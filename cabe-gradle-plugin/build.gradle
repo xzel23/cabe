@@ -1,0 +1,45 @@
+plugins {
+    id 'java-gradle-plugin'
+    
+    // add the Maven-publish plugin to be able to publish to the local Maven repository for testing
+    id 'maven-publish'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 11    
+targetCompatibility = 11    
+
+ext.group = 'com.dua3.cabe'
+ext.name = 'cabe-gradle-plugin'
+ext.id = 'com.dua3.cabe-gradle-plugin'
+ext.implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
+
+dependencies {
+    implementation "fr.inria.gforge.spoon:spoon-core:10.0.0"
+    implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
+}
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = project.id
+            implementationClass = project.implementationClass
+            version = project.version
+        }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.ext.group
+            artifactId = project.ext.id
+            version = project.version
+
+            from components.java
+        }
+    }
+}

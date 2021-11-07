@@ -1,0 +1,28 @@
+buildscript {
+    dependencies {
+        classpath project(":cabe-gradle-plugin")
+    }
+}
+
+plugins {
+    id 'application'
+}
+
+apply plugin: "com.dua3.cabe-gradle-plugin"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileClasspath project(':cabe-gradle-plugin')
+    implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
+}
+
+application {
+    mainClass = 'com.dua3.cabe.coba.Coba'
+}
+
+run {
+    enableAssertions = true
+}
