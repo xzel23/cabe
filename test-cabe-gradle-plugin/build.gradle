@@ -8,7 +8,7 @@ plugins {
     id 'application'
 }
 
-apply plugin: "com.dua3.cabe-gradle-plugin"
+apply plugin: "com.dua3.cabe.cabe-gradle-plugin"
 
 repositories {
     mavenCentral()

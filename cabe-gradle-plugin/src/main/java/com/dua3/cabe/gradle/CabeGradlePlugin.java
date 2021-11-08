@@ -1,5 +1,6 @@
 package com.dua3.cabe.gradle;
 
+import org.gradle.api.JavaVersion;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -40,18 +41,18 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class);
                 SourceSet mainSrc = javaExtension.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
-                t.srcFolders.addAll(mainSrc.getJava().getSrcDirs().stream().map(File::toString).toList());
-                log.debug("cabe source folder(s) is {}", t.srcFolders);
-                t.outFolder = project.file(project.getBuildDir().toPath().resolve("generated-sources").resolve("cabe"));
-                log.debug("cabe output folder is {}", t.outFolder);
+                t.setSrcFolders(mainSrc.getJava().getSrcDirs().stream().map(File::toString).toList());
+                t.setOutFolder(project.file(project.getBuildDir().toPath().resolve("generated-sources").resolve("cabe")));
                 
                 compileJavaTask.ifPresent(cj -> {
-                    log.debug("setting compileJava source folder to {}", t.outFolder);
                     JavaCompile jc = (JavaCompile) cj;
-                    jc.setSource(t.outFolder);
+                    jc.setSource(t.getOutFolder());
     
                     log.debug("setting cabe classpath");
                     t.setClasspath(jc.getClasspath());
+                    
+                    log.debug("setting cabe Java version compliance");
+                    t.setJavaVersionCompliance(JavaVersion.toVersion(jc.getTargetCompatibility()));
                     
                     log.debug("adding dependency on cabe to compileJava");
                     jc.dependsOn(t);

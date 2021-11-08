@@ -14,7 +14,7 @@ targetCompatibility = 11
 
 ext.group = 'com.dua3.cabe'
 ext.name = 'cabe-gradle-plugin'
-ext.id = 'com.dua3.cabe-gradle-plugin'
+ext.id = 'com.dua3.cabe.cabe-gradle-plugin'
 ext.implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
 
 dependencies {
@@ -25,8 +25,8 @@ dependencies {
 gradlePlugin {
     plugins {
         simplePlugin {
-            id = project.id
-            implementationClass = project.implementationClass
+            id = project.ext.id
+            implementationClass = project.ext.implementationClass
             version = project.version
         }
     }
@@ -36,7 +36,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = project.ext.group
-            artifactId = project.ext.id
+            artifactId = project.ext.name
             version = project.version
 
             from components.java
