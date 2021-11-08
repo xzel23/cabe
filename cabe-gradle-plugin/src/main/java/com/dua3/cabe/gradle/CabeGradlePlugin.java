@@ -1,6 +1,5 @@
 package com.dua3.cabe.gradle;
 
-import org.gradle.api.JavaVersion;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -51,15 +50,6 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     JavaCompile jc = (JavaCompile) cj;
                     jc.setSource(t.outFolder);
     
-                    String compatibility = jc.getSourceCompatibility();
-                    if (compatibility.matches("\\d+")) {
-                        t.compliance = Integer.parseInt(compatibility);
-                    } else {
-                        t.compliance = JavaVersion.current().ordinal();
-                        log.warn("cabe could not determine the java version");
-                    }
-                    log.debug("cabe java version set to {}", t.compliance);
-
                     log.debug("setting cabe classpath");
                     t.setClasspath(jc.getClasspath());
                     

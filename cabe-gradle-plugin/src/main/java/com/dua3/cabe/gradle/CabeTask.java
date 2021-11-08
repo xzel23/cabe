@@ -16,9 +16,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CabeTask extends DefaultTask {
+    
     Collection<String> srcFolders = new ArrayList<>();
     File outFolder = null;
-    int compliance = JavaVersion.current().ordinal();
 
     boolean noClasspath = false;
 
@@ -46,7 +46,7 @@ public class CabeTask extends DefaultTask {
         List<String> params = new LinkedList<>(List.of(
                 "-i", String.join(File.pathSeparator, srcFolders),
                 "-o", outFolder.getAbsolutePath(),
-                "--compliance", Integer.toString(Math.min(16, compliance))
+                "--lines"
         ));
         
         if (noClasspath) {
