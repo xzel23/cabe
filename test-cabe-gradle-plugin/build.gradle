@@ -26,3 +26,6 @@ application {
 run {
     enableAssertions = true
 }
+
+sourceCompatibility = 17
+targetCompatibility = 17    
