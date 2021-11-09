@@ -121,6 +121,7 @@ public class CabeTask extends DefaultTask {
                 "-o", outFolder.getAbsolutePath(),
                 "--lines",
                 "--with-imports",
+                "--output-type", "compilationunits",
                 "--compliance", compliance
         ));
         
