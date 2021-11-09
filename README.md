@@ -24,5 +24,10 @@ Usage
 
 **NOTE: The plugin is not yet released to the Gradle plugin portal, so at the moment you have to build the plugin locally. Once I am confident the plugin has reached a somewhat stable state, I will release to the plugin portal and remove zhis notice.**
 
+Issues
+------
 
-
+- **Pleae keep in mind that Cabe is in a very early stage of development!**
+- Github Issues has not yet been set up
+- compilation fails with generic recorda
+- line number information may differ
