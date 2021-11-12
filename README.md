@@ -29,5 +29,5 @@ Issues
 
 - **Pleae keep in mind that Cabe is in a very early stage of development!**
 - Github Issues has not yet been set up for this project
-- compilation fails with generic records
+- compilation fails with generic records ([Spoon issue #4281](https://github.com/INRIA/spoon/issues/4281))
 - line number information may differ
