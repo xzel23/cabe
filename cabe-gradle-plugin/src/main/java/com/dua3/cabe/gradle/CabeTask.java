@@ -1,7 +1,7 @@
 package com.dua3.cabe.gradle;
 
 
-import com.dua3.cabe.notnull.JetrainsAnnotationsNotNullProcessor;
+import com.dua3.cabe.notnull.JetBrainsAnnotationsNotNullProcessor;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.file.FileCollection;
@@ -10,11 +10,12 @@ import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import spoon.Launcher;
+import spoon.OutputType;
+import spoon.compiler.Environment;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,7 +35,7 @@ public class CabeTask extends DefaultTask {
     private boolean noClasspath = false;
 
     /** SPOON compliance level. */
-    private String compliance = JavaVersion.current().getMajorVersion();
+    private int compliance = Math.min(MAX_COMPATIBLE_JAVA_VERSION, getMajorVersion(JavaVersion.current()));
 
     /** The class path. */
     @Classpath
@@ -88,11 +89,11 @@ public class CabeTask extends DefaultTask {
      * Set the Java version. If the Java version is supported by SPOON, it is passed on unchanged. Otherwise,
      * the latest Java version supported by SPOON is used.
      * 
-     * @param jv The Javaversion used to compile the project sources 
+     * @param v The Javaversion used to compile the project sources 
      */
-    public void setJavaVersionCompliance(JavaVersion jv) {
-        int majorVersion = Integer.parseInt(jv.getMajorVersion());
-        int maxVersion = Math.min(MAX_COMPATIBLE_JAVA_VERSION, jv.ordinal() + 1);
+    public void setJavaVersionCompliance(JavaVersion v) {
+        int majorVersion = getMajorVersion(v);
+        int maxVersion = Math.min(MAX_COMPATIBLE_JAVA_VERSION, majorVersion);
 
         if (maxVersion != majorVersion) {
             getProject().getLogger().warn(
@@ -102,8 +103,12 @@ public class CabeTask extends DefaultTask {
             );   
         }
         
-        compliance = Integer.toString(maxVersion);
+        compliance = maxVersion;
         getProject().getLogger().debug("source code transformation uses Java {} compliance", maxVersion);
+    }
+    
+    private static final int getMajorVersion(JavaVersion v) {
+        return Integer.parseInt(v.getMajorVersion().replaceFirst("\\..*", ""));
     }
     
     @TaskAction
@@ -116,30 +121,25 @@ public class CabeTask extends DefaultTask {
             return;
         }
 
-        List<String> params = new LinkedList<>(List.of(
-                "-i", String.join(File.pathSeparator, srcFolders),
-                "-o", outFolder.getAbsolutePath(),
-                "--lines",
-                "--with-imports",
-                "--output-type", "compilationunits",
-                "--compliance", compliance
-        ));
-        
-        if (noClasspath) {
-            params.add("-x");
-        }
+        Launcher launcher = new Launcher();
 
-        params.add("-p");
-        params.add(JetrainsAnnotationsNotNullProcessor.class.getName());
+        srcFolders.forEach(launcher::addInputResource);
+        launcher.setSourceOutputDirectory(outFolder.getAbsolutePath());
+        launcher.addProcessor(new JetBrainsAnnotationsNotNullProcessor());
+        
+        Environment environment = launcher.getEnvironment();
+        environment.setComplianceLevel(Math.min(compliance, MAX_COMPATIBLE_JAVA_VERSION));
+        environment.setPreserveLineNumbers(true);
+        environment.setOutputType(OutputType.COMPILATION_UNITS);
+        environment.setNoClasspath(noClasspath);
 
         if (!classpath.isEmpty()) {
-            params.add("--source-classpath");
-            params.add(classpath.getAsPath());
+            List<String> classPathStrings = new ArrayList<>();
+            classpath.forEach(p -> classPathStrings.add(p.toString()));
+            environment.setSourceClasspath(classPathStrings.stream().toArray(String[]::new));
         }
 
-        Launcher launcher = new Launcher();
-        getProject().getLogger().debug("calling SPOON launcher with args: {}", params);
-        launcher.setArgs(params.toArray(new String[params.size()]));
+        getProject().getLogger().debug("calling SPOON launcher");
         launcher.run();
     }
 

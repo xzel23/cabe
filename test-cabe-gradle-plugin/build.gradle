@@ -1,4 +1,8 @@
 buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
     dependencies {
         classpath project(":cabe-gradle-plugin")
     }
@@ -15,7 +19,6 @@ repositories {
 }
 
 dependencies {
-    compileClasspath project(':cabe-gradle-plugin')
     implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
 }
 
