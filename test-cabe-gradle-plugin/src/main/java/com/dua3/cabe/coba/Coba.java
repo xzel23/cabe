@@ -1,7 +1,7 @@
 package com.dua3.cabe.coba;
 
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import com.dua3.cabe.annotations.NotNull;
 
 public class Coba {
     

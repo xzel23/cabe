@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
+    implementation project(":cabe-annotations")
 }
 
 application {

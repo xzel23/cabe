@@ -29,5 +29,19 @@ Issues
 
 - **Pleae keep in mind that Cabe is in a very early stage of development!**
 - Github Issues has not yet been set up for this project
-- compilation fails with generic records ([Spoon issue #4281](https://github.com/INRIA/spoon/issues/4281))
+- ~~compilation fails with generic records ([Spoon #4281](https://github.com/INRIA/spoon/issues/4281))~~ fixed in Spoon Git
+- compilation fails when using nested class as generic arg to its own super class ([Spoon #4313](https://github.com/INRIA/spoon/issues/4313))
 - line number information may differ
+
+Code
+----
+
+## cabe-annotations
+
+This module defines custom annotations that can be processed by Cabe:
+
+ - `NotNull` serves the same purpose as the `org.jetbrains.annotations.NotNull`, `javax.annotation.Nonnull` and other annotations. It mcan be used to specify that a method parameter must not be null. In contrast to the mentioned existing annotations, it is declared with a `SOURCE` rentention policy, i. e. using this annotation does not introduce any runtime dependencies.
+
+## cabe-gradle-plugin
+
+## test-cabe-gradle-plugin

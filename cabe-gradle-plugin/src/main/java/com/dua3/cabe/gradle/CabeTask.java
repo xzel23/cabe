@@ -1,6 +1,7 @@
 package com.dua3.cabe.gradle;
 
 
+import com.dua3.cabe.notnull.CabeAnnotationsNotNullProcessor;
 import com.dua3.cabe.notnull.JetBrainsAnnotationsNotNullProcessor;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.JavaVersion;
@@ -125,6 +126,7 @@ public class CabeTask extends DefaultTask {
 
         srcFolders.forEach(launcher::addInputResource);
         launcher.setSourceOutputDirectory(outFolder.getAbsolutePath());
+        launcher.addProcessor(new CabeAnnotationsNotNullProcessor());
         launcher.addProcessor(new JetBrainsAnnotationsNotNullProcessor());
         
         Environment environment = launcher.getEnvironment();

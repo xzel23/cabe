@@ -1,6 +1,6 @@
 rootProject.name = 'cabe'
 
-include 'cabe-gradle-plugin'
+include 'cabe-annotations', 'cabe-gradle-plugin'
 
 if (System.getProperty("test") == null) {
     System.out.println("skipping tests")

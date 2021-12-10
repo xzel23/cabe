@@ -20,7 +20,8 @@ ext.implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
 
 dependencies {
     implementation "fr.inria.gforge.spoon:spoon-core:10.0.1-SNAPSHOT"
-    implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
+    implementation project(":cabe-annotations")
+    implementation "org.jetbrains:annotations:22.0.0"
 }
 
 gradlePlugin {
