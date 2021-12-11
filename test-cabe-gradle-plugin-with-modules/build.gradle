@@ -23,7 +23,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'com.dua3.cabe.test.coba.Coba'
+    mainClass = 'com.dua3.cabe.test.modular.Modular'
 }
 
 run {

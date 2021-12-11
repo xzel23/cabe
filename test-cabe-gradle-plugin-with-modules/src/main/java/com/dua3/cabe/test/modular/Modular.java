@@ -1,9 +1,9 @@
-package com.dua3.cabe.coba;
+package com.dua3.cabe.test.modular;
 
 import java.util.Objects;
 import com.dua3.cabe.annotations.NotNull;
 
-public class Coba {
+public class Modular {
     
     public static void main(String[] args) {
         check(() -> oneNonNullAnnotatedArgument("hello world!"), null);

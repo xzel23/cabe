@@ -33,7 +33,7 @@ public class CabeTask extends DefaultTask {
     private File outFolder = null;
 
     /** Omit classpath (see SPOON docs). */
-    private boolean noClasspath = false;
+    private boolean noClasspath = true;
 
     /** SPOON compliance level. */
     private int compliance = Math.min(MAX_COMPATIBLE_JAVA_VERSION, getMajorVersion(JavaVersion.current()));

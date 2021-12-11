@@ -5,5 +5,5 @@ include 'cabe-annotations', 'cabe-gradle-plugin'
 if (System.getProperty("test") == null) {
     System.out.println("skipping tests")
 } else {
-    include 'test-cabe-gradle-plugin'
+    include 'test-cabe-gradle-plugin', 'test-cabe-gradle-plugin-with-modules'
 }

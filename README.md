@@ -44,4 +44,8 @@ This module defines custom annotations that can be processed by Cabe:
 
 ## cabe-gradle-plugin
 
+This module contains the Gradle plugin used to process annotations.
+
 ## test-cabe-gradle-plugin
+
+This module contains tests for the Gradle plugin.
