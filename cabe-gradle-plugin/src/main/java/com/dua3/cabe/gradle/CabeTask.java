@@ -1,8 +1,9 @@
 package com.dua3.cabe.gradle;
 
 
-import com.dua3.cabe.notnull.CabeAnnotationsNotNullProcessor;
-import com.dua3.cabe.notnull.JetBrainsAnnotationsNotNullProcessor;
+import com.dua3.cabe.spoon.CabeSpoonProcessor;
+import com.dua3.cabe.spoon.notnull.CabeAnnotationsNotNullProcessor;
+import com.dua3.cabe.spoon.notnull.JetBrainsAnnotationsNotNullProcessor;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.file.FileCollection;
@@ -32,9 +33,6 @@ public class CabeTask extends DefaultTask {
     @Internal
     private File outFolder = null;
 
-    /** Omit classpath (see SPOON docs). */
-    private boolean noClasspath = true;
-
     /** SPOON compliance level. */
     private int compliance = Math.min(MAX_COMPATIBLE_JAVA_VERSION, getMajorVersion(JavaVersion.current()));
 
@@ -42,6 +40,11 @@ public class CabeTask extends DefaultTask {
     @Classpath
     private FileCollection classpath = null;
 
+    private final List<CabeSpoonProcessor> PROCESSORS = List.of(
+            new CabeAnnotationsNotNullProcessor(), 
+            new JetBrainsAnnotationsNotNullProcessor()
+    );
+    
     /**
      * Set source folders.
      * 
@@ -126,20 +129,21 @@ public class CabeTask extends DefaultTask {
 
         srcFolders.forEach(launcher::addInputResource);
         launcher.setSourceOutputDirectory(outFolder.getAbsolutePath());
-        launcher.addProcessor(new CabeAnnotationsNotNullProcessor());
-        launcher.addProcessor(new JetBrainsAnnotationsNotNullProcessor());
         
         Environment environment = launcher.getEnvironment();
         environment.setComplianceLevel(Math.min(compliance, MAX_COMPATIBLE_JAVA_VERSION));
         environment.setPreserveLineNumbers(true);
         environment.setOutputType(OutputType.COMPILATION_UNITS);
-        environment.setNoClasspath(noClasspath);
+        environment.setAutoImports(true);
 
-        if (!classpath.isEmpty()) {
-            List<String> classPathStrings = new ArrayList<>();
-            classpath.forEach(p -> classPathStrings.add(p.toString()));
-            environment.setSourceClasspath(classPathStrings.stream().toArray(String[]::new));
-        }
+        List<String> classPathStrings = new ArrayList<>();
+        classpath.forEach(p -> classPathStrings.add(p.toString()));
+        environment.setSourceClasspath(classPathStrings.stream().toArray(String[]::new));
+
+        PROCESSORS.forEach(processor -> {
+            launcher.addProcessor(processor);
+            processor.patchEnvironment(environment);
+        });
 
         getProject().getLogger().debug("calling SPOON launcher");
         launcher.run();

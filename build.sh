@@ -2,8 +2,10 @@
 
 # This script first builds the plugin and then runs a test to verify assertions are present in the generated output 
 
+#FLAGS=--debug
+
 cd `dirname $0` \
 && ./gradlew clean build \
-&& ./gradlew -Dtest test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run \
-&& ./gradlew -Dtest test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run \
+&& ./gradlew -Dtest test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} \
+&& ./gradlew -Dtest test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} \
 && echo "SUCCESS"

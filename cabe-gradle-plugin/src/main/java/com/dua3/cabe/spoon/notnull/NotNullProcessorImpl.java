@@ -1,5 +1,6 @@
-package com.dua3.cabe.notnull;
+package com.dua3.cabe.spoon.notnull;
 
+import com.dua3.cabe.spoon.CabeSpoonProcessor;
 import spoon.processing.AbstractAnnotationProcessor;
 import spoon.reflect.code.CtAssert;
 import spoon.reflect.code.CtBlock;
@@ -7,11 +8,16 @@ import spoon.reflect.code.CtCodeSnippetExpression;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtParameter;
 
+import org.slf4j.Logger;
+
 import java.lang.annotation.Annotation;
 
-public interface NotNullProcessorImpl<A extends Annotation> {
-
+public interface NotNullProcessorImpl<A extends Annotation> extends CabeSpoonProcessor<CtParameter<?>> {
+    
+    Logger logger();
+    
     default void doProcess(AbstractAnnotationProcessor<A, CtParameter<?>> processor, A annotation, CtParameter<?> param) {
+        logger().debug("processing {} with {}", param, getClass().getSimpleName());
         CtMethod<?> method = param.getParent(CtMethod.class);
         CtBlock<?> body = method.getBody();
  
@@ -29,4 +35,3 @@ public interface NotNullProcessorImpl<A extends Annotation> {
     }
     
 }
-
