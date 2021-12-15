@@ -16,6 +16,11 @@ import spoon.OutputType;
 import spoon.compiler.Environment;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,11 +45,6 @@ public class CabeTask extends DefaultTask {
     @Classpath
     private FileCollection classpath = null;
 
-    private final List<CabeSpoonProcessor> PROCESSORS = List.of(
-            new CabeAnnotationsNotNullProcessor(), 
-            new JetBrainsAnnotationsNotNullProcessor()
-    );
-    
     /**
      * Set source folders.
      * 
@@ -127,7 +127,27 @@ public class CabeTask extends DefaultTask {
 
         Launcher launcher = new Launcher();
 
-        srcFolders.forEach(launcher::addInputResource);
+        srcFolders.forEach(s -> {
+            try {
+                Files.walk(Paths.get(s))
+                        .filter(Files::isRegularFile)
+                        .forEach(p -> {
+                            if (p.getFileName().toString().equals("module-info.java")) {
+                                try {
+                                    Path targetPath = outFolder.toPath().resolve("module-info.java");
+                                    Files.createDirectories(targetPath.getParent());
+                                    Files.copy(p, targetPath);
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            } else {
+                                launcher.addInputResource(p.toString());
+                            }
+                        });
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
         launcher.setSourceOutputDirectory(outFolder.getAbsolutePath());
         
         Environment environment = launcher.getEnvironment();
@@ -140,10 +160,7 @@ public class CabeTask extends DefaultTask {
         classpath.forEach(p -> classPathStrings.add(p.toString()));
         environment.setSourceClasspath(classPathStrings.stream().toArray(String[]::new));
 
-        PROCESSORS.forEach(processor -> {
-            launcher.addProcessor(processor);
-            processor.patchEnvironment(environment);
-        });
+        launcher.addProcessor(new CabeAnnotationsNotNullProcessor());
 
         getProject().getLogger().debug("calling SPOON launcher");
         launcher.run();
