@@ -1,9 +1,7 @@
 package com.dua3.cabe.gradle;
 
 
-import com.dua3.cabe.spoon.CabeSpoonProcessor;
 import com.dua3.cabe.spoon.notnull.CabeAnnotationsNotNullProcessor;
-import com.dua3.cabe.spoon.notnull.JetBrainsAnnotationsNotNullProcessor;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.file.FileCollection;
@@ -21,6 +19,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -136,7 +135,7 @@ public class CabeTask extends DefaultTask {
                                 try {
                                     Path targetPath = outFolder.toPath().resolve("module-info.java");
                                     Files.createDirectories(targetPath.getParent());
-                                    Files.copy(p, targetPath);
+                                    Files.copy(p, targetPath, StandardCopyOption.REPLACE_EXISTING);
                                 } catch (IOException e) {
                                     throw new UncheckedIOException(e);
                                 }
@@ -152,9 +151,11 @@ public class CabeTask extends DefaultTask {
         
         Environment environment = launcher.getEnvironment();
         environment.setComplianceLevel(Math.min(compliance, MAX_COMPATIBLE_JAVA_VERSION));
-        environment.setPreserveLineNumbers(true);
+        environment.setPreserveLineNumbers(false);
         environment.setOutputType(OutputType.COMPILATION_UNITS);
         environment.setAutoImports(true);
+        environment.setNoClasspath(false);
+        environment.setCommentEnabled(true);
 
         List<String> classPathStrings = new ArrayList<>();
         classpath.forEach(p -> classPathStrings.add(p.toString()));

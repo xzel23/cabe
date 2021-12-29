@@ -8,4 +8,5 @@ cd `dirname $0` \
 && ./gradlew clean build \
 && ./gradlew -Dtest test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} \
 && ./gradlew -Dtest test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} \
+&& ./gradlew publishToMavenLocal \
 && echo "SUCCESS"

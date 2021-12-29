@@ -9,12 +9,13 @@ import spoon.reflect.code.CtAssert;
 import spoon.reflect.code.CtBlock;
 import spoon.reflect.code.CtCodeSnippetExpression;
 import spoon.reflect.declaration.CtAnnotation;
-import spoon.reflect.declaration.CtMethod;
+import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtParameter;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,26 +60,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
     public boolean shoudBeConsumed(CtAnnotation<? extends Annotation> annotation) {
         return isMatchhingAnnotation(annotation);
     }
-/*
-    public void patchEnvironment(Environment env) {
-        try {
-            Class<NotNull> annotationClass = NotNull.class;
-            URL classLocation = annotationClass.getProtectionDomain().getCodeSource().getLocation();
-            Path parent = Paths.get(classLocation.toURI()).getParent();
-            if (parent == null) {
-                LOG.warn("could not determine classpath location of {}", annotationClass);
-            } else {
-                LOG.debug("adding {} to source class path", parent);
-                List<String> sourceClasspath = new ArrayList<>();
-                Optional.ofNullable(env.getSourceClasspath()).ifPresent(cp -> Arrays.stream(cp).forEach(sourceClasspath::add));
-                sourceClasspath.add(parent.toString());
-                env.setSourceClasspath(sourceClasspath.toArray(String[]::new));
-            }
-        } catch (URISyntaxException e) {
-            LOG.error("could not update source classpath", e);
-        }
-    }
-*/
+
     @Override
     public void process(CtParameter<?> element) {
         // work on a copy of the annotations because annotations are removed inside loop
@@ -99,20 +81,26 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
     }
 
     private void processNotNullAnnotatedElement(CtParameter<?> param) {
-        logger().debug("processing {} with {}", param, getClass().getSimpleName());
-        CtMethod<?> method = param.getParent(CtMethod.class);
+        logger().debug("processing {} with {} at ", param, getClass().getSimpleName());
+        CtExecutable<?> method = Objects.requireNonNull(
+                param.getParent(CtExecutable.class), 
+                () -> String.format("annotated element '%s' is not inside method/constructor declaration: %s", param.getSimpleName(), param.getOriginalSourceFragment().getSourcePosition()));
         CtBlock<?> body = method.getBody();
 
-        CtAssert<?> ctAssert = getFactory().createAssert();
+        if (body != null) {
+            CtAssert<?> ctAssert = getFactory().createAssert();
 
-        CtCodeSnippetExpression<Boolean> assertExpression = getFactory().Core().createCodeSnippetExpression();
-        assertExpression.setValue(param.getSimpleName()+"!=null");
-        ctAssert.setAssertExpression(assertExpression);
+            CtCodeSnippetExpression<Boolean> assertExpression = getFactory().Core().createCodeSnippetExpression();
+            assertExpression.setValue(param.getSimpleName() + "!=null");
+            ctAssert.setAssertExpression(assertExpression);
 
-        ctAssert.setExpression(getFactory().Code()
-                .createCodeSnippetExpression(String.format("\"parameter %s must not be null\"",  param.getSimpleName()))
-        );
+            ctAssert.setExpression(getFactory().Code()
+                    .createCodeSnippetExpression(String.format("\"parameter %s must not be null\"", param.getSimpleName()))
+            );
 
-        body.insertBegin(ctAssert);
+            body.insertBegin(ctAssert);
+        } else {
+            logger().debug("parent of annotated element '{}' does not have a body: {}", param.getSimpleName(), param.getOriginalSourceFragment().getSourcePosition());
+        }
     }
 }
