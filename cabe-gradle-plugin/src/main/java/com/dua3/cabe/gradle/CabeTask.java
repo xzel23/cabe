@@ -28,7 +28,7 @@ import java.util.Objects;
 public class CabeTask extends DefaultTask {
 
     /** The latest Java version supported (by SPOON). */
-    public static final int MAX_COMPATIBLE_JAVA_VERSION = 16;
+    public static final int MAX_COMPATIBLE_JAVA_VERSION = 17;
     
     /** Source folders. */
     private final Collection<String> srcFolders = new ArrayList<>();
@@ -110,7 +110,7 @@ public class CabeTask extends DefaultTask {
         getProject().getLogger().debug("source code transformation uses Java {} compliance", maxVersion);
     }
     
-    private static final int getMajorVersion(JavaVersion v) {
+    private static int getMajorVersion(JavaVersion v) {
         return Integer.parseInt(v.getMajorVersion().replaceFirst("\\..*", ""));
     }
     
@@ -127,8 +127,8 @@ public class CabeTask extends DefaultTask {
         Launcher launcher = new Launcher();
 
         srcFolders.forEach(s -> {
-            try {
-                Files.walk(Paths.get(s))
+            try (var stream = Files.walk(Paths.get(s))){
+                    stream
                         .filter(Files::isRegularFile)
                         .forEach(p -> {
                             if (p.getFileName().toString().equals("module-info.java")) {
@@ -153,13 +153,13 @@ public class CabeTask extends DefaultTask {
         environment.setComplianceLevel(Math.min(compliance, MAX_COMPATIBLE_JAVA_VERSION));
         environment.setPreserveLineNumbers(false);
         environment.setOutputType(OutputType.COMPILATION_UNITS);
-        environment.setAutoImports(true);
+        environment.setAutoImports(false);
         environment.setNoClasspath(false);
         environment.setCommentEnabled(true);
 
         List<String> classPathStrings = new ArrayList<>();
         classpath.forEach(p -> classPathStrings.add(p.toString()));
-        environment.setSourceClasspath(classPathStrings.stream().toArray(String[]::new));
+        environment.setSourceClasspath(classPathStrings.toArray(String[]::new));
 
         launcher.addProcessor(new CabeAnnotationsNotNullProcessor());
 
