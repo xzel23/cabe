@@ -151,11 +151,11 @@ public class CabeTask extends DefaultTask {
         
         Environment environment = launcher.getEnvironment();
         environment.setComplianceLevel(Math.min(compliance, MAX_COMPATIBLE_JAVA_VERSION));
-        environment.setPreserveLineNumbers(false);
         environment.setOutputType(OutputType.COMPILATION_UNITS);
+        environment.setPreserveLineNumbers(true);
         environment.setAutoImports(false);
         environment.setNoClasspath(false);
-        environment.setCommentEnabled(true);
+        environment.setCommentEnabled(false);
 
         List<String> classPathStrings = new ArrayList<>();
         classpath.forEach(p -> classPathStrings.add(p.toString()));
