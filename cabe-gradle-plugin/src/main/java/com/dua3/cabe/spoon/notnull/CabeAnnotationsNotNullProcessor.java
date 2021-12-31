@@ -8,6 +8,10 @@ import spoon.processing.AnnotationProcessor;
 import spoon.reflect.code.CtAssert;
 import spoon.reflect.code.CtBlock;
 import spoon.reflect.code.CtCodeSnippetExpression;
+import spoon.reflect.code.CtConstructorCall;
+import spoon.reflect.code.CtInvocation;
+import spoon.reflect.code.CtStatement;
+import spoon.reflect.cu.SourcePosition;
 import spoon.reflect.declaration.CtAnnotation;
 import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtParameter;
@@ -95,10 +99,33 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             ctAssert.setAssertExpression(assertExpression);
 
             ctAssert.setExpression(getFactory().Code()
-                    .createCodeSnippetExpression(String.format("\"parameter %s must not be null\"", param.getSimpleName()))
+                    .createCodeSnippetExpression(String.format("\"parameter '%s' must not be null\"", param.getSimpleName()))
             );
 
-            body.insertBegin(ctAssert);
+            // check if explicit constructor call is present
+            List<CtStatement> statements = body.getStatements();
+            boolean hasSuperConstructorCall = false;
+            if (!statements.isEmpty()) {
+                CtStatement firstStatement = statements.get(0);
+                if ( !firstStatement.isImplicit() && (firstStatement instanceof CtInvocation)) {
+                    String statementText = firstStatement.toString();
+                    if (statementText.startsWith("super(") || statementText.startsWith("this(")) {
+                        hasSuperConstructorCall = true;
+                    }
+                }
+            }
+
+            // insert position: on same line as parameters if no super constructor call, otherwise after call to super()
+            SourcePosition position = hasSuperConstructorCall ? statements.get(0).getPosition() : param.getPosition();
+            ctAssert.setPosition(position);
+                    
+            // make sure assignments are in order of parameters
+            int idx = hasSuperConstructorCall ? 1 : 0;
+            while (idx<statements.size() && (statements.get(idx) instanceof CtAssert)) {
+                idx++;
+            }
+            
+            body.addStatement(idx, ctAssert);
         } else {
             logger().debug("parent of annotated element '{}' does not have a body: {}", param.getSimpleName(), param.getOriginalSourceFragment().getSourcePosition());
         }

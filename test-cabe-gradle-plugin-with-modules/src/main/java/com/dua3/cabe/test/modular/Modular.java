@@ -7,17 +7,17 @@ public class Modular {
     
     public static void main(String[] args) {
         check(() -> oneNonNullAnnotatedArgument("hello world!"), null);
-        check(() -> oneNonNullAnnotatedArgument(null), "error: parameter arg must not be null");
+        check(() -> oneNonNullAnnotatedArgument(null), "error: parameter 'arg' must not be null");
         
         check(() -> nonNullAnnotatedSecondArgument("hello", "world"), null);
         check(() -> nonNullAnnotatedSecondArgument(null, "world"), null);
-        check(() -> nonNullAnnotatedSecondArgument("hello", null), "error: parameter arg2 must not be null");
-        check(() -> nonNullAnnotatedSecondArgument(null, null), "error: parameter arg2 must not be null");
+        check(() -> nonNullAnnotatedSecondArgument("hello", null), "error: parameter 'arg2' must not be null");
+        check(() -> nonNullAnnotatedSecondArgument(null, null), "error: parameter 'arg2' must not be null");
         
         check(() -> twoNonNullAnnotatedArgument("hello", "world"), null);
-        check(() -> twoNonNullAnnotatedArgument(null, "world"), "error: parameter arg1 must not be null");
-        check(() -> twoNonNullAnnotatedArgument("hello", null), "error: parameter arg2 must not be null");
-        check(() -> twoNonNullAnnotatedArgument(null, null), "error: parameter arg2 must not be null");
+        check(() -> twoNonNullAnnotatedArgument(null, "world"), "error: parameter 'arg1' must not be null");
+        check(() -> twoNonNullAnnotatedArgument("hello", null), "error: parameter 'arg2' must not be null");
+        check(() -> twoNonNullAnnotatedArgument(null, null), "error: parameter 'arg1' must not be null");
     }
     
     private static void oneNonNullAnnotatedArgument(@NotNull String arg) {

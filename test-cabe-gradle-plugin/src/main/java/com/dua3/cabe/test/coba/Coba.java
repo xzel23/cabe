@@ -13,30 +13,34 @@ public class Coba {
     }
     
     public static void main(String[] args) {
+        // check processing of annotated arguments
         check(() -> oneNonNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNonNullAnnotatedArgument(null), null, "error: parameter arg must not be null");
+        check(() -> oneNonNullAnnotatedArgument(null), null, "error: parameter 'arg' must not be null");
         
         check(() -> nonNullAnnotatedSecondArgument("hello", "world!"), "hello world!", null);
         check(() -> nonNullAnnotatedSecondArgument(null, "world!"), "null world!", null);
-        check(() -> nonNullAnnotatedSecondArgument("hello", null), null, "error: parameter arg2 must not be null");
-        check(() -> nonNullAnnotatedSecondArgument(null, null), null, "error: parameter arg2 must not be null");
+        check(() -> nonNullAnnotatedSecondArgument("hello", null), null, "error: parameter 'arg2' must not be null");
+        check(() -> nonNullAnnotatedSecondArgument(null, null), null, "error: parameter 'arg2' must not be null");
         
         check(() -> twoNonNullAnnotatedArgument("hello", "world!"), "hello world!", null);
-        check(() -> twoNonNullAnnotatedArgument(null, "world!"), null, "error: parameter arg1 must not be null");
-        check(() -> twoNonNullAnnotatedArgument("hello", null), null, "error: parameter arg2 must not be null");
-        check(() -> twoNonNullAnnotatedArgument(null, null), null, "error: parameter arg2 must not be null");
+        check(() -> twoNonNullAnnotatedArgument(null, "world!"), null, "error: parameter 'arg1' must not be null");
+        check(() -> twoNonNullAnnotatedArgument("hello", null), null, "error: parameter 'arg2' must not be null");
+        check(() -> twoNonNullAnnotatedArgument(null, null), null, "error: parameter 'arg1' must not be null");
 
         check(() -> secondArgumentNonNullAnnotated("hello", "world!"), "hello world!", null);
         check(() -> secondArgumentNonNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNonNullAnnotated("hello", null), null, "error: parameter arg2 must not be null");
-        check(() -> secondArgumentNonNullAnnotated(null, null), null, "error: parameter arg2 must not be null");
+        check(() -> secondArgumentNonNullAnnotated("hello", null), null, "error: parameter 'arg2' must not be null");
+        check(() -> secondArgumentNonNullAnnotated(null, null), null, "error: parameter 'arg2' must not be null");
 
         check(() -> firstArgumentNonNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNonNullAnnotated(null, "world!"), null, "error: parameter arg1 must not be null");
+        check(() -> firstArgumentNonNullAnnotated(null, "world!"), null, "error: parameter 'arg1' must not be null");
         check(() -> firstArgumentNonNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNonNullAnnotated(null, null), null, "error: parameter arg1 must not be null");
+        check(() -> firstArgumentNonNullAnnotated(null, null), null, "error: parameter 'arg1' must not be null");
         
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
+        
+        // check that annotated arguments to constructors work
+        assert new B("hello", " world!").toString().equals("hello world!");
     }
     
     private static String oneNonNullAnnotatedArgument(@NotNull String arg) {
@@ -87,5 +91,27 @@ public class Coba {
             throw new IllegalStateException();
         }
     }
-    
+ 
+    static class A {
+        private String s;
+        A(String s) {
+            this.s = s;
+        }
+
+        public String toString() {
+            return s;
+        }
+    }
+
+    static class B extends A {
+        private String b;
+        B(@NotNull String a, @NotNull String b) {
+            super(a);
+            this.b = b;
+        }
+
+        public String toString() {
+            return super.toString()+b;
+        }
+    }
 }
