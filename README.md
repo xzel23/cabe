@@ -3,7 +3,7 @@ Cabe
 
 From the [disambiguation page for Lombok](https://id.wikipedia.org/wiki/Lombok_(disambiguasi)) in the indonesian Wiklipedia:
 
-_Lombok adalah nama lain dari cabai_ (Lombok is another name for cabai).
+___Lombok adalah nama lain dari cabai___ -- _Lombok is another name for cabai_.
 
 This started out when I annotated one of my library projects with [JetBrains annotations](https://github.com/JetBrains/java-annotations) and found out that while very helpful, this doesn't help me at all in projects that use the library. I know that project Lombok provides similar annotations to `@NotNull` that also add runtime checks, but I did not want to add runtime dependencies to my project.
 
@@ -28,10 +28,11 @@ Issues
 ------
 
 - **Pleae keep in mind that Cabe is in a very early stage of development!**
-- Github Issues has not yet been set up for this project
+- **A patched version of spoon is needed! I am working on upstreaming patches.**
+- ~~Github Issues has not yet been set up for this project~~
 - ~~compilation fails with generic records ([Spoon #4281](https://github.com/INRIA/spoon/issues/4281))~~ fixed in Spoon Git
-- compilation fails when using nested class as generic arg to its own super class ([Spoon #4313](https://github.com/INRIA/spoon/issues/4313))
-- line number information may differ
+- ~~compilation fails when using nested class as generic arg to its own super class ([Spoon #4313](https://github.com/INRIA/spoon/issues/4313))~~
+- ~~line number information may differ~~
 
 Code
 ----
