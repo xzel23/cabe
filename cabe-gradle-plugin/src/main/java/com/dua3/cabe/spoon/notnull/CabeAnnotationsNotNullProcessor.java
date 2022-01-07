@@ -1,6 +1,9 @@
 package com.dua3.cabe.spoon.notnull;
 
 import com.dua3.cabe.annotations.NotNull;
+import com.dua3.cabe.annotations.NotNullApi;
+import com.dua3.cabe.annotations.Nullable;
+import com.dua3.cabe.annotations.NullableApi;
 import org.slf4j.Logger;
 import spoon.Launcher;
 import spoon.processing.AbstractProcessor;
@@ -8,25 +11,34 @@ import spoon.processing.AnnotationProcessor;
 import spoon.reflect.code.CtAssert;
 import spoon.reflect.code.CtBlock;
 import spoon.reflect.code.CtCodeSnippetExpression;
-import spoon.reflect.code.CtConstructorCall;
 import spoon.reflect.code.CtInvocation;
 import spoon.reflect.code.CtStatement;
 import spoon.reflect.cu.SourcePosition;
 import spoon.reflect.declaration.CtAnnotation;
+import spoon.reflect.declaration.CtClass;
+import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtParameter;
+import spoon.reflect.declaration.CtType;
+import spoon.reflect.reference.CtTypeReference;
+import spoon.support.reflect.declaration.CtTypeImpl;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParameter<?>> implements AnnotationProcessor<Annotation, CtParameter<?>> {
 
-    private static final Set<Class<? extends Annotation>> ANNOTATION_TYPES = Set.of(NotNull.class);
-    private static final Set<String> ANNOTATION_TYPE_NAMES = ANNOTATION_TYPES.stream().map(Class::getCanonicalName).collect(Collectors.toSet());
+    private static final Set<Class<? extends Annotation>> NOT_NULL_ANNOTATION_TYPES = Set.of(NotNull.class, NotNullApi.class);
+    private static final Set<Class<? extends Annotation>> NULLABLE_ANNOTATION_TYPES = Set.of(Nullable.class, NullableApi.class);
+
+    private static final Set<Class<? extends Annotation>> ALL_ANNOTATION_TYPES = Set.of(NotNull.class, Nullable.class, NotNullApi.class, NullableApi.class);
+    
+    private static final Set<String> ANNOTATION_TYPE_NAMES = NOT_NULL_ANNOTATION_TYPES.stream().map(Class::getCanonicalName).collect(Collectors.toSet());
 
     private static final Logger logger() {
         return Launcher.LOGGER;
@@ -36,10 +48,6 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
         logger().debug("instance created");
     }
 
-    public boolean isMatchhingAnnotation(CtAnnotation<? extends Annotation> annotation) {
-        return ANNOTATION_TYPE_NAMES.contains(annotation.getAnnotationType().getQualifiedName());
-    }
-
     @Override
     public void process(Annotation annotation, CtParameter<?> element) { 
         process(element);
@@ -47,12 +55,12 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
 
     @Override
     public Set<Class<? extends Annotation>> getProcessedAnnotationTypes() {
-        return ANNOTATION_TYPES;
+        return ALL_ANNOTATION_TYPES;
     }
 
     @Override
     public Set<Class<? extends Annotation>> getConsumedAnnotationTypes() {
-        return ANNOTATION_TYPES;
+        return ALL_ANNOTATION_TYPES;
     }
 
     @Override
@@ -62,24 +70,34 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
 
     @Override
     public boolean shoudBeConsumed(CtAnnotation<? extends Annotation> annotation) {
-        return isMatchhingAnnotation(annotation);
+        return ALL_ANNOTATION_TYPES.contains(annotation.getAnnotationType());
     }
 
     @Override
-    public void process(CtParameter<?> element) {
+    public void process(CtParameter<?> param) {
         // work on a copy of the annotations because annotations are removed inside loop
-        List<CtAnnotation<? extends Annotation>> annotations = new ArrayList<>(element.getAnnotations());
-        for (var annotation: annotations) {
-            if (isMatchhingAnnotation(annotation)) {
-                try {
-                    this.processNotNullAnnotatedElement(element);
-                } catch (Exception var5) {
-                    Launcher.LOGGER.error(var5.getMessage(), var5);
-                }
+        boolean notNull = false;
+        for (CtElement element = param; element!=null; element=getAncestor(element)) {
+            CtElement el = element;
+            Optional<Boolean> notNullAnnotated = getIsNotNullAnnotated(
+                    element,
+                    annotation -> {
+                        if (el == param && this.shoudBeConsumed(annotation)) {
+                            el.removeAnnotation(annotation);
+                        }
+                    }
+            );
+            if (notNullAnnotated.isPresent()) {
+                notNull = notNullAnnotated.orElseThrow();
+                break;
+            }
+        }
 
-                if (this.shoudBeConsumed(annotation)) {
-                    element.removeAnnotation(annotation);
-                }
+        if (notNull) {
+            try {
+                this.processNotNullAnnotatedElement(param);
+            } catch (Exception e) {
+                Launcher.LOGGER.error(e.getMessage(), e);
             }
         }
     }
@@ -129,5 +147,51 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
         } else {
             logger().debug("parent of annotated element '{}' does not have a body: {}", param.getSimpleName(), param.getOriginalSourceFragment().getSourcePosition());
         }
+    }
+
+    private Optional<Boolean> getIsNotNullAnnotated(CtElement element, Consumer<CtAnnotation<?>> annotationConsumer) {
+        boolean notNullAnnotated = false;
+        boolean nullableAnnotated = false;
+        for (var annotation: element.getAnnotations()) {
+            notNullAnnotated |= NOT_NULL_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
+            nullableAnnotated |= NULLABLE_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
+
+            annotationConsumer.accept(annotation);
+        }
+
+        // consistency check
+        if (notNullAnnotated && nullableAnnotated) {
+            throw new IllegalStateException(String.format(
+                    "both nullable and non-nullable annotations present at: %s",
+                    element.getOriginalSourceFragment().getSourcePosition()
+            ));
+        }
+        
+        return notNullAnnotated || nullableAnnotated
+                ? Optional.of(notNullAnnotated)
+                : Optional.empty();
+    }
+    
+    private CtElement getAncestor(CtElement element) {
+        // for a method, return the declaring class
+        if (element instanceof CtParameter) {
+            CtExecutable<?> method = ((CtParameter<?>) element).getParent();
+            return method.getParent();
+        }
+        
+        // for a class, return the package
+        if (element instanceof CtType<?>) {
+            CtType<?> type = (CtType<?>) element;
+
+            // return the outer class
+            CtType<?> declaringType = type.getDeclaringType();
+            if (declaringType!=null) {
+                return declaringType;
+            }
+            
+            return type.getPackage(); 
+        }
+        
+        return null;
     }
 }
