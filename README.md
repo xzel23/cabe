@@ -29,6 +29,7 @@ Issues
 
 - **Pleae keep in mind that Cabe is in a very early stage of development!**
 - **A patched version of spoon is needed! I am working on upstreaming patches.**
+- For technical reasons, parameters to constructor calls cannot be checked before the super constructor is run. This may lead to spotbugs complaining about unnecessary null checks.
 - ~~Github Issues has not yet been set up for this project~~
 - ~~compilation fails with generic records ([Spoon #4281](https://github.com/INRIA/spoon/issues/4281))~~ fixed in Spoon Git
 - ~~compilation fails when using nested class as generic arg to its own super class ([Spoon #4313](https://github.com/INRIA/spoon/issues/4313))~~
@@ -41,7 +42,17 @@ Code
 
 This module defines custom annotations that can be processed by Cabe:
 
- - `NotNull` serves the same purpose as the `org.jetbrains.annotations.NotNull`, `javax.annotation.Nonnull` and other annotations. It mcan be used to specify that a method parameter must not be null. In contrast to the mentioned existing annotations, it is declared with a `SOURCE` rentention policy, i. e. using this annotation does not introduce any runtime dependencies.
+- `NotNull` serves the same purpose as the `org.jetbrains.annotations.NotNull`, `javax.annotation.Nonnull` and other annotations. It mcan be used to specify that a method parameter must not be null. In contrast to the mentioned existing annotations, it is declared with a `SOURCE` rentention policy, i. e. using this annotation does not introduce any runtime dependencies.
+
+- `Nullable` marks a parameter as nullable.
+
+- `NotNullApi` marks all parameters as `@NotNull` by default for an entire package or class.
+
+- `NullableApi` marks all parameters as `@Nullable` by default for an entire package or class.
+
+For each unannotated parameter, the annotations are checked on the declaring class where inner classes inherit annotation from the class they are defined in. If no class lavel annotation is found, annotations from the package are used. 
+
+**NOTE:** Use the `package-info.file` to annotate a package with `@NotNullApi`. Look at the sub-project `test-cabe-plugin` for examples.
 
 ## cabe-gradle-plugin
 

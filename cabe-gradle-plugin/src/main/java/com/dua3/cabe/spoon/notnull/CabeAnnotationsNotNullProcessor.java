@@ -15,13 +15,10 @@ import spoon.reflect.code.CtInvocation;
 import spoon.reflect.code.CtStatement;
 import spoon.reflect.cu.SourcePosition;
 import spoon.reflect.declaration.CtAnnotation;
-import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.declaration.CtType;
-import spoon.reflect.reference.CtTypeReference;
-import spoon.support.reflect.declaration.CtTypeImpl;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -38,8 +35,6 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
 
     private static final Set<Class<? extends Annotation>> ALL_ANNOTATION_TYPES = Set.of(NotNull.class, Nullable.class, NotNullApi.class, NullableApi.class);
     
-    private static final Set<String> ANNOTATION_TYPE_NAMES = NOT_NULL_ANNOTATION_TYPES.stream().map(Class::getCanonicalName).collect(Collectors.toSet());
-
     private static final Logger logger() {
         return Launcher.LOGGER;
     }
@@ -75,7 +70,11 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
 
     @Override
     public void process(CtParameter<?> param) {
-        // work on a copy of the annotations because annotations are removed inside loop
+        // primitive types are inheritly non-nullable
+        if (param.getType().isPrimitive()) {
+            return;    
+        }
+        
         boolean notNull = false;
         for (CtElement element = param; element!=null; element=getAncestor(element)) {
             CtElement el = element;

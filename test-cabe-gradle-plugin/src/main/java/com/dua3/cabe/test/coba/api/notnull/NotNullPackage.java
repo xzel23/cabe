@@ -13,11 +13,11 @@ public class NotNullPackage {
     }
     
     public static void test() {
-        // check processing of annotated arguments
+        // check processing of unannotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
         check(() -> unannotatedArgument(null), null, "error: parameter 'arg' must not be null");
         
-        // NotNull
+        // @NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNotNullAnnotatedArgument(null), null, "error: parameter 'arg' must not be null");
         
@@ -36,7 +36,7 @@ public class NotNullPackage {
         check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: parameter 'arg2' must not be null");
         check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg1' must not be null");
         
-        // Nullable
+        // @Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNullableAnnotatedArgument(null), null, null);
 
@@ -57,6 +57,9 @@ public class NotNullPackage {
 
         // record parameter
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
+        
+        // primitive argument
+        check(() -> primitiveArgument(1), "hello 1", null);
         
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
@@ -117,6 +120,14 @@ public class NotNullPackage {
         return s;
     }
 
+    // primitive arguments
+    
+    private static String primitiveArgument(int i) {
+        return "hello "+i;
+    }
+    
+    // helper methods
+    
     private static void check(Supplier<String> task, @Nullable String expectedResult, @Nullable String expectedExceptionMesssage) {
         String assertionMessage = null;
         String result = null;
