@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParameter<?>> implements AnnotationProcessor<Annotation, CtParameter<?>> {
 
@@ -70,34 +69,43 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
 
     @Override
     public void process(CtParameter<?> param) {
-        // primitive types are inheritly non-nullable
-        if (param.getType().isPrimitive()) {
-            return;    
-        }
-        
-        boolean notNull = false;
-        for (CtElement element = param; element!=null; element=getAncestor(element)) {
-            CtElement el = element;
-            Optional<Boolean> notNullAnnotated = getIsNotNullAnnotated(
-                    element,
-                    annotation -> {
-                        if (el == param && this.shoudBeConsumed(annotation)) {
-                            el.removeAnnotation(annotation);
-                        }
-                    }
-            );
-            if (notNullAnnotated.isPresent()) {
-                notNull = notNullAnnotated.orElseThrow();
-                break;
+        try {
+            // primitive types are inheritly non-nullable
+            if (param.getType().isPrimitive()) {
+                return;
             }
-        }
 
-        if (notNull) {
-            try {
-                this.processNotNullAnnotatedElement(param);
-            } catch (Exception e) {
-                Launcher.LOGGER.error(e.getMessage(), e);
+            boolean notNull = false;
+            for (CtElement element = param; element != null; element = getAncestor(element)) {
+                CtElement el = element;
+                Optional<Boolean> notNullAnnotated = getIsNotNullAnnotated(
+                        element,
+                        annotation -> {
+                            if (el == param && shoudBeConsumed(annotation)) {
+                                el.removeAnnotation(annotation);
+                            }
+                        }
+                );
+                if (notNullAnnotated.isPresent()) {
+                    notNull = notNullAnnotated.orElseThrow();
+                    break;
+                }
             }
+
+            if (notNull) {
+                try {
+                    this.processNotNullAnnotatedElement(param);
+                } catch (Exception e) {
+                    Launcher.LOGGER.error(e.getMessage(), e);
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(String.format(
+                    "Exception while processing parameter '%s' (%s): %s", 
+                    param.getSimpleName(), 
+                    param.getOriginalSourceFragment().getSourcePosition(), 
+                    e.getMessage()
+            ), e);
         }
     }
 
@@ -105,7 +113,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
         logger().debug("processing {} with {} at ", param, getClass().getSimpleName());
         CtExecutable<?> method = Objects.requireNonNull(
                 param.getParent(CtExecutable.class), 
-                () -> String.format("annotated element '%s' is not inside method/constructor declaration: %s", param.getSimpleName(), param.getOriginalSourceFragment().getSourcePosition()));
+                "annotated element is not inside method/constructor declaration");
         CtBlock<?> body = method.getBody();
 
         if (body != null) {

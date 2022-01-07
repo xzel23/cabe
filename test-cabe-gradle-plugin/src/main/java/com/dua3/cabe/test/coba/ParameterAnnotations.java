@@ -6,11 +6,13 @@ import java.util.function.Supplier;
 
 public class ParameterAnnotations {
     
-    public static record Pair<T1,T2>(T1 first, T2 second) {
+    public record Pair<T1,T2>(@Nullable T1 first, @Nullable T2 second) {
         public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
             return new Pair<>(first, second);
         }
     }
+
+    public record NotNullRecord(@NotNull String a, @NotNull String b) {}
 
     public static void test() {
         // check processing of annotated arguments
