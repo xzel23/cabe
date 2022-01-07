@@ -93,17 +93,12 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             }
 
             if (notNull) {
-                try {
-                    this.processNotNullAnnotatedElement(param);
-                } catch (Exception e) {
-                    Launcher.LOGGER.error(e.getMessage(), e);
-                }
+                this.processNotNullAnnotatedElement(param);
             }
         } catch (Exception e) {
             throw new IllegalStateException(String.format(
-                    "Exception while processing parameter '%s' (%s): %s", 
+                    "Exception while processing parameter '%s': %s", 
                     param.getSimpleName(), 
-                    param.getOriginalSourceFragment().getSourcePosition(), 
                     e.getMessage()
             ), e);
         }
@@ -152,7 +147,14 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             
             body.addStatement(idx, ctAssert);
         } else {
-            logger().debug("parent of annotated element '{}' does not have a body: {}", param.getSimpleName(), param.getOriginalSourceFragment().getSourcePosition());
+            CtType<?> parentType = method.getParent(CtType.class);
+            if (parentType!= null) {
+                logger().debug("not generating code for annotated parameter {} because {}.{}(...) does not have a body", 
+                        param.getSimpleName(),
+                        parentType.getQualifiedName(), 
+                        method.getSimpleName() 
+                );
+            }
         }
     }
 
