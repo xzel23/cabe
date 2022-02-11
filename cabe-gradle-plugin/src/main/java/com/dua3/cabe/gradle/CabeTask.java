@@ -154,7 +154,7 @@ public class CabeTask extends DefaultTask {
         environment.setOutputType(OutputType.COMPILATION_UNITS);
         environment.setPreserveLineNumbers(true);
         environment.setAutoImports(false);
-        environment.setNoClasspath(false);
+        environment.setNoClasspath(true);
         environment.setCommentEnabled(false);
 
         List<String> classPathStrings = new ArrayList<>();
