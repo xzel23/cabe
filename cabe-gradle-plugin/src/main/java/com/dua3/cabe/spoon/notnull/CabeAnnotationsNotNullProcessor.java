@@ -97,8 +97,9 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             }
         } catch (Exception e) {
             throw new IllegalStateException(String.format(
-                    "Exception while processing parameter '%s': %s", 
+                    "Exception while processing parameter '%s' %s: %s", 
                     param.getSimpleName(), 
+                    param.getPosition().toString(),
                     e.getMessage()
             ), e);
         }
