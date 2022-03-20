@@ -19,6 +19,7 @@ import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.declaration.CtType;
+import spoon.reflect.declaration.CtTypeInformation;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -71,7 +72,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
     public void process(CtParameter<?> param) {
         try {
             // primitive types are inheritly non-nullable
-            if (param.getType().isPrimitive()) {
+            if (Optional.ofNullable(param.getType()).map(CtTypeInformation::isPrimitive).orElse(true)) {
                 return;
             }
 
