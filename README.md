@@ -28,7 +28,7 @@ Issues
 ------
 
 - **Pleae keep in mind that Cabe is in a very early stage of development!**
-- **A patched version of spoon is needed! I am working on upstreaming patches.**
+- ~~**A patched version of spoon is needed! I am working on upstreaming patches.**~~
 - For technical reasons, parameters to constructor calls cannot be checked before the super constructor is run. This may lead to spotbugs complaining about unnecessary null checks.
 - ~~Github Issues has not yet been set up for this project~~
 - ~~compilation fails with generic records ([Spoon #4281](https://github.com/INRIA/spoon/issues/4281))~~ fixed in Spoon Git
