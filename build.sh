@@ -5,7 +5,7 @@
 #FLAGS=--debug
 
 cd `dirname $0` \
-&& ./gradlew -Dnotest clean build && echo "build successful" \
+&& ./gradlew -Dnotest clean build publishToMavenLocal && echo "build successful" \
 && ./gradlew test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} && echo "non-modular test successful" \
 && ./gradlew test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} && echo "modular test successful" \
 && ./gradlew publishToMavenLocal && echo "plugin published to local repository" \
