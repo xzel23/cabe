@@ -19,7 +19,7 @@ ext.id = 'com.dua3.cabe.cabe-gradle-plugin'
 ext.implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
 
 dependencies {
-    implementation "fr.inria.gforge.spoon:spoon-core:10.1.0"
+    implementation "fr.inria.gforge.spoon:spoon-core:10.1.1"
     implementation project(":cabe-annotations")
 }
 

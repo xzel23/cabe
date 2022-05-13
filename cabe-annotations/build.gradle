@@ -1,11 +1,20 @@
 plugins {
-    id 'java'
-
-    // add the Maven-publish plugin to be able to publish to the local Maven repository for testing
+    id 'java-library'
     id 'maven-publish'
+    id 'signing'
 }
 
 description = 'Java Annotations for Cabe'
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.addBooleanOption('html5', true)
+}
 
 dependencies {
 }
@@ -15,15 +24,69 @@ targetCompatibility = 11
 
 ext.group = 'com.dua3.cabe'
 ext.name = 'cabe-annotations'
+ext.scm = 'https://github.com/xzel23/cabe.git'
+ext.developerId = 'axh'
+ext.developerName = 'Axel Howind'
+ext.developerEmail = 'axh@dua3.com'
+ext.organization = 'dua3'
+ext.organizationUrl = 'https://www.dua3.com'
+
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+def pomConfig = {
+    licenses {
+        license {
+            name "MIT"
+            url "https://opensource.org/licenses/MIT"
+        }
+    }
+    developers {
+        developer {
+            id project.developerId
+            name project.developerName
+            email project.developerEmail
+            organization project.organization
+            organizationUrl project.organizationUrl
+        }
+    }
+
+    scm {
+        url project.scm
+    }
+}
 
 publishing {
     publications {
-        maven(MavenPublication) {
-            groupId = project.ext.group
-            artifactId = project.ext.name
-            version = project.version
-
+        mavenJava(MavenPublication) {
+            groupId project.group
+            artifactId project.name
+            version version
             from components.java
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', project.description)
+                root.appendNode('name', project.name)
+                root.appendNode('url', project.scm)
+                root.children().last() + pomConfig
+            }
         }
     }
+
+    repositories {
+        // Sonatype OSSRH
+        maven {
+            def releaseRepo = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotRepo = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = isReleaseVersion ? releaseRepo : snapshotRepo
+            credentials {
+                username = System.properties.get('ossrhUsername')
+                password = System.properties.get('ossrhPassword')
+            }
+        }
+    }
+}
+
+// === sign artifacts
+signing {
+    sign publishing.publications.mavenJava
 }
