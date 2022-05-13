@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'com.dua3.cabe', name: 'cabe-gradle-plugin', version: version
+        classpath group: 'com.dua3.cabe', name: 'com.dua3.cabe.gradle.plugin', version: version
         classpath group: 'com.dua3.cabe', name: 'cabe-annotations', version: version
     }
 }
@@ -13,7 +13,7 @@ plugins {
     id 'application'
 }
 
-apply plugin: "com.dua3.cabe.cabe-gradle-plugin"
+apply plugin: "com.dua3.cabe"
 
 repositories {
     mavenLocal()

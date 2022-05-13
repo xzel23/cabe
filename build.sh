@@ -9,4 +9,13 @@ cd `dirname $0` \
 && ./gradlew test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} && echo "non-modular test successful" \
 && ./gradlew test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} && echo "modular test successful" \
 && ./gradlew publishToMavenLocal && echo "plugin published to local repository" \
-&& echo "SUCCESS"
+|| { echo "ERROR" ; exit 1 ; }
+
+read -p "Publish library and plugin? " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  ./gradlew cabe-gradle-plugin:publishPlugins publish && echo "plugin published"
+fi 
+
+echo "SUCCESS"

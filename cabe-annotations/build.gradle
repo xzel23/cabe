@@ -11,6 +11,11 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 javadoc {
     options.encoding = 'UTF-8'
     options.addBooleanOption('html5', true)
@@ -22,8 +27,8 @@ dependencies {
 sourceCompatibility = 11
 targetCompatibility = 11
 
-ext.group = 'com.dua3.cabe'
-ext.name = 'cabe-annotations'
+group = 'com.dua3.cabe'
+
 ext.scm = 'https://github.com/xzel23/cabe.git'
 ext.developerId = 'axh'
 ext.developerName = 'Axel Howind'
@@ -89,4 +94,8 @@ publishing {
 // === sign artifacts
 signing {
     sign publishing.publications.mavenJava
+}
+
+tasks.withType(PublishToMavenRepository) {
+    dependsOn publishToMavenLocal
 }

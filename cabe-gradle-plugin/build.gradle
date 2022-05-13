@@ -1,8 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
-    
-    // add the Maven-publish plugin to be able to publish to the local Maven repository for testing
     id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '0.21.0'
 }
 
 repositories {
@@ -11,36 +10,27 @@ repositories {
 }
 
 sourceCompatibility = 11    
-targetCompatibility = 11    
-
-ext.group = 'com.dua3.cabe'
-ext.name = 'cabe-gradle-plugin'
-ext.id = 'com.dua3.cabe.cabe-gradle-plugin'
-ext.implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
+targetCompatibility = 11
 
 dependencies {
     implementation "fr.inria.gforge.spoon:spoon-core:10.1.1"
     implementation project(":cabe-annotations")
 }
 
-gradlePlugin {
-    plugins {
-        simplePlugin {
-            id = project.ext.id
-            implementationClass = project.ext.implementationClass
-            version = project.version
-        }
-    }
+pluginBundle {
+    website = 'https://github.com/xzel23/cabe'
+    vcsUrl = 'https://github.com/xzel23/cabe'
+    tags = ['java', 'NotNull', 'Nullable', 'null check', 'assertion']
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = project.ext.group
-            artifactId = project.ext.name
-            version = project.version
-
-            from components.java
+gradlePlugin {
+    plugins {
+        cabePlugin {
+            id = 'com.dua3.cabe'
+            group = 'com.dua3'
+            displayName = 'Plugin for adding assertions during compile time'
+            description = 'A plugin that adds assertions for annotated method parameters at compile time.'
+            implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
         }
     }
 }
