@@ -22,14 +22,43 @@ What I wanted is something more or less like Lombok, but closer to standard Java
 Usage
 -----
 
+ - Add the plugin in `build.gradle`:
+    ```
+    plugins {
+        id 'com.dua3.cabe
+    }
+    ```
+
+ - Add a compile time dependency on cabe-annotations:   
+    ```
+    dependencies {
+        compileOnly "com.dua3.cabe:cabe-annotations:<version>"
+    }
+    ```
+
+ - Use annotations in your code:
+   ```
+   public void foo(@NotNull bar) {
+       ...
+   }
+   ```
+   will be compiled to the equivalent of this (see below for a list of the supported annotations):
+   ```
+   public void foo(@NotNull bar) {
+       assert ( bar != null, "parameter 'bar' must not be null" );
+       ...
+   }
+   ```
+
 **NOTE: The plugin is not yet released to the Gradle plugin portal, so at the moment you have to build the plugin locally. Once I am confident the plugin has reached a somewhat stable state, I will release to the plugin portal and remove zhis notice.**
 
 Issues
 ------
 
 - For technical reasons, parameters to constructor calls cannot be checked before the super constructor is run. This may lead to spotbugs complaining about unnecessary null checks.
+- When building cabe under Windows, make sure the TERM variable is set correctly for your system or text output will look garbled. For Git Bash, use `export TERM=cygwin`.
 
-Code
+- Code
 ----
 
 ## cabe-annotations
