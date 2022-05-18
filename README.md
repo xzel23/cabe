@@ -50,8 +50,6 @@ Usage
    }
    ```
 
-**NOTE: The plugin is not yet released to the Gradle plugin portal, so at the moment you have to build the plugin locally. Once I am confident the plugin has reached a somewhat stable state, I will release to the plugin portal and remove zhis notice.**
-
 Issues
 ------
 
