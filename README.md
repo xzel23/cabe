@@ -56,7 +56,7 @@ Issues
 - For technical reasons, parameters to constructor calls cannot be checked before the super constructor is run. This may lead to spotbugs complaining about unnecessary null checks.
 - When building cabe under Windows, make sure the TERM variable is set correctly for your system or text output will look garbled. For Git Bash, use `export TERM=cygwin`.
 
-- Code
+Code
 ----
 
 ## cabe-annotations
