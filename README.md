@@ -38,13 +38,13 @@ Usage
 
  - Use annotations in your code:
    ```
-   public void foo(@NotNull bar) {
+   public void foo(@NotNull Bar bar) {
        ...
    }
    ```
    will be compiled to the equivalent of this (see below for a list of the supported annotations):
    ```
-   public void foo(@NotNull bar) {
+   public void foo(Bar bar) {
        assert ( bar != null, "parameter 'bar' must not be null" );
        ...
    }
