@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class CabeTask extends DefaultTask {
 
@@ -127,7 +128,7 @@ public class CabeTask extends DefaultTask {
         Launcher launcher = new Launcher();
 
         srcFolders.forEach(s -> {
-            try (var stream = Files.walk(Paths.get(s))){
+            try (var stream = walk(s)) {
                     stream
                         .filter(Files::isRegularFile)
                         .forEach(p -> {
@@ -165,6 +166,18 @@ public class CabeTask extends DefaultTask {
 
         getProject().getLogger().debug("calling SPOON launcher");
         launcher.run();
+    }
+
+    private static Stream<Path> walk(String s) throws IOException {
+        Path path = Paths.get(s);
+        if (!Files.exists(path)) {
+            return Stream.empty();
+        }
+        if (Files.isDirectory(path)) {
+            return Files.walk(path);
+        } else {
+            return Stream.of(path);
+        }
     }
 
 }
