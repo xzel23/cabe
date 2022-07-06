@@ -28,6 +28,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+/**
+ * An AnnotationProcessor for cabe annotations.
+ *
+ * - adds assertions for method/constructor parameters annotated with @NotNull
+ */
 public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParameter<?>> implements AnnotationProcessor<Annotation, CtParameter<?>> {
 
     private static final Set<Class<? extends Annotation>> NOT_NULL_ANNOTATION_TYPES = Set.of(NotNull.class, NotNullApi.class);
