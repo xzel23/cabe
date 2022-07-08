@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation to mark a parameter as accepting null-values.
- *
+ * <p>
  * This annotation is used to mark exceptions in a {@link NotNullApi} context.
  */
 @Retention(RetentionPolicy.SOURCE)

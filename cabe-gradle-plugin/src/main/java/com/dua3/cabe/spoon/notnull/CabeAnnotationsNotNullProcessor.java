@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 
 /**
  * An AnnotationProcessor for cabe annotations.
- *
+ * <p>
  * - adds assertions for method/constructor parameters annotated with @NotNull
  */
 public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParameter<?>> implements AnnotationProcessor<Annotation, CtParameter<?>> {
@@ -40,7 +40,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
 
     private static final Set<Class<? extends Annotation>> ALL_ANNOTATION_TYPES = Set.of(NotNull.class, Nullable.class, NotNullApi.class, NullableApi.class);
     
-    private static final Logger logger() {
+    private static Logger logger() {
         return Launcher.LOGGER;
     }
 
