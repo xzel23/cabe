@@ -13,6 +13,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
@@ -41,7 +42,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class);
                 SourceSet mainSrc = javaExtension.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
-                t.setSrcFolders(mainSrc.getJava().getSrcDirs().stream().map(File::toString).toList());
+                t.setSrcFolders(mainSrc.getJava().getSrcDirs().stream().map(File::toString).collect(Collectors.toList()));
                 t.setOutFolder(project.file(project.getBuildDir().toPath().resolve("generated-sources").resolve("cabe")));
                 
                 compileJavaTask.ifPresent(cj -> {
