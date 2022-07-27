@@ -12,7 +12,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.io.File;
-import java.util.Optional;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @NonNullApi
@@ -33,9 +33,9 @@ public class CabeGradlePlugin implements Plugin<Project> {
         // Adds task before the evaluation of the project to access of values
         // overloaded by the developer.
         project.afterEvaluate(p -> {
-            Optional<Task> compileJavaTask = p.getTasksByName("compileJava", true)
+            List<Task> compileJavaTask = p.getTasksByName("compileJava", true)
                     .stream()
-                    .findFirst();
+                    .collect(Collectors.toUnmodifiableList());
 
             project.getTasks().create("cabe", CabeTask.class,  t -> {
                 log.debug("initialising cabe task");
@@ -45,7 +45,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 t.setSrcFolders(mainSrc.getJava().getSrcDirs().stream().map(File::toString).collect(Collectors.toList()));
                 t.setOutFolder(project.file(project.getBuildDir().toPath().resolve("generated-sources").resolve("cabe")));
                 
-                compileJavaTask.ifPresent(cj -> {
+                compileJavaTask.forEach(cj -> {
                     JavaCompile jc = (JavaCompile) cj;
                     jc.setSource(t.getOutFolder());
     

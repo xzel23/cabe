@@ -148,6 +148,7 @@ public class CabeTask extends DefaultTask {
                 throw new UncheckedIOException(e);
             }
         });
+        
         launcher.setSourceOutputDirectory(outFolder.getAbsolutePath());
         
         Environment environment = launcher.getEnvironment();
