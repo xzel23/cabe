@@ -15,6 +15,9 @@ import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * The gradle plugin class for Cabe.
+ */
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
     
@@ -33,7 +36,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
         // Adds task before the evaluation of the project to access of values
         // overloaded by the developer.
         project.afterEvaluate(p -> {
-            List<Task> compileJavaTask = p.getTasksByName("compileJava", true)
+            List<Task> compileJavaTask = p.getTasksByName("compileJava", false)
                     .stream()
                     .collect(Collectors.toUnmodifiableList());
 
@@ -59,6 +62,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     jc.dependsOn(t);
                 });
             });
+
         });
     }
     
