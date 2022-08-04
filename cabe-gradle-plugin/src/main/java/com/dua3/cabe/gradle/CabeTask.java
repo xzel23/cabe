@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+/**
+ * This tasks injects assertions for parameters marked as not allowing null values into the source code.
+ */
 public class CabeTask extends DefaultTask {
 
     /** The latest Java version supported (by SPOON). */
@@ -67,7 +70,9 @@ public class CabeTask extends DefaultTask {
     }
 
     /**
-     * Set output folder.
+     * Get output folder.
+     * 
+     * @return the output folder
      */
      public File getOutFolder() {
         return Objects.requireNonNull(outFolder, "outputfolfer has not yet been set");
@@ -75,6 +80,8 @@ public class CabeTask extends DefaultTask {
 
     /** 
      * Get class path.
+     * 
+     * @return the classpath
      */
     public FileCollection getClasspath() {
         return classpath;

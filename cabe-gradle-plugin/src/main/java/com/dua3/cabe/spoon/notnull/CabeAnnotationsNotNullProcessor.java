@@ -44,6 +44,9 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
         return Launcher.LOGGER;
     }
 
+    /**
+     * Constructor.
+     */
     public CabeAnnotationsNotNullProcessor() {
         logger().debug("instance created");
     }
