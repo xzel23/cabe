@@ -1,7 +1,7 @@
 Cabe
 ====
 
-From the [disambiguation page for Lombok](https://id.wikipedia.org/wiki/Lombok_(disambiguasi)) in the indonesian Wiklipedia:
+From the [disambiguation page for Lombok](https://id.wikipedia.org/wiki/Lombok_(disambiguasi)) in the indonesian Wikipedia:
 
 ___Lombok adalah nama lain dari cabai___ -- _Lombok is another name for cabai_.
 
