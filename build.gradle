@@ -1,3 +1,4 @@
 subprojects {
-    version = '1.1.0'
+    ext.plugin_version = '1.1.0'
+    ext.annotations_version = '1.0.0'
 }

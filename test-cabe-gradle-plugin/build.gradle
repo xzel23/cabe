@@ -4,8 +4,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'com.dua3.cabe', name: 'com.dua3.cabe.gradle.plugin', version: version
-        classpath group: 'com.dua3.cabe', name: 'cabe-annotations', version: version
+        classpath group: 'com.dua3.cabe', name: 'com.dua3.cabe.gradle.plugin', version: project.property('plugin_version')
+        classpath group: 'com.dua3.cabe', name: 'cabe-annotations', version: 1.0
     }
 }
 
@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.dua3.cabe:cabe-annotations:${version}"
+    compileOnly "com.dua3.cabe:cabe-annotations:${annotations_version}"
 }
 
 application {

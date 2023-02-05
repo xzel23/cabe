@@ -5,6 +5,7 @@ plugins {
 }
 
 description = 'Java Annotations for Cabe'
+version = project.property('annotations_version')
 
 compileJava {
     options.encoding = 'UTF-8'
