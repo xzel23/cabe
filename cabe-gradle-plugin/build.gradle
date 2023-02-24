@@ -16,7 +16,7 @@ sourceCompatibility = 11
 targetCompatibility = 11
 
 dependencies {
-    implementation "fr.inria.gforge.spoon:spoon-core:10.2.0"
+    implementation "fr.inria.gforge.spoon:spoon-core:10.3.0-beta-16"
     implementation project(":cabe-annotations")
 }
 
