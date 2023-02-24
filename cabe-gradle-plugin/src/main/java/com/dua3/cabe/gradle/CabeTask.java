@@ -75,7 +75,7 @@ public class CabeTask extends DefaultTask {
      * @return the output folder
      */
      public File getOutFolder() {
-        return Objects.requireNonNull(outFolder, "outputfolfer has not yet been set");
+        return Objects.requireNonNull(outFolder, "outputfolder has not yet been set");
     }
 
     /** 

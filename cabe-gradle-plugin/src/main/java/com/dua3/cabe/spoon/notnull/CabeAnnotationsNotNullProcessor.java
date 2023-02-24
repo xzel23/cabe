@@ -79,7 +79,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
     @Override
     public void process(CtParameter<?> param) {
         try {
-            // primitive types are inheritly non-nullable
+            // primitive types are inherently non-nullable
             if (Optional.ofNullable(param.getType()).map(CtTypeInformation::isPrimitive).orElse(true)) {
                 return;
             }
