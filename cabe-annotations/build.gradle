@@ -98,6 +98,6 @@ signing {
     sign publishing.publications.mavenJava
 }
 
-tasks.withType(PublishToMavenRepository) {
+tasks.withType(PublishToMavenRepository).configureEach {
     dependsOn publishToMavenLocal
 }

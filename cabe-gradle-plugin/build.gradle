@@ -12,7 +12,7 @@ repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 11    
+sourceCompatibility = 11
 targetCompatibility = 11
 
 dependencies {
@@ -20,19 +20,17 @@ dependencies {
     implementation project(":cabe-annotations")
 }
 
-pluginBundle {
+gradlePlugin {
     website = 'https://github.com/xzel23/cabe'
     vcsUrl = 'https://github.com/xzel23/cabe'
-    tags = ['java', 'NotNull', 'Nullable', 'null check', 'assertion']
-}
 
-gradlePlugin {
     plugins {
         cabePlugin {
             id = 'com.dua3.cabe'
             group = 'com.dua3'
             displayName = 'Plugin for adding assertions during compile time'
             description = 'A plugin that adds assertions for annotated method parameters at compile time.'
+            tags.set(['java', 'NotNull', 'Nullable', 'null check', 'assertion'])
             implementationClass = 'com.dua3.cabe.gradle.CabeGradlePlugin'
         }
     }
