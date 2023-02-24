@@ -17,7 +17,7 @@ I started looking around to see how I could enable this in my gradle build, but 
 
 Also Lombok tends to introduce new features that while innovative later are implemented in a different way in standard JDK.
 
-What I wanted is something more or less like Lombok, but closer to standard Java. Thus the name was born: Cabai is another name for Lombok, but on the island of Java, it's commonly called ***Cabe***!
+What I wanted is something more or less like Lombok, but closer to standard Java. Thus the name was born: Cabai is another name for Lombok, but on the island of Java, it is commonly called ***Cabe***!
 
 Usage
 -----

@@ -168,12 +168,12 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
         }
     }
 
-    private Optional<Boolean> getIsNotNullAnnotated(CtElement element, Consumer<CtAnnotation<?>> annotationConsumer) {
+    private static Optional<Boolean> getIsNotNullAnnotated(CtElement element, Consumer<CtAnnotation<?>> annotationConsumer) {
         boolean notNullAnnotated = false;
         boolean nullableAnnotated = false;
         for (var annotation: element.getAnnotations()) {
-            notNullAnnotated |= NOT_NULL_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
-            nullableAnnotated |= NULLABLE_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
+            notNullAnnotated = notNullAnnotated || NOT_NULL_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
+            nullableAnnotated = nullableAnnotated || NULLABLE_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
 
             annotationConsumer.accept(annotation);
         }
@@ -191,7 +191,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
                 : Optional.empty();
     }
     
-    private CtElement getAncestor(CtElement element) {
+    private static CtElement getAncestor(CtElement element) {
         // for a method, return the declaring class
         if (element instanceof CtParameter) {
             CtExecutable<?> method = ((CtParameter<?>) element).getParent();
