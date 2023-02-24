@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
  * Annotation to mark parameters @{@link Nullable} by default for all methods contained in a class or package.
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.PACKAGE,ElementType.TYPE})
+@Target({ElementType.PACKAGE, ElementType.TYPE})
 public @interface NullableApi {
 }

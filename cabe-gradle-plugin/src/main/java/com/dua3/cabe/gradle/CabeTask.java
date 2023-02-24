@@ -31,26 +31,52 @@ import java.util.stream.Stream;
  */
 public class CabeTask extends DefaultTask {
 
-    /** The latest Java version supported (by SPOON). */
+    /**
+     * The latest Java version supported (by SPOON).
+     */
     public static final int MAX_COMPATIBLE_JAVA_VERSION = 17;
-    
-    /** Source folders. */
+
+    /**
+     * Source folders.
+     */
     private final Collection<String> srcFolders = new ArrayList<>();
 
-    /** Output folder for generated sources. */
+    /**
+     * Output folder for generated sources.
+     */
     @Internal
     private File outFolder = null;
 
-    /** SPOON compliance level. */
+    /**
+     * SPOON compliance level.
+     */
     private int compliance = Math.min(MAX_COMPATIBLE_JAVA_VERSION, getMajorVersion(JavaVersion.current()));
 
-    /** The class path. */
+    /**
+     * The class path.
+     */
     @Classpath
     private FileCollection classpath = null;
 
+    private static int getMajorVersion(JavaVersion v) {
+        return Integer.parseInt(v.getMajorVersion().replaceFirst("\\..*", ""));
+    }
+
+    private static Stream<Path> walk(String s) throws IOException {
+        Path path = Paths.get(s);
+        if (!Files.exists(path)) {
+            return Stream.empty();
+        }
+        if (Files.isDirectory(path)) {
+            return Files.walk(path);
+        } else {
+            return Stream.of(path);
+        }
+    }
+
     /**
      * Set source folders.
-     * 
+     *
      * @param srcFolders the source folders
      */
     public void setSrcFolders(Collection<String> srcFolders) {
@@ -60,8 +86,17 @@ public class CabeTask extends DefaultTask {
     }
 
     /**
+     * Get output folder.
+     *
+     * @return the output folder
+     */
+    public File getOutFolder() {
+        return Objects.requireNonNull(outFolder, "outputfolder has not yet been set");
+    }
+
+    /**
      * Set output folder.
-     * 
+     *
      * @param outFolder the output folder
      */
     public void setOutFolder(File outFolder) {
@@ -70,26 +105,17 @@ public class CabeTask extends DefaultTask {
     }
 
     /**
-     * Get output folder.
-     * 
-     * @return the output folder
-     */
-     public File getOutFolder() {
-        return Objects.requireNonNull(outFolder, "outputfolder has not yet been set");
-    }
-
-    /** 
      * Get class path.
-     * 
+     *
      * @return the classpath
      */
     public FileCollection getClasspath() {
         return classpath;
     }
 
-    /** 
-     * Set class path. 
-     * 
+    /**
+     * Set class path.
+     *
      * @param classpath the class path
      */
     public void setClasspath(FileCollection classpath) {
@@ -99,8 +125,8 @@ public class CabeTask extends DefaultTask {
     /**
      * Set the Java version. If the Java version is supported by SPOON, it is passed on unchanged. Otherwise,
      * the latest Java version supported by SPOON is used.
-     * 
-     * @param v The Javaversion used to compile the project sources 
+     *
+     * @param v The Javaversion used to compile the project sources
      */
     public void setJavaVersionCompliance(JavaVersion v) {
         int majorVersion = getMajorVersion(v);
@@ -108,24 +134,20 @@ public class CabeTask extends DefaultTask {
 
         if (maxVersion != majorVersion) {
             getProject().getLogger().warn(
-                    "Project target is Java {} but source code transformation max supported version is {}", 
-                    majorVersion, 
+                    "Project target is Java {} but source code transformation max supported version is {}",
+                    majorVersion,
                     maxVersion
-            );   
+            );
         }
-        
+
         compliance = maxVersion;
         getProject().getLogger().debug("source code transformation uses Java {} compliance", maxVersion);
     }
-    
-    private static int getMajorVersion(JavaVersion v) {
-        return Integer.parseInt(v.getMajorVersion().replaceFirst("\\..*", ""));
-    }
-    
+
     @TaskAction
     void run() {
         Logger log = getProject().getLogger();
-        
+
         // No source code to spoon.
         if (srcFolders.isEmpty()) {
             log.debug("cabe: no source folders");
@@ -136,7 +158,7 @@ public class CabeTask extends DefaultTask {
 
         srcFolders.forEach(s -> {
             try (var stream = walk(s)) {
-                    stream
+                stream
                         .filter(Files::isRegularFile)
                         .forEach(p -> {
                             if (p.getFileName().toString().equals("module-info.java")) {
@@ -155,9 +177,9 @@ public class CabeTask extends DefaultTask {
                 throw new UncheckedIOException(e);
             }
         });
-        
+
         launcher.setSourceOutputDirectory(outFolder.getAbsolutePath());
-        
+
         Environment environment = launcher.getEnvironment();
         environment.setComplianceLevel(Math.min(compliance, MAX_COMPATIBLE_JAVA_VERSION));
         environment.setOutputType(OutputType.COMPILATION_UNITS);
@@ -174,18 +196,6 @@ public class CabeTask extends DefaultTask {
 
         getProject().getLogger().debug("calling SPOON launcher");
         launcher.run();
-    }
-
-    private static Stream<Path> walk(String s) throws IOException {
-        Path path = Paths.get(s);
-        if (!Files.exists(path)) {
-            return Stream.empty();
-        }
-        if (Files.isDirectory(path)) {
-            return Files.walk(path);
-        } else {
-            return Stream.of(path);
-        }
     }
 
 }

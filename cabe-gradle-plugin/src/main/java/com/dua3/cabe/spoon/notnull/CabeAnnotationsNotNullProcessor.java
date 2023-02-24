@@ -39,10 +39,6 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
     private static final Set<Class<? extends Annotation>> NULLABLE_ANNOTATION_TYPES = Set.of(Nullable.class, NullableApi.class);
 
     private static final Set<Class<? extends Annotation>> ALL_ANNOTATION_TYPES = Set.of(NotNull.class, Nullable.class, NotNullApi.class, NullableApi.class);
-    
-    private static Logger logger() {
-        return Launcher.LOGGER;
-    }
 
     /**
      * Constructor.
@@ -51,8 +47,58 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
         logger().debug("instance created");
     }
 
+    private static Logger logger() {
+        return Launcher.LOGGER;
+    }
+
+    private static Optional<Boolean> getIsNotNullAnnotated(CtElement element, Consumer<CtAnnotation<?>> annotationConsumer) {
+        boolean notNullAnnotated = false;
+        boolean nullableAnnotated = false;
+        for (var annotation : element.getAnnotations()) {
+            notNullAnnotated = notNullAnnotated || NOT_NULL_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
+            nullableAnnotated = nullableAnnotated || NULLABLE_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
+
+            annotationConsumer.accept(annotation);
+        }
+
+        // consistency check
+        if (notNullAnnotated && nullableAnnotated) {
+            throw new IllegalStateException(String.format(
+                    "both nullable and non-nullable annotations present at: %s",
+                    element.getOriginalSourceFragment().getSourcePosition()
+            ));
+        }
+
+        return notNullAnnotated || nullableAnnotated
+                ? Optional.of(notNullAnnotated)
+                : Optional.empty();
+    }
+
+    private static CtElement getAncestor(CtElement element) {
+        // for a method, return the declaring class
+        if (element instanceof CtParameter) {
+            CtExecutable<?> method = ((CtParameter<?>) element).getParent();
+            return method.getParent();
+        }
+
+        // for a class, return the package
+        if (element instanceof CtType<?>) {
+            CtType<?> type = (CtType<?>) element;
+
+            // return the outer class
+            CtType<?> declaringType = type.getDeclaringType();
+            if (declaringType != null) {
+                return declaringType;
+            }
+
+            return type.getPackage();
+        }
+
+        return null;
+    }
+
     @Override
-    public void process(Annotation annotation, CtParameter<?> element) { 
+    public void process(Annotation annotation, CtParameter<?> element) {
         process(element);
     }
 
@@ -106,8 +152,8 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             }
         } catch (Exception e) {
             throw new IllegalStateException(String.format(
-                    "Exception while processing parameter '%s' %s: %s", 
-                    param.getSimpleName(), 
+                    "Exception while processing parameter '%s' %s: %s",
+                    param.getSimpleName(),
                     param.getPosition().toString(),
                     e.getMessage()
             ), e);
@@ -117,7 +163,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
     private void processNotNullAnnotatedElement(CtParameter<?> param) {
         logger().debug("processing {} with {} at ", param, getClass().getSimpleName());
         CtExecutable<?> method = Objects.requireNonNull(
-                param.getParent(CtExecutable.class), 
+                param.getParent(CtExecutable.class),
                 "annotated element is not inside method/constructor declaration");
         CtBlock<?> body = method.getBody();
 
@@ -137,7 +183,7 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             boolean hasSuperConstructorCall = false;
             if (!statements.isEmpty()) {
                 CtStatement firstStatement = statements.get(0);
-                if ( !firstStatement.isImplicit() && (firstStatement instanceof CtInvocation)) {
+                if (!firstStatement.isImplicit() && (firstStatement instanceof CtInvocation)) {
                     String statementText = firstStatement.toString();
                     if (statementText.startsWith("super(") || statementText.startsWith("this(")) {
                         hasSuperConstructorCall = true;
@@ -148,69 +194,23 @@ public class CabeAnnotationsNotNullProcessor extends AbstractProcessor<CtParamet
             // insert position: on same line as parameters if no super constructor call, otherwise after call to super()
             SourcePosition position = hasSuperConstructorCall ? statements.get(0).getPosition() : param.getPosition();
             ctAssert.setPosition(position);
-                    
+
             // make sure assignments are in order of parameters
             int idx = hasSuperConstructorCall ? 1 : 0;
-            while (idx<statements.size() && (statements.get(idx) instanceof CtAssert)) {
+            while (idx < statements.size() && (statements.get(idx) instanceof CtAssert)) {
                 idx++;
             }
-            
+
             body.addStatement(idx, ctAssert);
         } else {
             CtType<?> parentType = method.getParent(CtType.class);
-            if (parentType!= null) {
-                logger().debug("not generating code for annotated parameter {} because {}.{}(...) does not have a body", 
+            if (parentType != null) {
+                logger().debug("not generating code for annotated parameter {} because {}.{}(...) does not have a body",
                         param.getSimpleName(),
-                        parentType.getQualifiedName(), 
-                        method.getSimpleName() 
+                        parentType.getQualifiedName(),
+                        method.getSimpleName()
                 );
             }
         }
-    }
-
-    private static Optional<Boolean> getIsNotNullAnnotated(CtElement element, Consumer<CtAnnotation<?>> annotationConsumer) {
-        boolean notNullAnnotated = false;
-        boolean nullableAnnotated = false;
-        for (var annotation: element.getAnnotations()) {
-            notNullAnnotated = notNullAnnotated || NOT_NULL_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
-            nullableAnnotated = nullableAnnotated || NULLABLE_ANNOTATION_TYPES.contains(annotation.getAnnotationType().getActualClass());
-
-            annotationConsumer.accept(annotation);
-        }
-
-        // consistency check
-        if (notNullAnnotated && nullableAnnotated) {
-            throw new IllegalStateException(String.format(
-                    "both nullable and non-nullable annotations present at: %s",
-                    element.getOriginalSourceFragment().getSourcePosition()
-            ));
-        }
-        
-        return notNullAnnotated || nullableAnnotated
-                ? Optional.of(notNullAnnotated)
-                : Optional.empty();
-    }
-    
-    private static CtElement getAncestor(CtElement element) {
-        // for a method, return the declaring class
-        if (element instanceof CtParameter) {
-            CtExecutable<?> method = ((CtParameter<?>) element).getParent();
-            return method.getParent();
-        }
-        
-        // for a class, return the package
-        if (element instanceof CtType<?>) {
-            CtType<?> type = (CtType<?>) element;
-
-            // return the outer class
-            CtType<?> declaringType = type.getDeclaringType();
-            if (declaringType!=null) {
-                return declaringType;
-            }
-            
-            return type.getPackage(); 
-        }
-        
-        return null;
     }
 }

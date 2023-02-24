@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
  * Use @{@link NotNull} for exceptions.
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.PACKAGE,ElementType.TYPE})
+@Target({ElementType.PACKAGE, ElementType.TYPE})
 public @interface NotNullApi {
 }

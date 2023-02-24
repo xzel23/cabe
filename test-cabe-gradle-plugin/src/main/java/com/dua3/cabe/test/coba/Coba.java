@@ -10,5 +10,5 @@ public class Coba {
         NotNullPackage.test();
         NullablePackage.test();
     }
-    
+
 }

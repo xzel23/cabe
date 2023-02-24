@@ -1,18 +1,12 @@
 package com.dua3.cabe.test.coba;
 
+import com.dua3.cabe.annotations.NotNull;
+import com.dua3.cabe.annotations.Nullable;
+
 import java.util.Objects;
-import com.dua3.cabe.annotations.*;
 import java.util.function.Supplier;
 
 public class ParameterAnnotations {
-    
-    public record Pair<T1,T2>(@Nullable T1 first, @Nullable T2 second) {
-        public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
-            return new Pair<>(first, second);
-        }
-    }
-
-    public record NotNullRecord(@NotNull String a, @NotNull String b) {}
 
     public static void test() {
         // check processing of annotated arguments
@@ -65,57 +59,57 @@ public class ParameterAnnotations {
     }
 
     private static String unannotatedArgument(String arg) {
-        System.out.println("oneArgument: "+arg);
+        System.out.println("oneArgument: " + arg);
         return arg;
     }
 
-    // @NotNull
-
     private static String oneNotNullAnnotatedArgument(@NotNull String arg) {
-        System.out.println("oneNotNullAnnotatedArgument: "+arg);
+        System.out.println("oneNotNullAnnotatedArgument: " + arg);
         return arg;
     }
 
     private static String twoNotNullAnnotatedArguments(@NotNull String arg1, @NotNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("twoNotNullAnnotatedArguments: "+s);
+        System.out.println("twoNotNullAnnotatedArguments: " + s);
         return s;
     }
 
+    // @NotNull
+
     private static String firstArgumentNotNullAnnotated(@NotNull String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("firstArgumentNotNullAnnotated: "+s);
+        System.out.println("firstArgumentNotNullAnnotated: " + s);
         return s;
     }
 
     private static String secondArgumentNotNullAnnotated(String arg1, @NotNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("secondArgumentNotNullAnnotated: "+s);
+        System.out.println("secondArgumentNotNullAnnotated: " + s);
         return s;
     }
 
-    // @Nullable
-
     private static String oneNullableAnnotatedArgument(@Nullable String arg) {
-        System.out.println("oneNullableAnnotatedArgument: "+arg);
+        System.out.println("oneNullableAnnotatedArgument: " + arg);
         return arg;
     }
 
     private static String twoNullableAnnotatedArguments(@Nullable String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("twoNullableAnnotatedArguments: "+s);
+        System.out.println("twoNullableAnnotatedArguments: " + s);
         return s;
     }
 
+    // @Nullable
+
     private static String firstArgumentNullableAnnotated(@Nullable String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("firstArgumentNullableAnnotated: "+s);
+        System.out.println("firstArgumentNullableAnnotated: " + s);
         return s;
     }
 
     private static String secondArgumentNullableAnnotated(String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("secondArgumentNullableAnnotated: "+s);
+        System.out.println("secondArgumentNullableAnnotated: " + s);
         return s;
     }
 
@@ -125,7 +119,7 @@ public class ParameterAnnotations {
         try {
             result = task.get();
         } catch (AssertionError ae) {
-            assertionMessage = "error: "+ae.getMessage();
+            assertionMessage = "error: " + ae.getMessage();
         }
 
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
@@ -139,8 +133,18 @@ public class ParameterAnnotations {
         }
     }
 
+    public record Pair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {
+        public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
+            return new Pair<>(first, second);
+        }
+    }
+
+    public record NotNullRecord(@NotNull String a, @NotNull String b) {
+    }
+
     static class A {
         private String s;
+
         A(String s) {
             this.s = s;
         }
@@ -152,13 +156,14 @@ public class ParameterAnnotations {
 
     static class B extends A {
         private String b;
+
         B(@NotNull String a, @NotNull String b) {
             super(a);
             this.b = b;
         }
 
         public String toString() {
-            return super.toString()+b;
+            return super.toString() + b;
         }
     }
 }

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
-    
+
     @Override
     public void apply(Project project) {
         Logger log = project.getLogger();
@@ -40,24 +40,24 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     .stream()
                     .collect(Collectors.toUnmodifiableList());
 
-            project.getTasks().create("cabe", CabeTask.class,  t -> {
+            project.getTasks().create("cabe", CabeTask.class, t -> {
                 log.debug("initialising cabe task");
                 JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class);
                 SourceSet mainSrc = javaExtension.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
                 t.setSrcFolders(mainSrc.getJava().getSrcDirs().stream().map(File::toString).collect(Collectors.toList()));
                 t.setOutFolder(project.file(project.getBuildDir().toPath().resolve("generated-sources").resolve("cabe")));
-                
+
                 compileJavaTask.forEach(cj -> {
                     JavaCompile jc = (JavaCompile) cj;
                     jc.setSource(t.getOutFolder());
-    
+
                     log.debug("setting cabe classpath");
                     t.setClasspath(jc.getClasspath());
-                    
+
                     log.debug("setting cabe Java version compliance");
                     t.setJavaVersionCompliance(JavaVersion.toVersion(jc.getTargetCompatibility()));
-                    
+
                     log.debug("adding dependency on cabe to compileJava");
                     jc.dependsOn(t);
                 });
@@ -65,5 +65,5 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
         });
     }
-    
+
 }

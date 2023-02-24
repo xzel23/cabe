@@ -1,26 +1,22 @@
 package com.dua3.cabe.test.coba.api.notnull;
 
+import com.dua3.cabe.annotations.NotNull;
+import com.dua3.cabe.annotations.Nullable;
+
 import java.util.Objects;
-import com.dua3.cabe.annotations.*;
 import java.util.function.Supplier;
 
 public class NotNullPackage {
-    
-    public record Pair<T1,T2>(T1 first, T2 second) {
-        public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
-            return new Pair<>(first, second);
-        }
-    }
-    
+
     public static void test() {
         // check processing of unannotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
         check(() -> unannotatedArgument(null), null, "error: parameter 'arg' must not be null");
-        
+
         // @NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNotNullAnnotatedArgument(null), null, "error: parameter 'arg' must not be null");
-        
+
         check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
         check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: parameter 'arg1' must not be null");
         check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: parameter 'arg2' must not be null");
@@ -35,7 +31,7 @@ public class NotNullPackage {
         check(() -> secondArgumentNotNullAnnotated(null, "world!"), null, "error: parameter 'arg1' must not be null");
         check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: parameter 'arg2' must not be null");
         check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg1' must not be null");
-        
+
         // @Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNullableAnnotatedArgument(null), null, null);
@@ -57,99 +53,106 @@ public class NotNullPackage {
 
         // record parameter
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
-        
+
         // primitive argument
         check(() -> primitiveArgument(1), "hello 1", null);
-        
+
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
     }
 
     private static String unannotatedArgument(String arg) {
-        System.out.println("oneArgument: "+arg);
+        System.out.println("oneArgument: " + arg);
         return arg;
     }
-    
-    // @NotNull
 
     private static String oneNotNullAnnotatedArgument(@NotNull String arg) {
-        System.out.println("oneNotNullAnnotatedArgument: "+arg);
+        System.out.println("oneNotNullAnnotatedArgument: " + arg);
         return arg;
     }
+
+    // @NotNull
 
     private static String twoNotNullAnnotatedArguments(@NotNull String arg1, @NotNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("twoNotNullAnnotatedArguments: "+s);
+        System.out.println("twoNotNullAnnotatedArguments: " + s);
         return s;
     }
 
     private static String firstArgumentNotNullAnnotated(@NotNull String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("firstArgumentNotNullAnnotated: "+s);
+        System.out.println("firstArgumentNotNullAnnotated: " + s);
         return s;
     }
 
     private static String secondArgumentNotNullAnnotated(String arg1, @NotNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("secondArgumentNotNullAnnotated: "+s);
+        System.out.println("secondArgumentNotNullAnnotated: " + s);
         return s;
     }
 
-    // @Nullable
-    
     private static String oneNullableAnnotatedArgument(@Nullable String arg) {
-        System.out.println("oneNullableAnnotatedArgument: "+arg);
+        System.out.println("oneNullableAnnotatedArgument: " + arg);
         return arg;
     }
 
+    // @Nullable
+
     private static String twoNullableAnnotatedArguments(@Nullable String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("twoNullableAnnotatedArguments: "+s);
+        System.out.println("twoNullableAnnotatedArguments: " + s);
         return s;
     }
 
     private static String firstArgumentNullableAnnotated(@Nullable String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("firstArgumentNullableAnnotated: "+s);
+        System.out.println("firstArgumentNullableAnnotated: " + s);
         return s;
     }
 
     private static String secondArgumentNullableAnnotated(String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("secondArgumentNullableAnnotated: "+s);
+        System.out.println("secondArgumentNullableAnnotated: " + s);
         return s;
     }
 
-    // primitive arguments
-    
     private static String primitiveArgument(int i) {
-        return "hello "+i;
+        return "hello " + i;
     }
-    
-    // helper methods
-    
+
+    // primitive arguments
+
     private static void check(Supplier<String> task, @Nullable String expectedResult, @Nullable String expectedExceptionMesssage) {
         String assertionMessage = null;
         String result = null;
         try {
             result = task.get();
         } catch (AssertionError ae) {
-            assertionMessage = "error: "+ae.getMessage();
+            assertionMessage = "error: " + ae.getMessage();
         }
-        
+
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
             System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             throw new IllegalStateException();
         }
-        
+
         if (!Objects.equals(result, expectedResult)) {
             System.err.format("expected result:    %s%nactual:   %s%n", expectedResult, result);
             throw new IllegalStateException();
         }
     }
- 
+
+    // helper methods
+
+    public record Pair<T1, T2>(T1 first, T2 second) {
+        public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
+            return new Pair<>(first, second);
+        }
+    }
+
     static class A {
         private String s;
+
         A(String s) {
             this.s = s;
         }
@@ -161,13 +164,14 @@ public class NotNullPackage {
 
     static class B extends A {
         private String b;
+
         B(@NotNull String a, @NotNull String b) {
             super(a);
             this.b = b;
         }
 
         public String toString() {
-            return super.toString()+b;
+            return super.toString() + b;
         }
     }
 }
