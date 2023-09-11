@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'com.dua3.cabe', name: 'com.dua3.cabe.gradle.plugin', version: project.property('plugin_version')
-        classpath group: 'com.dua3.cabe', name: 'cabe-annotations', version: 1.0
+        classpath group: 'com.dua3.cabe', name: 'cabe-annotations', version: project.property('annotations_version')
     }
 }
 
