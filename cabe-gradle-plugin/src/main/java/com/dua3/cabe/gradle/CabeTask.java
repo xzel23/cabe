@@ -34,7 +34,7 @@ public class CabeTask extends DefaultTask {
     /**
      * The latest Java version supported (by SPOON).
      */
-    public static final int MAX_COMPATIBLE_JAVA_VERSION = 17;
+    public static final int MAX_COMPATIBLE_JAVA_VERSION = 21;
 
     /**
      * Source folders.
