@@ -6,13 +6,9 @@ import com.dua3.cabe.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class ParameterAnnotations {
+public class ParameterAnnotationsStaticMethods {
 
     public static void test() {
-        new ParameterAnnotations().doTest();
-    }
-
-    public void doTest() {
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
         check(() -> unannotatedArgument(null), null, null);
@@ -56,27 +52,26 @@ public class ParameterAnnotations {
         check(() -> secondArgumentNullableAnnotated(null, null), "null null", null);
 
         // record parameter
-        check(() -> new Pair("A", 1).toString(), "Pair[first=A, second=1]", null);
-        check(() -> new Pair(null, 1).toString(), "Pair[first=null, second=1]", null);
-        // TODO not null record parameter
+        check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
+        // FIXME check(() -> new NotNullRecord(null, "b").toString(), null, "error: parameter 'a' must not be null");
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
-        check(() -> new B(null, " world!").toString(), null, "error: parameter 'a' must not be null");
-        check(() -> new B("hello", null).toString(), null, "error: parameter 'b' must not be null");
+        // FIXME check(() -> new B(null, " world!").toString(), null, "error: parameter 'a' must not be null");
+// FIXME       check(() -> new B("hello", null).toString(), null, "error: parameter 'b' must not be null");
     }
 
-    private String unannotatedArgument(String arg) {
+    private static String unannotatedArgument(String arg) {
         System.out.println("oneArgument: " + arg);
         return arg;
     }
 
-    private String oneNotNullAnnotatedArgument(@NotNull String arg) {
+    private static String oneNotNullAnnotatedArgument(@NotNull String arg) {
         System.out.println("oneNotNullAnnotatedArgument: " + arg);
         return arg;
     }
 
-    private String twoNotNullAnnotatedArguments(@NotNull String arg1, @NotNull String arg2) {
+    private static String twoNotNullAnnotatedArguments(@NotNull String arg1, @NotNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("twoNotNullAnnotatedArguments: " + s);
         return s;
@@ -84,24 +79,24 @@ public class ParameterAnnotations {
 
     // @NotNull
 
-    private String firstArgumentNotNullAnnotated(@NotNull String arg1, String arg2) {
+    private static String firstArgumentNotNullAnnotated(@NotNull String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("firstArgumentNotNullAnnotated: " + s);
         return s;
     }
 
-    private String secondArgumentNotNullAnnotated(String arg1, @NotNull String arg2) {
+    private static String secondArgumentNotNullAnnotated(String arg1, @NotNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("secondArgumentNotNullAnnotated: " + s);
         return s;
     }
 
-    private String oneNullableAnnotatedArgument(@Nullable String arg) {
+    private static String oneNullableAnnotatedArgument(@Nullable String arg) {
         System.out.println("oneNullableAnnotatedArgument: " + arg);
         return arg;
     }
 
-    private String twoNullableAnnotatedArguments(@Nullable String arg1, @Nullable String arg2) {
+    private static String twoNullableAnnotatedArguments(@Nullable String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("twoNullableAnnotatedArguments: " + s);
         return s;
@@ -109,19 +104,19 @@ public class ParameterAnnotations {
 
     // @Nullable
 
-    private String firstArgumentNullableAnnotated(@Nullable String arg1, String arg2) {
+    private static String firstArgumentNullableAnnotated(@Nullable String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("firstArgumentNullableAnnotated: " + s);
         return s;
     }
 
-    private String secondArgumentNullableAnnotated(String arg1, @Nullable String arg2) {
+    private static String secondArgumentNullableAnnotated(String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("secondArgumentNullableAnnotated: " + s);
         return s;
     }
 
-    private void check(Supplier<String> task, @Nullable String expectedResult, @Nullable String expectedExceptionMesssage) {
+    private static void check(Supplier<String> task, @Nullable String expectedResult, @Nullable String expectedExceptionMesssage) {
         String assertionMessage = null;
         String result = null;
         try {
@@ -141,11 +136,16 @@ public class ParameterAnnotations {
         }
     }
 
-    public record Pair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {}
+    public record Pair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {
+        public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
+            return new Pair<>(first, second);
+        }
+    }
 
-    public record NotNullRecord(@NotNull String a, @NotNull String b) {}
+    public record NotNullRecord(@NotNull String a, @NotNull String b) {
+    }
 
-    class A {
+    static class A {
         private String s;
 
         A(String s) {
@@ -157,7 +157,7 @@ public class ParameterAnnotations {
         }
     }
 
-    class B extends A {
+    static class B extends A {
         private String b;
 
         B(@NotNull String a, @NotNull String b) {

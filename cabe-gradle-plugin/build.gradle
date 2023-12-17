@@ -16,8 +16,8 @@ sourceCompatibility = 11
 targetCompatibility = 11
 
 dependencies {
-    implementation "fr.inria.gforge.spoon:spoon-core:10.4.2"
     implementation project(":cabe-annotations")
+    implementation("org.javassist:javassist:3.30.0-GA")
 }
 
 gradlePlugin {
