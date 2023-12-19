@@ -2,6 +2,7 @@ package com.dua3.cabe.test.coba;
 
 import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.Nullable;
+import com.dua3.utility.data.Pair;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -13,6 +14,10 @@ public class ParameterAnnotations {
     }
 
     public void doTest() {
+        // test with external classes
+        check(() -> parameterWithExternalClass(Pair.of("hello", 123)), "Pair[first=hello, second=123]", null);
+        check(() -> parameterWithExternalClass(null), null, "error: parameter 'p' must not be null");
+
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
         check(() -> unannotatedArgument(null), null, null);
@@ -59,8 +64,8 @@ public class ParameterAnnotations {
         check(() -> secondArgumentNullableAnnotated(null, null), "null null", null);
 
         // record parameter
-        check(() -> new Pair("A", 1).toString(), "Pair[first=A, second=1]", null);
-        check(() -> new Pair(null, 1).toString(), "Pair[first=null, second=1]", null);
+        check(() -> new MyPair("A", 1).toString(), "MyPair[first=A, second=1]", null);
+        check(() -> new MyPair(null, 1).toString(), "MyPair[first=null, second=1]", null);
         // TODO not null record parameter
 
         // check that annotated arguments to constructors work
@@ -116,6 +121,12 @@ public class ParameterAnnotations {
         return s;
     }
 
+    private String parameterWithExternalClass(@NotNull Pair<String,Integer> p) {
+        String s = String.valueOf(p);
+        System.out.println("parameterWithExternalClass: " + s);
+        return s;
+    }
+
     // @Nullable
 
     private String firstArgumentNullableAnnotated(@Nullable String arg1, String arg2) {
@@ -150,7 +161,7 @@ public class ParameterAnnotations {
         }
     }
 
-    public record Pair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {}
+    public record MyPair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {}
 
     public record NotNullRecord(@NotNull String a, @NotNull String b) {}
 
@@ -178,4 +189,5 @@ public class ParameterAnnotations {
             return super.toString() + b;
         }
     }
+
 }
