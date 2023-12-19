@@ -206,16 +206,28 @@ public class ClassPatcher {
             return EMPTY_PARAMETER_INFO;
         }
 
+        CtClass declaringClass = method.getDeclaringClass();
+
         // read parameter annotations and types
         Object[][] parameterAnnotations = method.getParameterAnnotations();
         CtClass[] types = method.getParameterTypes();
 
+        // determine actual number of method parameters
+        boolean isThisPassedAsArgument = !Modifier.isStatic(method.getModifiers()) && !methodInfo.isConstructor();
+        boolean isParentPassedAsType = methodInfo.isConstructor() && !Modifier.isStatic(declaringClass.getModifiers());
+        int parameterCount = isParentPassedAsType ? types.length - 1 : types.length;
+        // enum constructors are called with two additional synthetic arguments (name ant ordinal)
+        boolean isEnumConstructor = declaringClass.isEnum() && methodInfo.isConstructor();
+        if (isEnumConstructor) {
+            parameterCount -= 2;
+        }
+
         // fastpath if no parameters
-        if (parameterAnnotations.length == 0) {
+        if (parameterCount < 1) {
             return EMPTY_PARAMETER_INFO;
         }
 
-        // determine number of synthetic arguments (i.e. 'this' of parent classes for inner classes)
+        // determine the number of synthetic arguments (i.e. 'this' of parent classes for inner classes)
         AttributeInfo attribute = methodInfo.getCodeAttribute().getAttribute(LocalVariableAttribute.tag);
         if (!(attribute instanceof LocalVariableAttribute)) {
             throw new IllegalStateException("could not get local variable info");
@@ -227,10 +239,6 @@ public class ClassPatcher {
             syntheticArgumentCount++;
         }
 
-        // determine actual number of method parameters
-        boolean isThisPassedAsArgument = !Modifier.isStatic(method.getModifiers()) && !methodInfo.isConstructor();
-        boolean isParentPassedAsType = methodInfo.isConstructor() && !Modifier.isStatic(method.getDeclaringClass().getModifiers());
-        int parameterCount = isParentPassedAsType ? types.length - 1 : types.length;
 
         // create return array
         ParameterInfo[] parameterInfo = new ParameterInfo[parameterCount];

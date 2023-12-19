@@ -174,4 +174,9 @@ public class NotNullPackage {
             return super.toString() + b;
         }
     }
+
+    enum E {
+        UNUSED_1,
+        UNUSED_2
+    }
 }
