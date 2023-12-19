@@ -63,8 +63,6 @@ Usage
 Issues
 ------
 
-- For technical reasons, parameters to constructor calls cannot be checked before the super constructor is run. This may
-  lead to spotbugs complaining about unnecessary null checks.
 - When building cabe under Windows, make sure the TERM variable is set correctly for your system or text output will
   look garbled. For Git Bash, use `export TERM=cygwin`.
 
@@ -90,7 +88,7 @@ For each unannotated parameter, the annotations are checked on the declaring cla
 annotation from the class they are defined in. If no class level annotation is found, annotations from the package are
 used.
 
-**NOTE:** Use the `package-info.file` to annotate a package with `@NotNullApi`. Look at the
+**NOTE:** Use the `package-info.java` to annotate a package with `@NotNullApi`. Look at the
 sub-project `test-cabe-plugin` for examples.
 
 ## cabe-gradle-plugin
@@ -100,3 +98,9 @@ This module contains the Gradle plugin used to process annotations.
 ## test-cabe-gradle-plugin
 
 This module contains tests for the Gradle plugin.
+
+## How to build
+
+Run the shell script `build.sh` to build both packages and run tests. When everything succeeds, the script will
+ask if you want to publish the plugin. Answer `n` unless you have updated the maven publish coordinates and want to
+publish the plugin.
