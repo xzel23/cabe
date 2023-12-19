@@ -215,12 +215,19 @@ public class ClassPatcher {
         // determine actual number of method parameters
         boolean isThisPassedAsArgument = !Modifier.isStatic(method.getModifiers()) && !methodInfo.isConstructor();
         boolean isParentPassedAsType = methodInfo.isConstructor() && !Modifier.isStatic(declaringClass.getModifiers());
-        int parameterCount = isParentPassedAsType ? types.length - 1 : types.length;
-        // enum constructors are called with two additional synthetic arguments (name ant ordinal)
         boolean isEnumConstructor = declaringClass.isEnum() && methodInfo.isConstructor();
-        if (isEnumConstructor) {
-            parameterCount -= 2;
+
+        int parameterCount = types.length;;
+        int typeOffset = 0;
+        if (isParentPassedAsType) {
+            parameterCount--;
         }
+        if (isEnumConstructor) {
+            // enum constructors are called with two additional synthetic arguments (name ant ordinal)
+            parameterCount -= 2;
+            typeOffset += 2;
+        }
+        int firstParameterNumber = 1 + types.length - parameterCount;
 
         // fastpath if no parameters
         if (parameterCount < 1) {
@@ -251,8 +258,8 @@ public class ClassPatcher {
                 isNotNullAnnotated = isNotNullAnnotated || (annotation instanceof NotNull);
                 isNullableAnnotated = isNullableAnnotated || (annotation instanceof Nullable);
             }
-            CtClass type = types[i];
-            String param = "$" + (isParentPassedAsType ? i + 2 : i + 1);
+            CtClass type = types[typeOffset + i];
+            String param = "$" + (firstParameterNumber + i);
             parameterInfo[i] = new ParameterInfo(name, param, type, isNotNullAnnotated, isNullableAnnotated);
         }
         return parameterInfo;

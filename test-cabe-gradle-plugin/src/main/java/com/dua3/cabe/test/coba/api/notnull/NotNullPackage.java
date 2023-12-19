@@ -59,6 +59,9 @@ public class NotNullPackage {
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
+
+        // check that enum constructors work
+        check(() -> F.WITH_INITIALISER_1.toString(), null, "error: parameter 'txt' must not be null");
     }
 
     private static String unannotatedArgument(String arg) {
@@ -178,5 +181,14 @@ public class NotNullPackage {
     enum E {
         UNUSED_1,
         UNUSED_2
+    }
+
+    enum F {
+        WITH_INITIALISER_1(1, "one"),
+        WITH_INITIALISER_2(2, null);
+
+        F(int i, @NotNull String txt) {
+            // nop
+        }
     }
 }
