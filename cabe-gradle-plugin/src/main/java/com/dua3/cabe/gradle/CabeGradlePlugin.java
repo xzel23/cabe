@@ -4,6 +4,7 @@ import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The gradle plugin class for Cabe.
+ * The Gradle plugin class for Cabe.
  */
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
@@ -48,6 +49,11 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     t.setClassFolder(classFolder);
                     log.debug("classes folder for cabe task: {}", classFolder);
 
+                    // Set the compile classpath
+                    FileCollection compileClasspath = project.getConfigurations().getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME);
+                    t.setCompileClasspath(compileClasspath);
+                    log.debug("Setting the compileClasspath for cabe task: {}", compileClasspath.getAsPath());
+
                     log.debug("configuring cabe task to run after classes");
                     Task classesTask = project.getTasks().getByName("classes");
                     classesTask.finalizedBy(t);
@@ -56,5 +62,4 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
         });
     }
-
 }

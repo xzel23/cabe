@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -50,10 +51,12 @@ public class ClassPatcher {
     private static final Pattern PATTERN_SYNTHETIC_PARAMETER_NAMES = Pattern.compile("this(\\$\\d+)?");
     private static final Pattern GET_CLASS_NAME_PATTERN = Pattern.compile("\\.[^.]*$");
 
-    private ClassPool pool = ClassPool.getDefault();
+    private ClassPool pool;
+    private List<Path> classpath;
     private Path classFolder;
 
-    public ClassPatcher() {
+    public ClassPatcher(Collection<Path> classpath) {
+        this.classpath = new ArrayList<>(classpath);
     }
 
     /**
@@ -66,6 +69,15 @@ public class ClassPatcher {
     public synchronized void processFolder(Path classFolder) throws IOException, ClassFileProcessingFailedException {
         try {
             LOG.fine(() -> "process folder " + classFolder);
+
+            this.pool = new ClassPool(true);
+            classpath.forEach(cp -> {
+                try {
+                    pool.appendClassPath(cp.toString());
+                } catch (NotFoundException e) {
+                    LOG.warning("could not add to classpath: " + cp);
+                }
+            });
 
             this.classFolder = classFolder;
 
@@ -92,20 +104,16 @@ public class ClassPatcher {
                 return;
             }
 
-            ClassPath classPath = null;
             try {
-                classPath = pool.appendClassPath(classFolder.toString());
-                processClassFiles(classFiles);
+                pool.appendClassPath(classFolder.toString());
             } catch (NotFoundException e) {
                 throw new IllegalStateException("could not append path to classpath: " + classFolder, e);
-            } finally {
-                if (classPath != null) {
-                    pool.removeClassPath(classPath);
-                }
             }
+
+            processClassFiles(classFiles);
         } finally {
-            this.pool = null;
             this.classFolder = null;
+            this.pool = null;
         }
     }
 

@@ -4,25 +4,30 @@ package com.dua3.cabe.gradle;
 import com.dua3.cabe.processor.ClassFileProcessingFailedException;
 import com.dua3.cabe.processor.ClassPatcher;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.TaskAction;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * This tasks injects assertions for parameters marked as not allowing null values into the source code.
  */
 public class CabeTask extends DefaultTask {
 
-    private final ClassPatcher classPatcher = new ClassPatcher();
-
     /**
      * Class file folder.
      */
     private Path classFolder;
+
+    private FileCollection compileClasspath;
 
     /**
      * Set class file folder.
@@ -32,6 +37,15 @@ public class CabeTask extends DefaultTask {
     public void setClassFolder(Path classFolder) {
         this.classFolder = Objects.requireNonNull(classFolder, "Class folder is null!");
         getLogger().debug("class folder set to {}", this.classFolder);
+    }
+
+    @Classpath
+    public FileCollection getCompileClasspath() {
+        return this.compileClasspath;
+    }
+
+    public void setCompileClasspath(FileCollection compileClasspath) {
+        this.compileClasspath = compileClasspath;
     }
 
     @TaskAction
@@ -51,6 +65,10 @@ public class CabeTask extends DefaultTask {
             return;
         }
 
+        List<Path> classpath = getCompileClasspath().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toList());
+        ClassPatcher classPatcher = new ClassPatcher(classpath);
         classPatcher.processFolder(classFolder);
     }
 }
