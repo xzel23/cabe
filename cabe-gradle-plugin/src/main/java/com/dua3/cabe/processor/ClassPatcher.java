@@ -26,6 +26,11 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * The ClassPatcher class is responsible for patching class files by adding assertions for nullability checks
+ * on method parameters. It collects information about the class file, including package information and
+ * parameter annotations, and modifies the class file by injecting the necessary code.
+ */
 public class ClassPatcher {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
     private static final ParameterInfo[] EMPTY_PARAMETER_INFO = {};
@@ -36,6 +41,13 @@ public class ClassPatcher {
     public ClassPatcher() {
     }
 
+    /**
+     * Process a folder containing class files.
+     *
+     * @param classFolder the folder to process
+     * @throws IOException                         if an I/O error occurs
+     * @throws ClassFileProcessingFailedException if processing of a class file fails
+     */
     public synchronized void processFolder(Path classFolder) throws IOException, ClassFileProcessingFailedException {
         try {
             LOG.fine(() -> "process folder " + classFolder);
@@ -82,17 +94,39 @@ public class ClassPatcher {
         }
     }
 
+    /**
+     * Processes a list of class files by calling the {@link #instrumentClassFile(Path)} method for each file.
+     *
+     * @param classFiles the list of class files to process
+     * @throws IOException                         if an I/O error occurs
+     * @throws ClassFileProcessingFailedException if processing of a class file fails
+     */
     private void processClassFiles(List<Path> classFiles) throws IOException, ClassFileProcessingFailedException {
         for (Path classFile : classFiles) {
-            modifyClassFile(classFile);
+            instrumentClassFile(classFile);
         }
     }
 
+    /**
+     * Checks if a given class element is annotated with the specified annotation.
+     *
+     * @param el the class element to check for annotation
+     * @param annotation the annotation to check for
+     * @return true if the class element is annotated with the specified annotation, false otherwise
+     * @throws ClassNotFoundException if the specified annotation class cannot be found
+     */
     private static boolean isAnnotated(CtClass el, Class<? extends java.lang.annotation.Annotation> annotation) throws ClassNotFoundException {
         return el.getAnnotation(annotation) != null;
     }
 
-    public void modifyClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
+    /**
+     * Instruments a class file by adding null-check assertions for method parameters.
+     *
+     * @param classFile the path to the class file to be instrumented
+     * @throws ClassFileProcessingFailedException if processing of the class file fails
+     * @throws IOException if an I/O error occurs
+     */
+    public void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
         LOG.info(() -> "Instrumenting class file: " + classFile);
 
         try {
@@ -177,6 +211,9 @@ public class ClassPatcher {
         }
     }
 
+    /**
+     * Class representing information about a method parameter.
+     */
     private static class ParameterInfo {
         final String name;
         final String param;
@@ -193,6 +230,14 @@ public class ClassPatcher {
         }
     }
 
+    /**
+     * Retrieves information about the parameters of a given method.
+     *
+     * @param method the method to retrieve parameter information for
+     * @return an array of ParameterInfo objects representing the parameters of the method
+     * @throws ClassNotFoundException if the method parameter types cannot be found
+     * @throws NotFoundException if the method information cannot be found
+     */
     private static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException, NotFoundException {
         String methodName = method.getLongName();
         LOG.fine("collecting parameter information for " + methodName);
@@ -246,8 +291,7 @@ public class ClassPatcher {
             syntheticArgumentCount++;
         }
 
-
-        // create return array
+        // create the return array
         ParameterInfo[] parameterInfo = new ParameterInfo[parameterCount];
 
         for (int i = 0; i < parameterCount; i++) {
@@ -265,6 +309,12 @@ public class ClassPatcher {
         return parameterInfo;
     }
 
+    /**
+     * Retrieves the class name from a given class file path.
+     *
+     * @param classFile the path to the class file
+     * @return the class name extracted from the class file path
+     */
     private String getClassName(Path classFile) {
         return classFolder.relativize(classFile).toString()
                 .replaceFirst("\\.[^.]*$", "")
