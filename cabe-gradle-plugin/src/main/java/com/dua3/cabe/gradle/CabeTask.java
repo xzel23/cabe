@@ -39,11 +39,23 @@ public class CabeTask extends DefaultTask {
         getLogger().debug("class folder set to {}", this.classFolder);
     }
 
+    /**
+     * Retrieves the compile classpath for the CabeTask.
+     *
+     * @return the compile classpath as a FileCollection
+     * @see CabeTask
+     */
     @Classpath
     public FileCollection getCompileClasspath() {
         return this.compileClasspath;
     }
 
+    /**
+     * Sets the compile classpath for the CabeTask.
+     *
+     * @param compileClasspath the compile classpath to be set
+     * @see CabeTask
+     */
     public void setCompileClasspath(FileCollection compileClasspath) {
         this.compileClasspath = compileClasspath;
     }

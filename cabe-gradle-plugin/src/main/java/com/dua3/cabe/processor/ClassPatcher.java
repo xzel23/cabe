@@ -4,7 +4,6 @@ import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.NotNullApi;
 import com.dua3.cabe.annotations.Nullable;
 import com.dua3.cabe.annotations.NullableApi;
-import javassist.ClassPath;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
@@ -55,6 +54,11 @@ public class ClassPatcher {
     private List<Path> classpath;
     private Path classFolder;
 
+    /**
+     * This class represents a ClassPatcher object that manipulates class files in a given classpath.
+     *
+     * @param classpath the compile classpath
+     */
     public ClassPatcher(Collection<Path> classpath) {
         this.classpath = new ArrayList<>(classpath);
     }
@@ -70,6 +74,7 @@ public class ClassPatcher {
         try {
             LOG.fine(() -> "process folder " + classFolder);
 
+            this.classFolder = Objects.requireNonNull(classFolder, "folder is null");
             this.pool = new ClassPool(true);
             classpath.forEach(cp -> {
                 try {
@@ -79,10 +84,11 @@ public class ClassPatcher {
                 }
             });
 
-            this.classFolder = classFolder;
-
-            // no class folder.
-            Objects.requireNonNull(classFolder, "folder is null");
+            try {
+                pool.appendClassPath(classFolder.toString());
+            } catch (NotFoundException e) {
+                throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + classFolder, e);
+            }
 
             // no directory
             if (!Files.isDirectory(classFolder)) {
@@ -102,12 +108,6 @@ public class ClassPatcher {
             if (classFiles.isEmpty()) {
                 LOG.info("no class files!");
                 return;
-            }
-
-            try {
-                pool.appendClassPath(classFolder.toString());
-            } catch (NotFoundException e) {
-                throw new IllegalStateException("could not append path to classpath: " + classFolder, e);
             }
 
             processClassFiles(classFiles);
@@ -340,6 +340,13 @@ public class ClassPatcher {
         return parameterInfo;
     }
 
+    /**
+     * Retrieves the parameter types of a given method.
+     *
+     * @param method the method to retrieve parameter types for
+     * @return an array of Strings representing the parameter types of the method
+     * @throws IllegalStateException if the parameter descriptor is malformed
+     */
     public static String[] getParameterTypes(CtBehavior method) {
         String descriptor = method.getSignature();
         String paramsDesc = Descriptor.getParamDescriptor(descriptor);
