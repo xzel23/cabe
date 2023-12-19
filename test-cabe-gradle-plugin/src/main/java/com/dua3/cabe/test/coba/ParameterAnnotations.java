@@ -36,6 +36,9 @@ public class ParameterAnnotations {
         check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: parameter 'arg2' must not be null");
         check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg2' must not be null");
 
+        check(() -> intermixedWithPrimitives(87, " hello ", 99), "87 hello 99", null);
+        check(() -> intermixedWithPrimitives(87, null, 99), null, "error: parameter 'txt' must not be null");
+
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNullableAnnotatedArgument(null), null, null);
@@ -104,6 +107,12 @@ public class ParameterAnnotations {
     private String twoNullableAnnotatedArguments(@Nullable String arg1, @Nullable String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("twoNullableAnnotatedArguments: " + s);
+        return s;
+    }
+
+    private String intermixedWithPrimitives(int a, @NotNull String txt, int b) {
+        String s = String.format("%d%s%d", a, txt, b);
+        System.out.println("intermixWithPrimitives: " + s);
         return s;
     }
 
