@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +47,8 @@ public class ClassPatcher {
             "short",
             "boolean"
     );
+    private static final Pattern PATTERN_SYNTHETIC_PARAMETER_NAMES = Pattern.compile("this(\\$\\d+)?");
+    private static final Pattern GET_CLASS_NAME_PATTERN = Pattern.compile("\\.[^.]*$");
 
     private ClassPool pool = ClassPool.getDefault();
     private Path classFolder;
@@ -257,9 +260,8 @@ public class ClassPatcher {
      * @param method the method to retrieve parameter information for
      * @return an array of ParameterInfo objects representing the parameters of the method
      * @throws ClassNotFoundException if the method parameter types cannot be found
-     * @throws NotFoundException if the method information cannot be found
      */
-    private static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException, NotFoundException {
+    private static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException {
         String methodName = method.getLongName();
         LOG.fine("collecting parameter information for " + methodName);
 
@@ -283,7 +285,7 @@ public class ClassPatcher {
         boolean isParentPassedAsType = methodInfo.isConstructor() && !Modifier.isStatic(declaringClass.getModifiers());
         boolean isEnumConstructor = declaringClass.isEnum() && methodInfo.isConstructor();
 
-        int parameterCount = types.length;;
+        int parameterCount = types.length;
         int typeOffset = 0;
         if (isParentPassedAsType) {
             parameterCount--;
@@ -308,7 +310,7 @@ public class ClassPatcher {
         LocalVariableAttribute lva = (LocalVariableAttribute) attribute;
         ConstPool constPool = methodInfo.getConstPool();
         int syntheticArgumentCount = 0;
-        while (constPool.getUtf8Info(lva.nameIndex(syntheticArgumentCount)).matches("this(\\$\\d+)?")) {
+        while (PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(constPool.getUtf8Info(lva.nameIndex(syntheticArgumentCount))).matches()) {
             syntheticArgumentCount++;
         }
 
@@ -384,8 +386,8 @@ public class ClassPatcher {
      * @return the class name extracted from the class file path
      */
     private String getClassName(Path classFile) {
-        return classFolder.relativize(classFile).toString()
-                .replaceFirst("\\.[^.]*$", "")
+        return GET_CLASS_NAME_PATTERN.matcher(classFolder.relativize(classFile).toString()).replaceFirst("")
                 .replace(File.separatorChar, '.');
     }
+
 }
