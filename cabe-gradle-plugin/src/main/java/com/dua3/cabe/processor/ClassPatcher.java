@@ -12,6 +12,7 @@ import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AttributeInfo;
 import javassist.bytecode.ConstPool;
+import javassist.bytecode.Descriptor;
 import javassist.bytecode.LocalVariableAttribute;
 import javassist.bytecode.MethodInfo;
 
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,6 +36,16 @@ import java.util.stream.Stream;
 public class ClassPatcher {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
     private static final ParameterInfo[] EMPTY_PARAMETER_INFO = {};
+    private static final Set<String> PRIMITIVES = Set.of(
+            "byte",
+            "char",
+            "double",
+            "float",
+            "int",
+            "long",
+            "short",
+            "boolean"
+    );
 
     private ClassPool pool = ClassPool.getDefault();
     private Path classFolder;
@@ -59,7 +71,7 @@ public class ClassPatcher {
 
             // no directory
             if (!Files.isDirectory(classFolder)) {
-                LOG.warning("Does not exist or is not a directory: " + classFolder);
+                LOG.warning("does not exist or is not a directory: " + classFolder);
                 return;
             }
 
@@ -166,14 +178,14 @@ public class ClassPatcher {
                     ParameterInfo[] parameterInfo = getParameterInfo(method);
                     for (ParameterInfo pi : parameterInfo) {
                         // do not add assertions for primitive types
-                        if (pi.type.isPrimitive()) {
+                        if (PRIMITIVES.contains(pi.type)) {
                             continue;
                         }
 
                         // consistency check
                         if (pi.isNotNullAnnotated && pi.isNullableAnnotated) {
                             throw new IllegalStateException(
-                                    "Parameter " + pi.name + " is annotated with both @NotNull and @Nullable"
+                                    "parameter " + pi.name + " is annotated with both @NotNull and @Nullable"
                             );
                         }
 
@@ -215,18 +227,27 @@ public class ClassPatcher {
      * Class representing information about a method parameter.
      */
     private static class ParameterInfo {
-        final String name;
         final String param;
-        final CtClass type;
+        final String name;
+        final String type;
         final boolean isNotNullAnnotated;
         final boolean isNullableAnnotated;
 
-        ParameterInfo(String name, String param, CtClass type, boolean isNotNullAnnotated, boolean isNullableAnnotated) {
+        ParameterInfo(String param, String name, String type, boolean isNotNullAnnotated, boolean isNullableAnnotated) {
             this.name = name;
             this.param = param;
             this.type = type;
             this.isNotNullAnnotated = isNotNullAnnotated;
             this.isNullableAnnotated = isNullableAnnotated;
+        }
+
+        @Override
+        public String toString() {
+            return param + ":"
+                    + (isNotNullAnnotated ? " @NotNull" : "")
+                    + (isNullableAnnotated ? " @Nullable" : "")
+                    + " " + type
+                    + " " + name;
         }
     }
 
@@ -255,7 +276,7 @@ public class ClassPatcher {
 
         // read parameter annotations and types
         Object[][] parameterAnnotations = method.getParameterAnnotations();
-        CtClass[] types = method.getParameterTypes();
+        String[] types = getParameterTypes(method);
 
         // determine actual number of method parameters
         boolean isThisPassedAsArgument = !Modifier.isStatic(method.getModifiers()) && !methodInfo.isConstructor();
@@ -302,11 +323,58 @@ public class ClassPatcher {
                 isNotNullAnnotated = isNotNullAnnotated || (annotation instanceof NotNull);
                 isNullableAnnotated = isNullableAnnotated || (annotation instanceof Nullable);
             }
-            CtClass type = types[typeOffset + i];
+            String type = types[typeOffset + i];
             String param = "$" + (firstParameterNumber + i);
-            parameterInfo[i] = new ParameterInfo(name, param, type, isNotNullAnnotated, isNullableAnnotated);
+            parameterInfo[i] = new ParameterInfo(param, name, type, isNotNullAnnotated, isNullableAnnotated);
         }
         return parameterInfo;
+    }
+
+    public static String[] getParameterTypes(CtBehavior method) {
+        String descriptor = method.getSignature();
+        String paramsDesc = Descriptor.getParamDescriptor(descriptor);
+
+        if (paramsDesc.length() < 2) {
+            throw new IllegalStateException("parameter descriptor length expected to be at least 2: \"" + paramsDesc + "\"");
+        }
+        if (paramsDesc.charAt(0) != '(') {
+            throw new IllegalStateException("'(' expected at the beginning of parameter descriptor: \"" + paramsDesc + "\"");
+        }
+        if (paramsDesc.charAt(paramsDesc.length()-1) != ')') {
+            throw new IllegalStateException("'(' expected at the end of parameter descriptor: ': \"" + paramsDesc + "\"");
+        }
+
+        ArrayList<String> params = new ArrayList<>();
+        for (int i = 1; i < paramsDesc.length() - 1;) {
+            StringBuilder type = new StringBuilder();
+
+            while (paramsDesc.charAt(i) == '[') {
+                type.append("[]");
+                i++;
+            }
+
+            switch (paramsDesc.charAt(i)) {
+                case 'B': type.insert(0, "byte"); break;
+                case 'C': type.insert(0, "char"); break;
+                case 'D': type.insert(0, "double"); break;
+                case 'F': type.insert(0, "float"); break;
+                case 'I': type.insert(0, "int"); break;
+                case 'J': type.insert(0, "long"); break;
+                case 'S': type.insert(0, "short"); break;
+                case 'Z': type.insert(0, "boolean"); break;
+                case 'L':
+                    int endIndex = paramsDesc.indexOf(';', i);
+                    // Get the text between 'L' and ';', replace '/' with '.'.
+                    String className = paramsDesc.substring(i + 1, endIndex).replace('/', '.');
+                    type.insert(0, className);
+                    i = endIndex;
+                    break;
+            }
+            params.add(type.toString());
+            i++;
+        }
+
+        return params.toArray(new String[0]);
     }
 
     /**
