@@ -4,7 +4,6 @@ import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.NotNullApi;
 import com.dua3.cabe.annotations.Nullable;
 import com.dua3.cabe.annotations.NullableApi;
-import javassist.CannotCompileException;
 import javassist.ClassPath;
 import javassist.ClassPool;
 import javassist.CtBehavior;
@@ -29,7 +28,7 @@ import java.util.stream.Stream;
 
 public class ClassPatcher {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
-    public static final ParameterInfo[] EMPTY_PARAMETER_INFO = {};
+    private static final ParameterInfo[] EMPTY_PARAMETER_INFO = {};
 
     private ClassPool pool = ClassPool.getDefault();
     private Path classFolder;
@@ -37,7 +36,7 @@ public class ClassPatcher {
     public ClassPatcher() {
     }
 
-    public synchronized void processFolder(Path classFolder) throws IOException {
+    public synchronized void processFolder(Path classFolder) throws IOException, ClassFileProcessingFailedException {
         try {
             LOG.fine(() -> "process folder " + classFolder);
 
@@ -48,7 +47,8 @@ public class ClassPatcher {
 
             // no directory
             if (!Files.isDirectory(classFolder)) {
-                throw new IllegalStateException("Does not exist or is not a directory: " + classFolder);
+                LOG.warning("Does not exist or is not a directory: " + classFolder);
+                return;
             }
 
             List<Path> classFiles;
@@ -60,12 +60,17 @@ public class ClassPatcher {
                         .collect(Collectors.toList());
             }
 
+            if (classFiles.isEmpty()) {
+                LOG.info("no class files!");
+                return;
+            }
+
             ClassPath classPath = null;
             try {
                 classPath = pool.appendClassPath(classFolder.toString());
                 processClassFiles(classFiles);
             } catch (NotFoundException e) {
-                throw new IllegalStateException(e);
+                throw new IllegalStateException("could not append path to classpath: " + classFolder, e);
             } finally {
                 if (classPath != null) {
                     pool.removeClassPath(classPath);
@@ -77,15 +82,17 @@ public class ClassPatcher {
         }
     }
 
-    private void processClassFiles(List<Path> classFiles) {
-        classFiles.forEach(this::modifyClassFile);
+    private void processClassFiles(List<Path> classFiles) throws IOException, ClassFileProcessingFailedException {
+        for (Path classFile : classFiles) {
+            modifyClassFile(classFile);
+        }
     }
 
     private static boolean isAnnotated(CtClass el, Class<? extends java.lang.annotation.Annotation> annotation) throws ClassNotFoundException {
         return el.getAnnotation(annotation) != null;
     }
 
-    public void modifyClassFile(Path classFile) {
+    public void modifyClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
         LOG.info(() -> "Instrumenting class file: " + classFile);
 
         try {
@@ -123,9 +130,7 @@ public class ClassPatcher {
 
                     List<String> assertions = new ArrayList<>();
                     ParameterInfo[] parameterInfo = getParameterInfo(method);
-                    for (int i = 0; i < parameterInfo.length; i++) {
-                        ParameterInfo pi = parameterInfo[i];
-
+                    for (ParameterInfo pi : parameterInfo) {
                         // do not add assertions for primitive types
                         if (pi.type.isPrimitive()) {
                             continue;
@@ -150,7 +155,7 @@ public class ClassPatcher {
                     }
                     for (int i = assertions.size() - 1; i >= 0; i--) {
                         String src = assertions.get(i);
-                        LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n" + src.replaceAll("^", "  "));
+                        LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n  " + src.replaceAll("\n", "\n  "));
                         method.insertBefore(src);
                     }
                 }
@@ -164,9 +169,11 @@ public class ClassPatcher {
             } finally {
                 ctClass.detach();
             }
-        } catch (NotFoundException | CannotCompileException | IOException e) {
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
             LOG.log(Level.WARNING, "instrumenting class file failed: " + classFile, e);
-            throw new RuntimeException("Failed to modify class file " + classFile, e);
+            throw new ClassFileProcessingFailedException("Failed to modify class file " + classFile, e);
         }
     }
 
@@ -237,7 +244,7 @@ public class ClassPatcher {
                 isNullableAnnotated = isNullableAnnotated || (annotation instanceof Nullable);
             }
             CtClass type = types[i];
-            String param = "$" + (isParentPassedAsType ? 2 + i : 1 + i);
+            String param = "$" + (isParentPassedAsType ? i + 2 : i + 1);
             parameterInfo[i] = new ParameterInfo(name, param, type, isNotNullAnnotated, isNullableAnnotated);
         }
         return parameterInfo;

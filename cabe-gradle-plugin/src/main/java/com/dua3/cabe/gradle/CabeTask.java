@@ -1,6 +1,7 @@
 package com.dua3.cabe.gradle;
 
 
+import com.dua3.cabe.processor.ClassFileProcessingFailedException;
 import com.dua3.cabe.processor.ClassPatcher;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
@@ -30,23 +31,24 @@ public class CabeTask extends DefaultTask {
      */
     public void setClassFolder(Path classFolder) {
         this.classFolder = Objects.requireNonNull(classFolder, "Class folder is null!");
-        getLogger().debug("cabe - class folder set to {}", this.classFolder);
+        getLogger().debug("class folder set to {}", this.classFolder);
     }
 
     @TaskAction
-    void run() throws IOException {
+    void run() throws IOException, ClassFileProcessingFailedException {
         Logger log = getLogger();
-        log.debug("cabe - running cabe task");
+        log.debug("running cabe task");
 
         // no class folder.
         if (classFolder == null) {
-            log.warn("cabe - no class folder");
+            log.warn("no class folder");
             return;
         }
 
         // no directory
         if (!Files.isDirectory(classFolder)) {
-            throw new IllegalStateException("Does not exist or is not a directory: " + classFolder);
+            log.warn("Does not exist or is not a directory: " + classFolder);
+            return;
         }
 
         classPatcher.processFolder(classFolder);
