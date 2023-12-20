@@ -54,7 +54,8 @@ public class ClassPatcher {
 
     private ClassPool pool;
     private List<Path> classpath;
-    private Path classFolder;
+    private Path inputFolder;
+    private Path outputFolder;
 
     /**
      * This class represents a ClassPatcher object that manipulates class files in a given classpath.
@@ -68,16 +69,18 @@ public class ClassPatcher {
     /**
      * Process a folder containing class files.
      *
-     * @param classFolder the folder to process
+     * @param inputFolder the folder to process
      * @throws IOException                         if an I/O error occurs
      * @throws ClassFileProcessingFailedException if processing of a class file fails
      */
-    public synchronized void processFolder(Path classFolder) throws IOException, ClassFileProcessingFailedException {
+    public synchronized void processFolder(Path inputFolder, Path outputFolder) throws IOException, ClassFileProcessingFailedException {
         try {
-            LOG.fine(() -> "process folder " + classFolder);
+            LOG.fine(() -> "process folder " + inputFolder);
 
-            this.classFolder = Objects.requireNonNull(classFolder, "folder is null");
+            this.inputFolder = Objects.requireNonNull(inputFolder, "input folder is null");
+            this.outputFolder = Objects.requireNonNull(outputFolder, "output folder is null");
             this.pool = new ClassPool(true);
+
             classpath.forEach(cp -> {
                 try {
                     pool.appendClassPath(cp.toString());
@@ -87,19 +90,19 @@ public class ClassPatcher {
             });
 
             try {
-                pool.appendClassPath(classFolder.toString());
+                pool.appendClassPath(inputFolder.toString());
             } catch (NotFoundException e) {
-                throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + classFolder, e);
+                throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + inputFolder, e);
             }
 
             // no directory
-            if (!Files.isDirectory(classFolder)) {
-                LOG.warning("does not exist or is not a directory: " + classFolder);
+            if (!Files.isDirectory(inputFolder)) {
+                LOG.warning("does not exist or is not a directory: " + inputFolder);
                 return;
             }
 
             List<Path> classFiles;
-            try (Stream<Path> paths = Files.walk(classFolder)) {
+            try (Stream<Path> paths = Files.walk(inputFolder)) {
                 classFiles = paths
                         .filter(Files::isRegularFile)
                         .filter(f -> f.getFileName().toString().endsWith(".class"))
@@ -114,7 +117,7 @@ public class ClassPatcher {
 
             processClassFiles(classFiles);
         } finally {
-            this.classFolder = null;
+            this.inputFolder = null;
             this.pool = null;
         }
     }
@@ -183,18 +186,15 @@ public class ClassPatcher {
                     );
                 }
 
-                boolean isChanged = false;
                 for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
-                    if (instrumentMethod(classFile, className, method, isNotNullApi)) {
-                        isChanged = true;
-                    }
+                    instrumentMethod(classFile, className, method, isNotNullApi);
                 }
 
-                // Write the changes back to the class file
-                if (isChanged) {
-                    LOG.fine("writing modified class file: " + classFile);
-                    ctClass.writeFile(classFolder.toString());
-                }
+                // Write the class file
+                LOG.fine("writing modified class file: " + classFile);
+                Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
+                ctClass.writeFile(outputFolder.toString());
+
                 LOG.fine("instrumenting class file successful: " + classFile);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -443,7 +443,7 @@ public class ClassPatcher {
      * @return the class name extracted from the class file path
      */
     private String getClassName(Path classFile) {
-        return GET_CLASS_NAME_PATTERN.matcher(classFolder.relativize(classFile).toString()).replaceFirst("")
+        return GET_CLASS_NAME_PATTERN.matcher(inputFolder.relativize(classFile).toString()).replaceFirst("")
                 .replace(File.separatorChar, '.');
     }
 
