@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * <p>
  * This annotation is used to mark exceptions in a {@link NotNullApi} context.
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target(ElementType.PARAMETER)
 public @interface Nullable {
 }

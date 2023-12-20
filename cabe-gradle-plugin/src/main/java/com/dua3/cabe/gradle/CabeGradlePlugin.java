@@ -1,22 +1,17 @@
 package com.dua3.cabe.gradle;
 
-import org.gradle.api.JavaVersion;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 
-import java.io.File;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 /**
- * The gradle plugin class for Cabe.
+ * The Gradle plugin class for Cabe.
  */
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
@@ -27,43 +22,44 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
         // check that JavaPlugin is loaded
         if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
-            throw new IllegalStateException("java plugin required");
+            throw new IllegalStateException("the java plugin is required for cabe to work");
         }
 
         // create extension
-        project.getExtensions().create("cabe", CabeExtension.class);
+        CabeExtension extension = project.getExtensions().create("cabe", CabeExtension.class, project);
 
         // Adds task before the evaluation of the project to access of values
         // overloaded by the developer.
         project.afterEvaluate(p -> {
-            List<Task> compileJavaTask = p.getTasksByName("compileJava", false)
-                    .stream()
-                    .collect(Collectors.toUnmodifiableList());
-
+            // wire the cabe input task
             project.getTasks().create("cabe", CabeTask.class, t -> {
+                assert t instanceof CabeTask;
+
                 log.debug("initialising cabe task");
-                JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class);
-                SourceSet mainSrc = javaExtension.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
-                t.setSrcFolders(mainSrc.getJava().getSrcDirs().stream().map(File::toString).collect(Collectors.toList()));
-                t.setOutFolder(project.file(project.getBuildDir().toPath().resolve("generated-sources").resolve("cabe")));
+                // set directories
+                t.getInputDirectory().set(extension.getInputDirectory());
+                t.getOutputDirectory().set(extension.getOutputDirectory());
+                t.getClassPath().set(extension.getClassPath());
 
-                compileJavaTask.forEach(cj -> {
-                    JavaCompile jc = (JavaCompile) cj;
-                    jc.setSource(t.getOutFolder());
+                // run after the compileJava  task
+                JavaCompile compileJavaTask = Objects.requireNonNull(
+                        project.getTasks().withType(JavaCompile.class).findByName("compileJava"),
+                        "task 'compileJava' not found"
+                );
+                compileJavaTask.finalizedBy(t);
 
-                    log.debug("setting cabe classpath");
-                    t.setClasspath(jc.getClasspath());
+                // change the compileJava class output directory to the cabe class input directory
+                compileJavaTask.setDestinationDir(project.file(t.getInputDirectory().get()));
 
-                    log.debug("setting cabe Java version compliance");
-                    t.setJavaVersionCompliance(JavaVersion.toVersion(jc.getTargetCompatibility()));
-
-                    log.debug("adding dependency on cabe to compileJava");
-                    jc.dependsOn(t);
-                });
+                // make the classes taks depend on the cabe task
+                Task classesTask = Objects.requireNonNull(
+                        project.getTasks().getByName("classes"),
+                        "task 'classes' not found"
+                );
+                classesTask.dependsOn(t);
             });
 
         });
     }
-
 }

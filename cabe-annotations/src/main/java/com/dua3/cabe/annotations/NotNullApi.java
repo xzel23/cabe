@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Annotation to mark parameters @{@link NotNull} by default for all methods contained in a class or package.
  * Use @{@link NotNull} for exceptions.
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.PACKAGE, ElementType.TYPE})
 public @interface NotNullApi {
 }
