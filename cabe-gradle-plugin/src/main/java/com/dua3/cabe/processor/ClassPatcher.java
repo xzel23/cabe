@@ -181,6 +181,7 @@ public class ClassPatcher {
                     );
                 }
 
+                boolean isChanged = false;
                 for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
                     String methodName = method.getLongName();
                     LOG.fine(() -> "instrumenting method " + methodName);
@@ -214,12 +215,15 @@ public class ClassPatcher {
                         String src = assertions.get(i);
                         LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n  " + src.replaceAll("\n", "\n  "));
                         method.insertBefore(src);
+                        isChanged = true;
                     }
                 }
 
                 // Write the changes back to the class file
-                LOG.fine("writing modified class file: " + classFile);
-                ctClass.writeFile(classFolder.toString());
+                if (isChanged) {
+                    LOG.fine("writing modified class file: " + classFile);
+                    ctClass.writeFile(classFolder.toString());
+                }
                 LOG.fine("instrumenting class file successful: " + classFile);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -315,8 +319,10 @@ public class ClassPatcher {
         if (!(attribute instanceof LocalVariableAttribute)) {
             throw new IllegalStateException("could not get local variable info");
         }
+
         LocalVariableAttribute lva = (LocalVariableAttribute) attribute;
         ConstPool constPool = methodInfo.getConstPool();
+
         int syntheticArgumentCount = 0;
         while (PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(constPool.getUtf8Info(lva.nameIndex(syntheticArgumentCount))).matches()) {
             syntheticArgumentCount++;
