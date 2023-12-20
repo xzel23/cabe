@@ -4,19 +4,11 @@ import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.TaskOutputsInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.tasks.TaskDependency;
-import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.compile.JavaCompile;
-import org.gradle.internal.impldep.org.glassfish.jaxb.core.v2.TODO;
 
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * The Gradle plugin class for Cabe.
