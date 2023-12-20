@@ -223,6 +223,11 @@ public class ClassPatcher {
         String methodName = method.getLongName();
         LOG.fine(() -> "instrumenting method " + methodName);
 
+        if (Modifier.isVolatile(method.getModifiers())) {
+            LOG.fine(() -> "skipping bridge method");
+            return false;
+        }
+
         boolean isChanged = false;
         try (Formatter assertions = new Formatter()) {
             ParameterInfo[] parameterInfo = getParameterInfo(method);
