@@ -48,6 +48,9 @@ public class ParameterAnnotations {
         check(() -> intermixedWithPrimitives(87, " hello ", 99), "87 hello 99", null);
         check(() -> intermixedWithPrimitives(87, null, 99), null, "error: parameter 'txt' must not be null");
 
+        check(() -> genericParameter(new A("hello world!")), "hello world!", null);
+        check(() -> genericParameter(null), null, "error: parameter 'arg' must not be null");
+
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNullableAnnotatedArgument(null), null, null);
@@ -128,6 +131,12 @@ public class ParameterAnnotations {
     private String parameterWithExternalClass(@NotNull Pair<String,Integer> p) {
         String s = String.valueOf(p);
         System.out.println("parameterWithExternalClass: " + s);
+        return s;
+    }
+
+    private <T> String genericParameter(@NotNull T arg) {
+        String s = String.valueOf(arg);
+        System.out.println("genericParameter: " + s);
         return s;
     }
 
