@@ -3,8 +3,13 @@ package com.dua3.cabe.test.coba;
 import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.Nullable;
 import com.dua3.utility.data.Pair;
+import com.dua3.utility.io.FileType;
+import com.dua3.utility.options.Arguments;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ParameterAnnotations {
@@ -21,6 +26,11 @@ public class ParameterAnnotations {
         // test with generic parameters
         check(() -> new C("hello world!").toString(), "hello world!", null);
         check(() -> new C(null).toString(), null, "error: parameter 't' must not be null");
+
+        check(() -> genericArguments("hello", "world", obj -> " " + obj + "!"), "hello world!", null);
+        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "error: parameter 'prefix' must not be null");
+        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "error: parameter 'suffix' must not be null");
+        check(() -> genericArguments("hello", "world", null), null, "error: parameter 'func' must not be null");
 
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
@@ -205,6 +215,7 @@ public class ParameterAnnotations {
 
     class C<T> {
         private T t;
+
         C(@NotNull T t) {
             this.t = t;
         }
@@ -213,6 +224,11 @@ public class ParameterAnnotations {
         public String toString() {
             return String.valueOf(t);
         }
+
+    }
+
+    public String genericArguments(@NotNull String prefix, @NotNull String suffix, @NotNull Function<C<? extends Object>, String> func) {
+        return prefix + func.apply(new C(suffix));
     }
 
 }
