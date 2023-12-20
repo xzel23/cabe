@@ -4,6 +4,7 @@ import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.NotNullApi;
 import com.dua3.cabe.annotations.Nullable;
 import com.dua3.cabe.annotations.NullableApi;
+import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
@@ -21,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Formatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -183,38 +185,7 @@ public class ClassPatcher {
 
                 boolean isChanged = false;
                 for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
-                    String methodName = method.getLongName();
-                    LOG.fine(() -> "instrumenting method " + methodName);
-
-                    List<String> assertions = new ArrayList<>();
-                    ParameterInfo[] parameterInfo = getParameterInfo(method);
-                    for (ParameterInfo pi : parameterInfo) {
-                        // do not add assertions for primitive types
-                        if (PRIMITIVES.contains(pi.type)) {
-                            continue;
-                        }
-
-                        // consistency check
-                        if (pi.isNotNullAnnotated && pi.isNullableAnnotated) {
-                            throw new IllegalStateException(
-                                    "parameter " + pi.name + " is annotated with both @NotNull and @Nullable"
-                            );
-                        }
-
-                        boolean isNotNull = pi.isNotNullAnnotated || isNotNullApi && !pi.isNullableAnnotated;
-                        if (isNotNull) {
-                            LOG.fine(() -> "adding assertion for parameter " + pi.name + " in " + classFile);
-                            assertions.add(
-                                    "if (" + className + ".class.desiredAssertionStatus() && (" + pi.param + "==null)) {\n" +
-                                            "  throw new AssertionError((Object) \"parameter '" + pi.name + "' must not be null\");\n" +
-                                            "}\n"
-                            );
-                        }
-                    }
-                    for (int i = assertions.size() - 1; i >= 0; i--) {
-                        String src = assertions.get(i);
-                        LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n  " + src.replaceAll("\n", "\n  "));
-                        method.insertBefore(src);
+                    if (instrumentMethod(classFile, className, method, isNotNullApi)) {
                         isChanged = true;
                     }
                 }
@@ -235,6 +206,67 @@ public class ClassPatcher {
         } catch (Exception e) {
             LOG.log(Level.WARNING, "instrumenting class file failed: " + classFile, e);
             throw new ClassFileProcessingFailedException("Failed to modify class file " + classFile, e);
+        }
+    }
+
+    /**
+     * Instruments a method by adding null-check assertions for method parameters.
+     *
+     * @param classFile      the path to the class file
+     * @param className      the name of the class containing the method
+     * @param method         the method to be instrumented
+     * @param isNotNullApi   a flag indicating whether the method is inside a @{@link NotNullApi} annotated package
+     * @return true if the method was modified, false otherwise
+     * @throws ClassFileProcessingFailedException if processing fails
+     */
+    private static boolean instrumentMethod(Path classFile, String className, CtBehavior method, boolean isNotNullApi) throws ClassFileProcessingFailedException {
+        String methodName = method.getLongName();
+        LOG.fine(() -> "instrumenting method " + methodName);
+
+        boolean isChanged = false;
+        try (Formatter assertions = new Formatter()) {
+            ParameterInfo[] parameterInfo = getParameterInfo(method);
+            for (ParameterInfo pi : parameterInfo) {
+                // do not add assertions for primitive types
+                if (PRIMITIVES.contains(pi.type)) {
+                    continue;
+                }
+
+                // consistency check
+                if (pi.isNotNullAnnotated && pi.isNullableAnnotated) {
+                    throw new IllegalStateException(
+                            "parameter " + pi.name + " is annotated with both @NotNull and @Nullable"
+                    );
+                }
+
+                // create assertion code
+                boolean isNotNull = pi.isNotNullAnnotated || isNotNullApi && !pi.isNullableAnnotated;
+                if (isNotNull) {
+                    LOG.fine(() -> "adding assertion for parameter " + pi.name + " in " + classFile);
+                    assertions.format(
+                            "if (%1$s.class.desiredAssertionStatus() && (%2$s==null)) {%n"
+                                    + "  throw new AssertionError((Object) \"parameter '%3$s' must not be null\");%n"
+                                    + "}%n",
+                            className, pi.param, pi.name
+                    );
+                    isChanged = true;
+                }
+            }
+
+            // modify class
+            if (isChanged) {
+                String src = assertions.toString();
+                LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n  " + src.replaceAll("\n", "\n  "));
+                method.insertBefore(src);
+            }
+
+            return isChanged;
+        } catch (CannotCompileException e) {
+            throw new ClassFileProcessingFailedException("compilation failed for method '" + methodName + "'", e);
+        } catch (ClassNotFoundException e) {
+            throw new ClassFileProcessingFailedException("class not found while instrumenting method '" + methodName + "'", e);
+        } catch (RuntimeException e) {
+            throw new ClassFileProcessingFailedException("exception while instrumenting method '" + methodName + "'", e);
         }
     }
 
