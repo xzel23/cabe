@@ -20,7 +20,7 @@ public class ClassFileProcessingFailedException extends Exception {
     }
 
     /**
-     * Represents an exception that is thrown when processing of a class file fails.
+     * Represents an exception thrown when processing of a class file fails.
      *
      * @param message the exception message
      * @param cause the cause of the exception

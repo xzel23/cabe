@@ -33,8 +33,6 @@ public class CabeGradlePlugin implements Plugin<Project> {
         project.afterEvaluate(p -> {
             // wire the cabe input task
             project.getTasks().create("cabe", CabeTask.class, t -> {
-                assert t instanceof CabeTask;
-
                 log.debug("initialising cabe task");
 
                 // set directories
@@ -50,7 +48,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 compileJavaTask.finalizedBy(t);
 
                 // change the compileJava class output directory to the cabe class input directory
-                compileJavaTask.setDestinationDir(project.file(t.getInputDirectory().get()));
+                compileJavaTask.getDestinationDirectory().set(project.file(t.getInputDirectory().get()));
 
                 // make the classes taks depend on the cabe task
                 Task classesTask = Objects.requireNonNull(

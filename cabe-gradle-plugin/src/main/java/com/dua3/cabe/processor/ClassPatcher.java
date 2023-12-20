@@ -52,8 +52,8 @@ public class ClassPatcher {
     private static final Pattern PATTERN_SYNTHETIC_PARAMETER_NAMES = Pattern.compile("this(\\$\\d+)?");
     private static final Pattern GET_CLASS_NAME_PATTERN = Pattern.compile("\\.[^.]*$");
 
+    private final List<Path> classpath;
     private ClassPool pool;
-    private List<Path> classpath;
     private Path inputFolder;
     private Path outputFolder;
 
@@ -70,7 +70,7 @@ public class ClassPatcher {
      * Process a folder containing class files.
      *
      * @param inputFolder the folder to process
-     * @throws IOException                         if an I/O error occurs
+     * @throws IOException                        if an I/O error occurs
      * @throws ClassFileProcessingFailedException if processing of a class file fails
      */
     public synchronized void processFolder(Path inputFolder, Path outputFolder) throws IOException, ClassFileProcessingFailedException {
@@ -126,7 +126,7 @@ public class ClassPatcher {
      * Processes a list of class files by calling the {@link #instrumentClassFile(Path)} method for each file.
      *
      * @param classFiles the list of class files to process
-     * @throws IOException                         if an I/O error occurs
+     * @throws IOException                        if an I/O error occurs
      * @throws ClassFileProcessingFailedException if processing of a class file fails
      */
     private void processClassFiles(List<Path> classFiles) throws IOException, ClassFileProcessingFailedException {
@@ -138,7 +138,7 @@ public class ClassPatcher {
     /**
      * Checks if a given class element is annotated with the specified annotation.
      *
-     * @param el the class element to check for annotation
+     * @param el         the class element to check for annotation
      * @param annotation the annotation to check for
      * @return true if the class element is annotated with the specified annotation, false otherwise
      * @throws ClassNotFoundException if the specified annotation class cannot be found
@@ -152,7 +152,7 @@ public class ClassPatcher {
      *
      * @param classFile the path to the class file to be instrumented
      * @throws ClassFileProcessingFailedException if processing of the class file fails
-     * @throws IOException if an I/O error occurs
+     * @throws IOException                        if an I/O error occurs
      */
     public void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
         LOG.info(() -> "Instrumenting class file: " + classFile);
@@ -212,10 +212,10 @@ public class ClassPatcher {
     /**
      * Instruments a method by adding null-check assertions for method parameters.
      *
-     * @param classFile      the path to the class file
-     * @param className      the name of the class containing the method
-     * @param method         the method to be instrumented
-     * @param isNotNullApi   a flag indicating whether the method is inside a @{@link NotNullApi} annotated package
+     * @param classFile    the path to the class file
+     * @param className    the name of the class containing the method
+     * @param method       the method to be instrumented
+     * @param isNotNullApi a flag indicating whether the method is inside a @{@link NotNullApi} annotated package
      * @return true if the method was modified, false otherwise
      * @throws ClassFileProcessingFailedException if processing fails
      */
@@ -359,16 +359,16 @@ public class ClassPatcher {
         LocalVariableAttribute lva = (LocalVariableAttribute) attribute;
         ConstPool constPool = methodInfo.getConstPool();
 
-        int syntheticArgumentCount = 0;
-        while (PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(constPool.getUtf8Info(lva.nameIndex(syntheticArgumentCount))).matches()) {
-            syntheticArgumentCount++;
+        int syntheticArgsCount = 0;
+        while (PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(constPool.getUtf8Info(lva.nameIndex(syntheticArgsCount))).matches()) {
+            syntheticArgsCount++;
         }
 
         // create the return array
         ParameterInfo[] parameterInfo = new ParameterInfo[parameterCount];
 
         for (int i = 0; i < parameterCount; i++) {
-            String name = constPool.getUtf8Info(lva.nameIndex(i + syntheticArgumentCount));
+            String name = constPool.getUtf8Info(lva.nameIndex(i + syntheticArgsCount));
             boolean isNotNullAnnotated = false;
             boolean isNullableAnnotated = false;
             for (Object annotation : parameterAnnotations[i]) {
@@ -399,12 +399,12 @@ public class ClassPatcher {
         if (paramsDesc.charAt(0) != '(') {
             throw new IllegalStateException("'(' expected at the beginning of parameter descriptor: \"" + paramsDesc + "\"");
         }
-        if (paramsDesc.charAt(paramsDesc.length()-1) != ')') {
+        if (paramsDesc.charAt(paramsDesc.length() - 1) != ')') {
             throw new IllegalStateException("'(' expected at the end of parameter descriptor: ': \"" + paramsDesc + "\"");
         }
 
         ArrayList<String> params = new ArrayList<>();
-        for (int i = 1; i < paramsDesc.length() - 1;) {
+        for (int i = 1; i < paramsDesc.length() - 1; ) {
             StringBuilder type = new StringBuilder();
 
             while (paramsDesc.charAt(i) == '[') {
@@ -413,14 +413,30 @@ public class ClassPatcher {
             }
 
             switch (paramsDesc.charAt(i)) {
-                case 'B': type.insert(0, "byte"); break;
-                case 'C': type.insert(0, "char"); break;
-                case 'D': type.insert(0, "double"); break;
-                case 'F': type.insert(0, "float"); break;
-                case 'I': type.insert(0, "int"); break;
-                case 'J': type.insert(0, "long"); break;
-                case 'S': type.insert(0, "short"); break;
-                case 'Z': type.insert(0, "boolean"); break;
+                case 'B':
+                    type.insert(0, "byte");
+                    break;
+                case 'C':
+                    type.insert(0, "char");
+                    break;
+                case 'D':
+                    type.insert(0, "double");
+                    break;
+                case 'F':
+                    type.insert(0, "float");
+                    break;
+                case 'I':
+                    type.insert(0, "int");
+                    break;
+                case 'J':
+                    type.insert(0, "long");
+                    break;
+                case 'S':
+                    type.insert(0, "short");
+                    break;
+                case 'Z':
+                    type.insert(0, "boolean");
+                    break;
                 case 'L':
                     int endIndex = paramsDesc.indexOf(';', i);
                     // Get the text between 'L' and ';', replace '/' with '.'.

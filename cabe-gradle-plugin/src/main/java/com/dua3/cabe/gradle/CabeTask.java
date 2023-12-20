@@ -11,6 +11,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectories;
 import org.gradle.api.tasks.TaskAction;
 
@@ -37,6 +38,7 @@ public abstract class CabeTask extends DefaultTask {
     }
 
     @InputDirectory
+    @Optional
     public DirectoryProperty getInputDirectory() {
         return inputDirectory;
     }
@@ -62,7 +64,7 @@ public abstract class CabeTask extends DefaultTask {
                     getInputDirectory().get().getAsFile().toPath(),
                     getOutputDirectory().get().getAsFile().toPath()
             );
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes", e);
         }
     }
