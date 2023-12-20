@@ -293,13 +293,12 @@ public class ClassPatcher {
         String[] types = getParameterTypes(method);
 
         // determine actual number of method parameters
-        boolean isThisPassedAsArgument = !Modifier.isStatic(method.getModifiers()) && !methodInfo.isConstructor();
-        boolean isParentPassedAsType = methodInfo.isConstructor() && !Modifier.isStatic(declaringClass.getModifiers());
+        boolean isParentTypePassed = methodInfo.isConstructor() && !Modifier.isStatic(declaringClass.getModifiers());
         boolean isEnumConstructor = declaringClass.isEnum() && methodInfo.isConstructor();
 
         int parameterCount = types.length;
         int typeOffset = 0;
-        if (isParentPassedAsType) {
+        if (isParentTypePassed) {
             parameterCount--;
         }
         if (isEnumConstructor) {
