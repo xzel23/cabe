@@ -18,6 +18,10 @@ public class ParameterAnnotations {
         check(() -> parameterWithExternalClass(Pair.of("hello", 123)), "Pair[first=hello, second=123]", null);
         check(() -> parameterWithExternalClass(null), null, "error: parameter 'p' must not be null");
 
+        // test with generic parameters
+        check(() -> new C("hello world!").toString(), "hello world!", null);
+        check(() -> new C(null).toString(), null, "error: parameter 't' must not be null");
+
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
         check(() -> unannotatedArgument(null), null, null);
@@ -187,6 +191,18 @@ public class ParameterAnnotations {
 
         public String toString() {
             return super.toString() + b;
+        }
+    }
+
+    class C<T> {
+        private T t;
+        C(@NotNull T t) {
+            this.t = t;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(t);
         }
     }
 
