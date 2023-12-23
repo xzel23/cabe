@@ -4,15 +4,13 @@
 
 #FLAGS=--debug
 
-# run a clean after successful execution to check files are not locked after executing gradle task
+ run a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
 && ./gradlew -Dnotest clean build publishToMavenLocal \
   && echo "build successful" \
 && ./gradlew test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} \
-  && ./gradlew test-cabe-gradle-plugin:clean \
   && echo "non-modular test successful" \
 && ./gradlew test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} \
-  && ./gradlew  test-cabe-gradle-plugin-with-modules:clean \
   && echo "modular test successful" \
 && ./gradlew publishToMavenLocal \
   && echo "plugin published to local repository" \

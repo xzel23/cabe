@@ -10,9 +10,8 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
-import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.OutputDirectories;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.OutputFiles;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
@@ -29,6 +28,11 @@ public abstract class CabeTask extends DefaultTask {
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
 
+    /**
+     * This task injects assertions for parameters marked as not allowing null values into the source code.
+     *
+     * @param objectFactory the Gradle object factory
+     */
     @Inject
     public CabeTask(ObjectFactory objectFactory) {
         // Properties are created via Gradle's ObjectFactory
@@ -37,17 +41,31 @@ public abstract class CabeTask extends DefaultTask {
         classPath = objectFactory.property(FileCollection.class);
     }
 
-    @InputDirectory
-    @Optional
+    /**
+     * Retrieves the input directory for the Cabe task.
+     *
+     * @return The input directory for the Cabe task.
+     */
+    @InputFiles
     public DirectoryProperty getInputDirectory() {
         return inputDirectory;
     }
 
-    @OutputDirectories
+    /**
+     * Retrieves the output directory for the Cabe task.
+     *
+     * @return The output directory for the Cabe task.
+     */
+    @OutputFiles
     public DirectoryProperty getOutputDirectory() {
         return outputDirectory;
     }
 
+    /**
+     * Retrieves the class path for the Cabe task.
+     *
+     * @return The class path for the Cabe task.
+     */
     @Classpath
     public Property<FileCollection> getClassPath() {
         return (Property<FileCollection>) classPath;

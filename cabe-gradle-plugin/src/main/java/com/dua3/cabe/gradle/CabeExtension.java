@@ -11,12 +11,22 @@ import org.gradle.api.tasks.SourceSet;
 
 import javax.inject.Inject;
 
+/**
+ * CabeExtension represents the extension for the Cabe plugin.
+ * It provides access to the input directory, output directory, and classpath.
+ */
 public class CabeExtension {
 
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
 
+    /**
+     * Construct a new instance of the extension.
+     *
+     * @param project the project to configure
+     * @param projectLayout the project layout
+     */
     @Inject
     public CabeExtension(Project project, ProjectLayout projectLayout) {
         ObjectFactory objectFactory = project.getObjects();
@@ -37,14 +47,29 @@ public class CabeExtension {
                                 .getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath()));
     }
 
+    /**
+     * Returns the input directory for the Cabe plugin.
+     *
+     * @return the input directory as a DirectoryProperty object
+     */
     public DirectoryProperty getInputDirectory() {
         return inputDirectory;
     }
 
+    /**
+     * Returns the output directory for the Cabe plugin.
+     *
+     * @return the output directory as a DirectoryProperty object
+     */
     public DirectoryProperty getOutputDirectory() {
         return outputDirectory;
     }
 
+    /**
+     * Retrieves the classpath for the Cabe plugin.
+     *
+     * @return the classpath as a Provider object of type FileCollection
+     */
     public Provider<FileCollection> getClassPath() {
         return classPath;
     }

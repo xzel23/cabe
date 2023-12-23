@@ -4,6 +4,12 @@ import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.NotNullApi;
 import com.dua3.cabe.annotations.Nullable;
 import com.dua3.cabe.annotations.NullableApi;
+import com.dua3.utility.options.Arguments;
+import com.dua3.utility.options.ArgumentsParser;
+import com.dua3.utility.options.ArgumentsParserBuilder;
+import com.dua3.utility.options.Flag;
+import com.dua3.utility.options.Option;
+import com.dua3.utility.options.SimpleOption;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtBehavior;
@@ -37,6 +43,39 @@ import java.util.stream.Stream;
  * parameter annotations, and modifies the class file by injecting the necessary code.
  */
 public class ClassPatcher {
+
+    /**
+     * This method is the entry point of the application.
+     *
+     * @param args an array of command-line arguments
+     * @throws IOException                        if an I/O error occurs
+     * @throws ClassFileProcessingFailedException if processing of a class file fails
+     */
+    public static void main(String[] args) throws IOException, ClassFileProcessingFailedException {
+        ArgumentsParserBuilder builder = ArgumentsParser.builder()
+                .name("cabe")
+                .description("Add null checks in Java class file byte code.")
+                .positionalArgs(0, 0);
+        SimpleOption<Path> optInput = builder.simpleOption(Path.class, "--input", "-i", "Input folder containing class files").required();
+        SimpleOption<Path> optOutput = builder.simpleOption(Path.class, "--output", "-o", "Output folder for patched class files").required();
+        Option<Path> optClasspath = builder.option(Path.class, "--classpath", "-c", "Java compile classpath").minArity(0).occurrence(0, 1);
+        Flag optHelp = builder.flag("--help", "-h", "Show help");
+
+        ArgumentsParser argsParser = builder.build();
+        Arguments parsedArgs = argsParser.parse(args);
+
+        if (parsedArgs.isSet(optHelp)) {
+            argsParser.help();
+            return;
+        }
+
+        Path in = parsedArgs.getOrThrow(optInput);
+        Path out = parsedArgs.getOrThrow(optOutput);
+        List<Path> classPaths = parsedArgs.stream(optClasspath).flatMap(List::stream).toList();
+        ClassPatcher classPatcher = new ClassPatcher(classPaths);
+        classPatcher.processFolder(in, out);
+    }
+
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
     private static final ParameterInfo[] EMPTY_PARAMETER_INFO = {};
     private static final Set<String> PRIMITIVES = Set.of(
@@ -70,6 +109,7 @@ public class ClassPatcher {
      * Process a folder containing class files.
      *
      * @param inputFolder the folder to process
+     * @param outputFolder the folder to write the patched files to
      * @throws IOException                        if an I/O error occurs
      * @throws ClassFileProcessingFailedException if processing of a class file fails
      */
@@ -154,7 +194,7 @@ public class ClassPatcher {
      * @throws ClassFileProcessingFailedException if processing of the class file fails
      * @throws IOException                        if an I/O error occurs
      */
-    public void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
+    private void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
         LOG.info(() -> "Instrumenting class file: " + classFile);
 
         try {
@@ -412,7 +452,8 @@ public class ClassPatcher {
                 i++;
             }
 
-            switch (paramsDesc.charAt(i)) {
+            char c = paramsDesc.charAt(i);
+            switch (c) {
                 case 'B':
                     type.insert(0, "byte");
                     break;
@@ -444,6 +485,8 @@ public class ClassPatcher {
                     type.insert(0, className);
                     i = endIndex;
                     break;
+                default:
+                    throw new IllegalStateException("invalid character in parameter descriptor: '" + c + "'");
             }
             params.add(type.toString());
             i++;
