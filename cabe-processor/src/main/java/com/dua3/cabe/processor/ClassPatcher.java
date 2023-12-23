@@ -373,21 +373,25 @@ public class ClassPatcher {
             throw new IllegalStateException("could not get method info");
         }
 
-        if (!methodInfo.isConstructor() && !methodInfo.isMethod()) {
+        CtClass declaringClass = method.getDeclaringClass();
+        boolean isAnonymousClass = declaringClass.getName().matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$\\d+");
+        boolean isConstructor = methodInfo.isConstructor();
+        boolean isMethod = methodInfo.isMethod();
+        boolean isInterface = declaringClass.isInterface();
+
+        if (!isConstructor && !isMethod || isConstructor && isInterface) {
             return EMPTY_PARAMETER_INFO;
         }
-
-        CtClass declaringClass = method.getDeclaringClass();
 
         // read parameter annotations and types
         Object[][] parameterAnnotations = method.getParameterAnnotations();
         String[] types = getParameterTypes(method);
 
         // determine actual number of method parameters
-        boolean isParentTypePassed = methodInfo.isConstructor()
+        boolean isParentTypePassed = isConstructor
                 && !Modifier.isStatic(declaringClass.getModifiers())
-                && !declaringClass.getSuperclass().getName().equals("java.lang.Object");
-        boolean isEnumConstructor = declaringClass.isEnum() && methodInfo.isConstructor();
+                && (!declaringClass.getSuperclass().getName().equals("java.lang.Object") || isAnonymousClass);
+        boolean isEnumConstructor = declaringClass.isEnum() && isConstructor;
 
         int parameterCount = types.length;
         int typeOffset = 0;
