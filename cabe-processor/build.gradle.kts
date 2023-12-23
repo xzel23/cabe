@@ -1,10 +1,12 @@
 import java.net.URI
 
 plugins {
-    id("java")
+    id("java-library")
+    id("application")
     id("maven-publish")
     id("signing")
     id("com.github.spotbugs") version "6.0.4"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -35,6 +37,18 @@ dependencies {
     implementation("com.dua3.utility:utility:12.0.0-beta10")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+}
+
+java {
+    application {
+        mainClass.set("com.dua3.cabe.processor.ClassPatcher")
+    }
+}
+
+tasks.shadowJar {
+    archiveBaseName.set("${project.name}")
+    archiveVersion.set("")
+    mergeServiceFiles()
 }
 
 tasks.test {

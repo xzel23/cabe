@@ -9,6 +9,7 @@ import com.dua3.utility.options.ArgumentsParser;
 import com.dua3.utility.options.ArgumentsParserBuilder;
 import com.dua3.utility.options.Flag;
 import com.dua3.utility.options.Option;
+import com.dua3.utility.options.OptionException;
 import com.dua3.utility.options.SimpleOption;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -17,6 +18,7 @@ import javassist.CtClass;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AttributeInfo;
+import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.ConstPool;
 import javassist.bytecode.Descriptor;
 import javassist.bytecode.LocalVariableAttribute;
@@ -62,18 +64,25 @@ public class ClassPatcher {
         Flag optHelp = builder.flag("--help", "-h", "Show help");
 
         ArgumentsParser argsParser = builder.build();
-        Arguments parsedArgs = argsParser.parse(args);
 
-        if (parsedArgs.isSet(optHelp)) {
-            argsParser.help();
-            return;
+        try {
+            Arguments parsedArgs = argsParser.parse(args);
+
+            if (parsedArgs.isSet(optHelp)) {
+                argsParser.help();
+                return;
+            }
+
+            Path in = parsedArgs.getOrThrow(optInput);
+            Path out = parsedArgs.getOrThrow(optOutput);
+            List<Path> classPaths = parsedArgs.stream(optClasspath).flatMap(List::stream).toList();
+            ClassPatcher classPatcher = new ClassPatcher(classPaths);
+            classPatcher.processFolder(in, out);
+        } catch (OptionException e) {
+            System.err.println(e.getMessage());
+            System.out.println();
+            System.out.println(argsParser.help());
         }
-
-        Path in = parsedArgs.getOrThrow(optInput);
-        Path out = parsedArgs.getOrThrow(optOutput);
-        List<Path> classPaths = parsedArgs.stream(optClasspath).flatMap(List::stream).toList();
-        ClassPatcher classPatcher = new ClassPatcher(classPaths);
-        classPatcher.processFolder(in, out);
     }
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
@@ -263,6 +272,11 @@ public class ClassPatcher {
         String methodName = method.getLongName();
         LOG.fine(() -> "instrumenting method " + methodName);
 
+        if (Modifier.isAbstract(method.getModifiers())) {
+            LOG.fine(() -> "skipping abstract method");
+            return false;
+        }
+
         if (Modifier.isVolatile(method.getModifiers())) {
             LOG.fine(() -> "skipping bridge method");
             return false;
@@ -391,7 +405,8 @@ public class ClassPatcher {
         }
 
         // determine the number of synthetic arguments (i.e. 'this' of parent classes for inner classes)
-        AttributeInfo attribute = methodInfo.getCodeAttribute().getAttribute(LocalVariableAttribute.tag);
+        CodeAttribute codeAttribute = Objects.requireNonNull(methodInfo.getCodeAttribute(), "could not get code attribute");
+        AttributeInfo attribute = codeAttribute.getAttribute(LocalVariableAttribute.tag);
         if (!(attribute instanceof LocalVariableAttribute)) {
             throw new IllegalStateException("could not get local variable info");
         }
