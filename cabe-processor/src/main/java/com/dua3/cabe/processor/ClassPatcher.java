@@ -324,7 +324,7 @@ public class ClassPatcher {
             throw new ClassFileProcessingFailedException("compilation failed for method '" + methodName + "'", e);
         } catch (ClassNotFoundException e) {
             throw new ClassFileProcessingFailedException("class not found while instrumenting method '" + methodName + "'", e);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | NotFoundException e) {
             throw new ClassFileProcessingFailedException("exception while instrumenting method '" + methodName + "'", e);
         }
     }
@@ -364,7 +364,7 @@ public class ClassPatcher {
      * @return an array of ParameterInfo objects representing the parameters of the method
      * @throws ClassNotFoundException if the method parameter types cannot be found
      */
-    private static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException {
+    private static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException, NotFoundException {
         String methodName = method.getLongName();
         LOG.fine("collecting parameter information for " + methodName);
 
@@ -384,7 +384,9 @@ public class ClassPatcher {
         String[] types = getParameterTypes(method);
 
         // determine actual number of method parameters
-        boolean isParentTypePassed = methodInfo.isConstructor() && !Modifier.isStatic(declaringClass.getModifiers());
+        boolean isParentTypePassed = methodInfo.isConstructor()
+                && !Modifier.isStatic(declaringClass.getModifiers())
+                && !declaringClass.getSuperclass().getName().equals("java.lang.Object");
         boolean isEnumConstructor = declaringClass.isEnum() && methodInfo.isConstructor();
 
         int parameterCount = types.length;
