@@ -24,12 +24,12 @@ tasks.withType<Javadoc> {
 group = "com.dua3.cabe"
 
 extra.apply {
-    set("scm","https://github.com/xzel23/cabe.git")
-    set("developerId","axh")
-    set("developerName","Axel Howind")
-    set("developerEmail","axh@dua3.com")
-    set("organization","dua3")
-    set("organizationUrl","https://www.dua3.com")
+    set("scm", "https://github.com/xzel23/cabe.git")
+    set("developerId", "axh")
+    set("developerName", "Axel Howind")
+    set("developerEmail", "axh@dua3.com")
+    set("organization", "dua3")
+    set("organizationUrl", "https://www.dua3.com")
 }
 
 val isReleaseVersion = !version.toString().endsWith("SNAPSHOT")

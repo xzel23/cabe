@@ -1,6 +1,5 @@
 package com.dua3.cabe.processor;
 
-import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
@@ -18,7 +17,6 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -33,6 +31,8 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClassPatcherTest {
@@ -55,10 +55,10 @@ class ClassPatcherTest {
 
         // make sure the build and resource directories exist
         if (!Files.isDirectory(buildDir)) {
-            throw new IllegalStateException("build directory not found: "+buildDir);
+            throw new IllegalStateException("build directory not found: " + buildDir);
         }
         if (!Files.isDirectory(resourceDir)) {
-            throw new IllegalStateException("resource directory not found: "+resourceDir);
+            throw new IllegalStateException("resource directory not found: " + resourceDir);
         }
 
         // create directories
@@ -124,14 +124,15 @@ class ClassPatcherTest {
     }
 
     private static void copyFolder(Path src, Path dest) throws IOException {
-        Files.walk(src)
-                .forEach(source -> copy(source, dest.resolve(src.relativize(source))));
+        try (Stream<Path> files = Files.walk(src)) {
+            files.forEach(source -> copy(source, dest.resolve(src.relativize(source))));
+        }
     }
 
     private static void copy(Path source, Path dest) {
         try {
-            if(Files.isDirectory(source)) {
-                if(!Files.exists(dest)) {
+            if (Files.isDirectory(source)) {
+                if (!Files.exists(dest)) {
                     Files.createDirectories(dest);
                 }
             } else {
@@ -158,27 +159,32 @@ class ClassPatcherTest {
     @ParameterizedTest
     @Order(1)
     @MethodSource("parameterinfoClassFiles")
-    void testCallParameterTypes(Path classFile) throws NotFoundException, ClassNotFoundException, CannotCompileException, IOException {
-        String className = getClassName(classFile);
-        CtClass ctClass = pool.get(className);
-        for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
-            ClassPatcher.ParameterInfo[] parameterTypes = ClassPatcher.getParameterInfo(method);
-            try (Formatter fmtCode = new Formatter()) {
-                for (int i=0; i<parameterTypes.length; i++) {
-                    fmtCode.format("if ((%2$s.getClass()==java.lang.String.class) && !\"%1$s\".equals(%2$s))" +
-                                    "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
-                            parameterTypes[i].name, parameterTypes[i].param);
-                    fmtCode.format("if ((%2$s.getClass()==Object[].class) && !\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))" +
-                                    "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
-                            parameterTypes[i].name, parameterTypes[i].param);
-                }
-                String code = fmtCode.toString();
-                if (!code.isEmpty()) {
-                    method.insertBefore(code);
+    void testCallParameterTypes(Path classFile) {
+        LOG.info("testing getParameterInfo(): " + classFile);
+        // The code does call  getParameterInfo() for all constructors and methods.
+        // Failure is signaled by a thrown exception
+        assertDoesNotThrow(() -> {
+            String className = getClassName(classFile);
+            CtClass ctClass = pool.get(className);
+            for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
+                ClassPatcher.ParameterInfo[] parameterTypes = ClassPatcher.getParameterInfo(method);
+                try (Formatter fmtCode = new Formatter()) {
+                    for (ClassPatcher.ParameterInfo parameterType : parameterTypes) {
+                        fmtCode.format("if ((%2$s.getClass()==java.lang.String.class) && !\"%1$s\".equals(%2$s))" +
+                                        "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
+                                parameterType.name, parameterType.param);
+                        fmtCode.format("if ((%2$s.getClass()==Object[].class) && !\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))" +
+                                        "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
+                                parameterType.name, parameterType.param);
+                    }
+                    String code = fmtCode.toString();
+                    if (!code.isEmpty()) {
+                        method.insertBefore(code);
+                    }
                 }
             }
-        }
-        ctClass.writeFile(testClassesProcessedParameterInfoDir.toString());
+            ctClass.writeFile(testClassesProcessedParameterInfoDir.toString());
+        });
     }
 
     @ParameterizedTest
@@ -189,11 +195,21 @@ class ClassPatcherTest {
             "com.dua3.cabe.processor.test.parameterinfo.Implements",
             "com.dua3.cabe.processor.test.parameterinfo.Interface"
     })
-    void testResultParameterTypes(String className) throws ClassNotFoundException, IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        ClassLoader cl = new URLClassLoader(new URL[]{testClassesProcessedParameterInfoDir.toUri().toURL()});
-        Class<?> cls = cl.loadClass(className);
-        var test = cls.getDeclaredMethod("test");
-        test.invoke(null);
+    void testResultParameterTypes(String className) {
+        LOG.info("testing correct results of getParameterInfo(): " + className);
+        // The code does call  getParameterInfo() for all constructors and methods.
+        // During the previous test step, assertions have been injected into the code that check the parameter values.
+        // Methods are called with string arguments "arg1", "arg2" and so on.
+        // The generated assertions check that the mapping from internal Javassist variables $1, $2, $3, ... to the
+        // parameter names is correct by asserting that the internal variable $n contains the value "argn".
+        // Failure is signaled by a thrown exception.
+        assertDoesNotThrow(() -> {
+            try (var cl = new URLClassLoader(new URL[]{testClassesProcessedParameterInfoDir.toUri().toURL()})) {
+                Class<?> cls = cl.loadClass(className);
+                var test = cls.getDeclaredMethod("test");
+                test.invoke(null);
+            }
+        });
     }
 
     private static String getClassName(Path classFile) {
@@ -204,10 +220,14 @@ class ClassPatcherTest {
 
     @Test
     @Order(3)
-    void processFolder() throws IOException, ClassFileProcessingFailedException {
-        Collection<Path> classPath = List.of();
-        ClassPatcher patcher = new ClassPatcher(classPath);
-        patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
+    void processFolder() {
+        LOG.info("testing processFolder()");
+        // processFolder will report errors by throwing an exception
+        assertDoesNotThrow(() -> {
+            Collection<Path> classPath = List.of();
+            ClassPatcher patcher = new ClassPatcher(classPath);
+            patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
+        });
     }
 
     @ParameterizedTest
@@ -218,10 +238,15 @@ class ClassPatcherTest {
             "com.dua3.cabe.processor.test.instrument.api.notnull.NotNullPackage",
             "com.dua3.cabe.processor.test.instrument.api.nullable.NullablePackage"
     })
-    void testInstrumentation(String className) throws ClassNotFoundException, IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        ClassLoader cl = new URLClassLoader(new URL[]{testClassesProcessedInstrumentedDir.toUri().toURL()});
-        Class<?> cls = cl.loadClass(className);
-        var test = cls.getDeclaredMethod("test");
-        test.invoke(null);
+    void testInstrumentation(String className) {
+        LOG.info("testing correct results of instrumentation: " + className);
+        // Each of the classes contains a test method that will throw an exception when an incorrect result is detected.
+        assertDoesNotThrow(() -> {
+            try (var cl = new URLClassLoader(new URL[]{testClassesProcessedInstrumentedDir.toUri().toURL()})) {
+                Class<?> cls = cl.loadClass(className);
+                var test = cls.getDeclaredMethod("test");
+                test.invoke(null);
+            }
+        });
     }
 }

@@ -71,11 +71,11 @@ Code
 
 ## cabe-annotations
 
-This module defines custom annotations that can be processed by Cabe:
+This module defines custom annotations that are by Cabe:
 
 - `NotNull` serves the same purpose as the `org.jetbrains.annotations.NotNull`, `javax.annotation.Nonnull` and other
   annotations. It can be used to specify that a method parameter must not be null. In contrast to the mentioned existing
-  annotations, it is declared with a `SOURCE` retention policy, i. e. using this annotation does not introduce any
+  annotations, it is declared with a `SOURCE` retention policy, i.e. using this annotation does not introduce any
   runtime dependencies.
 
 - `Nullable` marks a parameter as nullable.
@@ -89,7 +89,7 @@ annotation from the class they are defined in. If no class level annotation is f
 used.
 
 **NOTE:** Use the `package-info.java` to annotate a package with `@NotNullApi`. Look at the
-sub-project `test-cabe-plugin` for examples.
+subproject `test-cabe-plugin` for examples.
 
 ## cabe-gradle-plugin
 

@@ -134,7 +134,7 @@ public class ParameterAnnotations {
         return s;
     }
 
-    private String parameterWithExternalClass(@NotNull Pair<String,Integer> p) {
+    private String parameterWithExternalClass(@NotNull Pair<String, Integer> p) {
         String s = String.valueOf(p);
         System.out.println("parameterWithExternalClass: " + s);
         return s;

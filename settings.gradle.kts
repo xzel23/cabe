@@ -14,5 +14,5 @@ if (System.getProperty("notest") != null) {
     println("skipping plugin tests")
 } else {
     include("test-cabe-gradle-plugin")
-    include ("test-cabe-gradle-plugin-with-modules")
+    include("test-cabe-gradle-plugin-with-modules")
 }
