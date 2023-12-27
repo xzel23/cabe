@@ -79,7 +79,11 @@ public class ParameterAnnotations {
         // record parameter
         check(() -> new MyPair("A", 1).toString(), "MyPair[first=A, second=1]", null);
         check(() -> new MyPair(null, 1).toString(), "MyPair[first=null, second=1]", null);
-        // TODO not null record parameter
+        check(() -> new MyPair("A", null).toString(), "MyPair[first=A, second=null]", null);
+
+        check(() -> new NotNullRecord("A", "B").toString(), "NotNullRecord[a=A, b=B]", null);
+        check(() -> new NotNullRecord(null, "B").toString(), null, "error: parameter 'a' must not be null");
+        check(() -> new NotNullRecord("A", null).toString(), null, "error: parameter 'b' must not be null");
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
