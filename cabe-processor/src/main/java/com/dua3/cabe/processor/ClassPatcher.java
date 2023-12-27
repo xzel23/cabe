@@ -397,7 +397,7 @@ public class ClassPatcher {
 
         CtClass declaringClass = method.getDeclaringClass();
 
-        boolean isInnerClass = declaringClass.getName().matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z][_$a-zA-Z0-9]*(\\$\\d+)?");
+        boolean isInnerClass = declaringClass.getName().matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
         boolean isStaticClass = Modifier.isStatic(declaringClass.getModifiers());
 
         boolean isConstructor = methodInfo.isConstructor();

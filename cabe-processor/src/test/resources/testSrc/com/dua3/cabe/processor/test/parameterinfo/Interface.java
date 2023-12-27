@@ -58,4 +58,29 @@ public interface Interface {
     static void sim (String arg1, Object... args) {
         System.out.format("%s.m(String arg1, Object... args)%n", Interface.class.getSimpleName());
     }
+
+    default void dimInnerclass() {
+        new Interface() {
+            @Override
+            public void m() {
+                System.out.format("%s.m()%n", getClass().getSimpleName());
+            }
+            @Override
+            public void m(String arg1) {
+                System.out.format("%s.m(String arg1)%n", getClass().getSimpleName());
+            }
+            @Override
+            public void m(String arg1, String arg2) {
+                System.out.format("%s.m(String arg1, String arg2)%n", getClass().getSimpleName());
+            }
+            @Override
+            public void m(String arg1, String arg2, String arg3) {
+                System.out.format("%s.m(String arg1, String arg2, Stringg arg3)%n", getClass().getSimpleName());
+            }
+            @Override
+            public void m(String arg1, Object... args) {
+                System.out.format("%s.m(String arg1, Object... args)%n", getClass().getSimpleName());
+            }
+        };
+    }
 }
