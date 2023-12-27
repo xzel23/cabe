@@ -27,7 +27,12 @@ read -p "Publish plugin? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-  ./gradlew cabe-gradle-plugin:publishPlugins && echo "plugin published"
+  echo "publishing gradle-processor JAR"
+  ./gradlew cabe-processor:publish \
+  && echo "publishing plugin" \
+  && ./gradlew cabe-gradle-plugin:publishPlugins \
+  && echo "plugin published" \
+|| { echo "ERROR" ; exit 1 ; }
 fi
 
 echo "to publish the library, run ./gradlew publish"
