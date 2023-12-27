@@ -29,12 +29,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +58,24 @@ public class ClassPatcher {
      * @throws ClassFileProcessingFailedException if processing of a class file fails
      */
     public static void main(String[] args) throws IOException, ClassFileProcessingFailedException {
+        Logger rootLogger = Logger.getLogger("");
+        Handler consoleHandler = null;
+
+        for (Handler handler : rootLogger.getHandlers()) {
+            if (handler instanceof ConsoleHandler) {
+                consoleHandler = handler;
+                break;
+            }
+        }
+
+        if (consoleHandler == null) {
+            consoleHandler = new ConsoleHandler();
+            rootLogger.addHandler(consoleHandler);
+        }
+
+        consoleHandler.setLevel(Level.FINEST);
+        LOG.setLevel(Level.ALL);
+
         ArgumentsParserBuilder builder = ArgumentsParser.builder()
                 .name("cabe")
                 .description("Add null checks in Java class file byte code.")
@@ -332,7 +354,7 @@ public class ClassPatcher {
     /**
      * Class representing information about a method parameter.
      */
-    private static class ParameterInfo {
+    public static class ParameterInfo {
         final String param;
         final String name;
         final String type;
@@ -364,7 +386,7 @@ public class ClassPatcher {
      * @return an array of ParameterInfo objects representing the parameters of the method
      * @throws ClassNotFoundException if the method parameter types cannot be found
      */
-    private static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException, NotFoundException {
+    public static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException, NotFoundException {
         String methodName = method.getLongName();
         LOG.fine("collecting parameter information for " + methodName);
 
@@ -374,12 +396,16 @@ public class ClassPatcher {
         }
 
         CtClass declaringClass = method.getDeclaringClass();
-        boolean isAnonymousClass = declaringClass.getName().matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$\\d+");
+
+        boolean isInnerClass = declaringClass.getName().matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z][_$a-zA-Z0-9]*(\\$\\d+)?");
+        boolean isStaticClass = Modifier.isStatic(declaringClass.getModifiers());
+
         boolean isConstructor = methodInfo.isConstructor();
         boolean isMethod = methodInfo.isMethod();
         boolean isInterface = declaringClass.isInterface();
+        boolean isAbstract = Modifier.isAbstract(method.getModifiers());
 
-        if (!isConstructor && !isMethod || isConstructor && isInterface) {
+        if (!isConstructor && !isMethod || isConstructor && isInterface || isAbstract) {
             return EMPTY_PARAMETER_INFO;
         }
 
@@ -387,16 +413,14 @@ public class ClassPatcher {
         Object[][] parameterAnnotations = method.getParameterAnnotations();
         String[] types = getParameterTypes(method);
 
-        // determine actual number of method parameters
-        boolean isParentTypePassed = isConstructor
-                && !Modifier.isStatic(declaringClass.getModifiers())
-                && (!declaringClass.getSuperclass().getName().equals("java.lang.Object") || isAnonymousClass);
+        // determine the actual number of method parameters
+        boolean isParentTypePassed = isConstructor && isInnerClass && !isStaticClass;
         boolean isEnumConstructor = declaringClass.isEnum() && isConstructor;
 
         int parameterCount = types.length;
         int typeOffset = 0;
         if (isParentTypePassed) {
-            parameterCount--;
+            parameterCount--; // this is passed implicitly
         }
         if (isEnumConstructor) {
             // enum constructors are called with two additional synthetic arguments (name ant ordinal)
@@ -411,7 +435,10 @@ public class ClassPatcher {
         }
 
         // determine the number of synthetic arguments (i.e. 'this' of parent classes for inner classes)
-        CodeAttribute codeAttribute = Objects.requireNonNull(methodInfo.getCodeAttribute(), "could not get code attribute");
+        CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
+        if (codeAttribute == null) {
+            throw new IllegalStateException("code attribute is null");
+        }
         AttributeInfo attribute = codeAttribute.getAttribute(LocalVariableAttribute.tag);
         if (!(attribute instanceof LocalVariableAttribute)) {
             throw new IllegalStateException("could not get local variable info");
@@ -440,6 +467,9 @@ public class ClassPatcher {
             String param = "$" + (firstParameterNumber + i);
             parameterInfo[i] = new ParameterInfo(param, name, type, isNotNullAnnotated, isNullableAnnotated);
         }
+
+        LOG.finest(() -> methodName + ": " + Arrays.toString(parameterInfo));
+
         return parameterInfo;
     }
 

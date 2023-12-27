@@ -33,13 +33,21 @@ repositories {
 
 dependencies {
     implementation(project(":cabe-annotations"))
-    implementation("org.javassist:javassist:3.30.0-GA")
+    implementation("org.javassist:javassist:3.30.2-GA")
     implementation("com.dua3.utility:utility:12.0.0-beta10")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+
+    runtimeOnly("org.apache.logging.log4j:log4j-core:2.22.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
 }
 
 java {
+    sourceCompatibility = JavaVersion.VERSION_17;
+    targetCompatibility = JavaVersion.VERSION_17;
+
     application {
         mainClass.set("com.dua3.cabe.processor.ClassPatcher")
     }

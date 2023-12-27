@@ -6,13 +6,13 @@
 
 # run a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
-&& ./gradlew -Dnotest clean build publishToMavenLocal \
+&& ./gradlew -Dnotest clean build test publishToMavenLocal \
   && echo "build successful" \
-&& ./gradlew test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} \
-&& ./gradlew test-cabe-gradle-plugin:clean ${FLAGS} \
+&& ./gradlew --no-daemon test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} \
+&& ./gradlew --no-daemon test-cabe-gradle-plugin:clean ${FLAGS} \
   && echo "non-modular test successful" \
-&& ./gradlew test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} \
-&& ./gradlew test-cabe-gradle-plugin-with-modules:clean ${FLAGS} \
+&& ./gradlew --no-daemon test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} \
+&& ./gradlew --no-daemon test-cabe-gradle-plugin-with-modules:clean ${FLAGS} \
   && echo "modular test successful" \
 && ./gradlew cabe-processor:shadowJar \
 && for D in regressionstest/* ; do \
