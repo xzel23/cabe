@@ -10,8 +10,9 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFiles;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
@@ -46,7 +47,7 @@ public abstract class CabeTask extends DefaultTask {
      *
      * @return The input directory for the Cabe task.
      */
-    @InputFiles
+    @InputDirectory
     public DirectoryProperty getInputDirectory() {
         return inputDirectory;
     }
@@ -56,7 +57,7 @@ public abstract class CabeTask extends DefaultTask {
      *
      * @return The output directory for the Cabe task.
      */
-    @OutputFiles
+    @OutputDirectory
     public DirectoryProperty getOutputDirectory() {
         return outputDirectory;
     }
