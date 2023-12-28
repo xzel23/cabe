@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -227,8 +228,23 @@ public class ClassPatcher {
     private void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
         LOG.fine(() -> "Instrumenting class file: " + classFile);
 
+        Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
+
+        String className = getClassName(classFile);
+        LOG.fine(() -> "Class " + className);
+
+        if (!className.matches("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$")) {
+            if (!className.equals("module-info") && !className.matches(".*\\.package-info")) {
+                LOG.warning(() -> "unusual class file name: " + classFile.getFileName() + " [" + classFile + "]");
+            }
+
+            Path target = outputFolder.resolve(inputFolder.relativize(classFile));
+            LOG.fine(() -> "copying unchanged: " + classFile + " -> " + target);
+            Files.copy(classFile, target, StandardCopyOption.REPLACE_EXISTING);
+            return;
+        }
+
         try {
-            String className = getClassName(classFile);
             CtClass ctClass = pool.get(className);
 
             try {
