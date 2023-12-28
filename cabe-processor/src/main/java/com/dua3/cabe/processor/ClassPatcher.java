@@ -395,9 +395,11 @@ public class ClassPatcher {
         }
 
         CtClass declaringClass = method.getDeclaringClass();
+        String declaringClassName = declaringClass.getName();
 
-        boolean isInnerClass = declaringClass.getName().matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
+        boolean isInnerClass = declaringClassName.matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
         boolean isStaticClass = Modifier.isStatic(declaringClass.getModifiers());
+        boolean isAnonymousInnerClass = isInnerClass && !isStaticClass && declaringClassName.matches(".*\\$\\d+");
 
         boolean isConstructor = methodInfo.isConstructor();
         boolean isMethod = methodInfo.isMethod();
@@ -444,18 +446,24 @@ public class ClassPatcher {
         }
 
         LocalVariableAttribute lva = (LocalVariableAttribute) attribute;
-        ConstPool constPool = methodInfo.getConstPool();
 
+        int lvaLength = lva.tableLength();
         int syntheticArgsCount = 0;
-        while (PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(constPool.getUtf8Info(lva.nameIndex(syntheticArgsCount))).matches()) {
+        while (true) {
+            if (!(syntheticArgsCount< lvaLength && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(lva.variableName(syntheticArgsCount)).matches()))
+                break;
             syntheticArgsCount++;
+        }
+        if (isConstructor && isAnonymousInnerClass && syntheticArgsCount == lvaLength) {
+            return EMPTY_PARAMETER_INFO;
         }
 
         // create the return array
         ParameterInfo[] parameterInfo = new ParameterInfo[parameterCount];
 
         for (int i = 0; i < parameterCount; i++) {
-            String name = constPool.getUtf8Info(lva.nameIndex(i + syntheticArgsCount));
+            int idxLva = syntheticArgsCount + i;
+            String name = idxLva < lvaLength ? lva.variableName(idxLva) : "[parameter " + (i + 1) + "]";
             boolean isNotNullAnnotated = false;
             boolean isNullableAnnotated = false;
             for (Object annotation : parameterAnnotations[i]) {

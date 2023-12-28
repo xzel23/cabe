@@ -35,6 +35,8 @@ public class Base {
         sm("arg1", "arg2");
         sm("arg1", "arg2", "arg3");
         sm("arg1", new Object[]{"args"});
+
+        smAnonymousInnerClass("arg1", "arg2");
     }
 
     public void testStaticInner() {
@@ -179,6 +181,18 @@ public class Base {
 
     public static void sm(String arg1, Object... args) {
         System.out.format("%s.sm(String arg1, Object... args)%n", Base.class.getSimpleName());
+    }
+
+    public static void smAnonymousInnerClass(String arg1, String arg2) {
+        System.out.format("%s.smAnonymousInnerClass(String arg1, String arg2)%n", Base.class.getSimpleName());
+        new Runnable() {
+            {
+                System.out.format("%s.sm()%n", getClass().getSimpleName());
+            }
+            public void run() {
+                System.out.format("%s.run() - arg1 = '%s', arg2 = '%s'%n", getClass().getSimpleName(), arg1, arg2);
+            }
+        }.run();
     }
 
     public static class StaticInner {
