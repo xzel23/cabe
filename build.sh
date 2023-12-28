@@ -15,8 +15,8 @@ cd "`dirname $0`" \
 && ./gradlew --no-daemon test-cabe-gradle-plugin-with-modules:clean ${FLAGS} \
   && echo "modular test successful" \
 && ./gradlew cabe-processor:shadowJar \
-&& for D in regressionstest/* ; do \
-  echo "Regressionstest: ${D}" ;\
+&& for D in regressiontest/* ; do \
+  echo "test regressions: ${D}" ;\
   java -jar cabe-processor/build/libs/cabe-processor-all.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
 done \
 && ./gradlew publishToMavenLocal \
