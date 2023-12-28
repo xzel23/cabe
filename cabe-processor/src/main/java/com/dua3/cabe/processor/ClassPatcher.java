@@ -19,7 +19,6 @@ import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AttributeInfo;
 import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.ConstPool;
 import javassist.bytecode.Descriptor;
 import javassist.bytecode.LocalVariableAttribute;
 import javassist.bytecode.MethodInfo;
@@ -50,6 +49,9 @@ import java.util.stream.Stream;
  * parameter annotations, and modifies the class file by injecting the necessary code.
  */
 public class ClassPatcher {
+
+    private static final Pattern PATTERN_FQCN = Pattern.compile("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$");
+    private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
 
     /**
      * This method is the entry point of the application.
@@ -233,8 +235,8 @@ public class ClassPatcher {
         String className = getClassName(classFile);
         LOG.fine(() -> "Class " + className);
 
-        if (!className.matches("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$")) {
-            if (!className.equals("module-info") && !className.matches(".*\\.package-info")) {
+        if (!PATTERN_FQCN.matcher(className).matches()) {
+            if (!className.equals("module-info") && !className.endsWith(".package-info")) {
                 LOG.warning(() -> "unusual class file name: " + classFile.getFileName() + " [" + classFile + "]");
             }
 
@@ -352,7 +354,7 @@ public class ClassPatcher {
             // modify class
             if (isChanged) {
                 String src = assertions.toString();
-                LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n  " + src.replaceAll("\n", "\n  "));
+                LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n" + src.indent(2));
                 method.insertBefore(src);
             }
 
@@ -400,6 +402,7 @@ public class ClassPatcher {
      * @param method the method to retrieve parameter information for
      * @return an array of ParameterInfo objects representing the parameters of the method
      * @throws ClassNotFoundException if the method parameter types cannot be found
+     * @throws NotFoundException if the method parameter types cannot be found
      */
     public static ParameterInfo[] getParameterInfo(CtBehavior method) throws ClassNotFoundException, NotFoundException {
         String methodName = method.getLongName();
@@ -413,7 +416,7 @@ public class ClassPatcher {
         CtClass declaringClass = method.getDeclaringClass();
         String declaringClassName = declaringClass.getName();
 
-        boolean isInnerClass = declaringClassName.matches("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
+        boolean isInnerClass = PATTERN_INNER_CLASS_NAME.matcher(declaringClassName).matches();
         boolean isStaticClass = Modifier.isStatic(declaringClass.getModifiers());
         boolean isAnonymousInnerClass = isInnerClass && !isStaticClass && declaringClassName.matches(".*\\$\\d+");
 
@@ -457,11 +460,9 @@ public class ClassPatcher {
             throw new IllegalStateException("code attribute is null");
         }
         AttributeInfo attribute = codeAttribute.getAttribute(LocalVariableAttribute.tag);
-        if (!(attribute instanceof LocalVariableAttribute)) {
+        if (!(attribute instanceof LocalVariableAttribute lva)) {
             throw new IllegalStateException("could not get local variable info");
         }
-
-        LocalVariableAttribute lva = (LocalVariableAttribute) attribute;
 
         int lvaLength = lva.tableLength();
         int syntheticArgsCount = 0;
