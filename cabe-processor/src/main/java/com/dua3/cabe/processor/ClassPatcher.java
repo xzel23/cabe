@@ -225,7 +225,7 @@ public class ClassPatcher {
      * @throws IOException                        if an I/O error occurs
      */
     private void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
-        LOG.info(() -> "Instrumenting class file: " + classFile);
+        LOG.fine(() -> "Instrumenting class file: " + classFile);
 
         try {
             String className = getClassName(classFile);
@@ -241,7 +241,7 @@ public class ClassPatcher {
                     isNotNullApi = isAnnotated(pkg, NotNullApi.class);
                     isNullableApi = isAnnotated(pkg, NullableApi.class);
                 } catch (NotFoundException e) {
-                    LOG.warning("no package-info: " + pkgName);
+                    LOG.fine(() -> "no package-info: " + pkgName);
                 }
                 LOG.fine("package " + pkgName + " annotations: "
                         + (isNotNullApi ? "@" + NotNullApi.class.getSimpleName() : "")
