@@ -87,27 +87,6 @@ publishing {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-
-        }
-    }
-
-    repositories {
-        // Sonatype OSSRH
-        maven {
-            val releaseRepo = URI("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotRepo = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            url = if (isReleaseVersion) releaseRepo else snapshotRepo
-            credentials {
-                username = providers.environmentVariable("ossrhUsername").forUseAtConfigurationTime().orNull
-                password = providers.environmentVariable("ossrhPassword").forUseAtConfigurationTime().orNull
-            }
-        }
-    }
-}
-
 signing {
     isRequired = isReleaseVersion && gradle.taskGraph.hasTask("publish")
     sign(publishing.publications["maven"])
