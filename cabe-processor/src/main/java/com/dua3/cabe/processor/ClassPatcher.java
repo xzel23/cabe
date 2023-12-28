@@ -177,7 +177,6 @@ public class ClassPatcher {
                 classFiles = paths
                         .filter(Files::isRegularFile)
                         .filter(f -> f.getFileName().toString().endsWith(".class"))
-                        .filter(f -> !f.getFileName().toString().equals("module-info.class"))
                         .collect(Collectors.toList());
             }
 

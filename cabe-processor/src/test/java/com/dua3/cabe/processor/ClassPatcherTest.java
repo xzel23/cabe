@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClassPatcherTest {
@@ -77,6 +78,7 @@ class ClassPatcherTest {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         List<String> options = List.of(
                 "-d", testClassesUnprocessedDir.toString(),
+                "-p", resourceDir.resolve("testLib").toString(),
                 "-g"
         );
         JavaCompiler.CompilationTask task = compiler.getTask(
@@ -115,7 +117,6 @@ class ClassPatcherTest {
             classFiles = paths
                     .filter(Files::isRegularFile)
                     .filter(f -> f.getFileName().toString().endsWith(".class"))
-                    .filter(f -> !f.getFileName().toString().equals("module-info.class"))
                     .map(f -> testClassesUnprocessedDir.relativize(f))
                     .collect(Collectors.toList());
         }
@@ -248,5 +249,11 @@ class ClassPatcherTest {
                 test.invoke(null);
             }
         });
+    }
+
+    @Test
+    @Order(5)
+    void testInstrumentationModuleInfo() {
+        assertTrue(Files.isRegularFile(testClassesProcessedInstrumentedDir.resolve("module-info.class")), "module-info.class is missing");
     }
 }
