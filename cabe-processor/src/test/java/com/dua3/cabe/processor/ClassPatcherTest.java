@@ -79,6 +79,7 @@ class ClassPatcherTest {
         List<String> options = List.of(
                 "-d", testClassesUnprocessedDir.toString(),
                 "-p", resourceDir.resolve("testLib").toString(),
+                "-proc:full",
                 "-g"
         );
         JavaCompiler.CompilationTask task = compiler.getTask(
