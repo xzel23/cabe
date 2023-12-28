@@ -449,9 +449,7 @@ public class ClassPatcher {
 
         int lvaLength = lva.tableLength();
         int syntheticArgsCount = 0;
-        while (true) {
-            if (!(syntheticArgsCount< lvaLength && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(lva.variableName(syntheticArgsCount)).matches()))
-                break;
+        while ((syntheticArgsCount < lvaLength && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(lva.variableName(syntheticArgsCount)).matches())) {
             syntheticArgsCount++;
         }
         if (isConstructor && isAnonymousInnerClass && syntheticArgsCount == lvaLength) {
