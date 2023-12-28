@@ -24,7 +24,7 @@ object Meta {
 }
 /////////////////////////////////////////////////////////////////////////////
 
-project.version = rootProject.extra["annotations_version"] as String
+project.version = rootProject.extra["processor_version"] as String
 val isReleaseVersion = !project.version.toString().endsWith("SNAPSHOT")
 
 repositories {
