@@ -51,6 +51,7 @@ public class ClassPatcher {
 
     private static final Pattern PATTERN_FQCN = Pattern.compile("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$");
     private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
+    private static final Pattern PATTERN_ANONYMOUS_CLASS_SUFFIX = Pattern.compile(".*\\$\\d+");
 
     /**
      * This method is the entry point of the application.
@@ -430,7 +431,7 @@ public class ClassPatcher {
 
         boolean isInnerClass = PATTERN_INNER_CLASS_NAME.matcher(declaringClassName).matches();
         boolean isStaticClass = Modifier.isStatic(declaringClass.getModifiers());
-        boolean isAnonymousInnerClass = isInnerClass && !isStaticClass && declaringClassName.matches(".*\\$\\d+");
+        boolean isAnonymousInnerClass = isInnerClass && !isStaticClass && PATTERN_ANONYMOUS_CLASS_SUFFIX.matcher(declaringClassName).matches();
 
         boolean isConstructor = methodInfo.isConstructor();
         boolean isMethod = methodInfo.isMethod();
