@@ -250,29 +250,7 @@ public class ClassPatcher {
             CtClass ctClass = pool.get(className);
 
             try {
-                String pkgName = ctClass.getPackageName();
-
-                boolean isNotNullApi = false;
-                boolean isNullableApi = false;
-                try {
-                    CtClass pkg = pool.get(pkgName + ".package-info");
-                    isNotNullApi = isAnnotated(pkg, NotNullApi.class);
-                    isNullableApi = isAnnotated(pkg, NullableApi.class);
-                } catch (NotFoundException e) {
-                    LOG.fine(() -> "no package-info: " + pkgName);
-                }
-                LOG.fine("package " + pkgName + " annotations: "
-                        + (isNotNullApi ? "@" + NotNullApi.class.getSimpleName() : "")
-                        + (isNullableApi ? "@" + NullableApi.class.getSimpleName() : "")
-                );
-                if (isNotNullApi && isNullableApi) {
-                    throw new IllegalStateException(
-                            "package " + pkgName + " is annotated with both "
-                                    + NotNullApi.class.getSimpleName()
-                                    + " and "
-                                    + NullableApi.class.getSimpleName()
-                    );
-                }
+                boolean isNotNullApi = isNotNullApi(ctClass);
 
                 for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
                     instrumentMethod(classFile, className, method, isNotNullApi);
@@ -295,6 +273,41 @@ public class ClassPatcher {
             LOG.log(Level.WARNING, "instrumenting class file failed: " + classFile, e);
             throw new ClassFileProcessingFailedException("Failed to modify class file " + classFile, e);
         }
+    }
+
+    /**
+     * Checks if a given {@link CtClass} is contained in a package annotated with the {@link NotNullApi} annotation.
+     *
+     * @param ctClass the {@link CtClass} to check for annotation
+     * @return true if the {@link CtClass} is contained in a package annotated with the {@link NotNullApi} annotation, false otherwise
+     * @throws ClassNotFoundException if the specified annotation class cannot be found
+     * @throws IllegalStateException if the package is annotated with both {@link NotNullApi} and {@link NullableApi}
+     */
+    private boolean isNotNullApi(CtClass ctClass) throws ClassNotFoundException {
+        String pkgName = ctClass.getPackageName();
+
+        boolean isNotNullApi = false;
+        boolean isNullableApi = false;
+        try {
+            CtClass pkg = pool.get(pkgName + ".package-info");
+            isNotNullApi = isAnnotated(pkg, NotNullApi.class);
+            isNullableApi = isAnnotated(pkg, NullableApi.class);
+        } catch (NotFoundException e) {
+            LOG.fine(() -> "no package-info: " + pkgName);
+        }
+        LOG.fine("package " + pkgName + " annotations: "
+                + (isNotNullApi ? "@" + NotNullApi.class.getSimpleName() : "")
+                + (isNullableApi ? "@" + NullableApi.class.getSimpleName() : "")
+        );
+        if (isNotNullApi && isNullableApi) {
+            throw new IllegalStateException(
+                    "package " + pkgName + " is annotated with both "
+                            + NotNullApi.class.getSimpleName()
+                            + " and "
+                            + NullableApi.class.getSimpleName()
+            );
+        }
+        return isNotNullApi;
     }
 
     /**
@@ -459,8 +472,7 @@ public class ClassPatcher {
         if (codeAttribute == null) {
             throw new IllegalStateException("code attribute is null");
         }
-        AttributeInfo attribute = codeAttribute.getAttribute(LocalVariableAttribute.tag);
-        if (!(attribute instanceof LocalVariableAttribute lva)) {
+        if (!(codeAttribute.getAttribute(LocalVariableAttribute.tag) instanceof LocalVariableAttribute lva)) {
             throw new IllegalStateException("could not get local variable info");
         }
 
