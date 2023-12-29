@@ -17,7 +17,6 @@ import javassist.CtBehavior;
 import javassist.CtClass;
 import javassist.Modifier;
 import javassist.NotFoundException;
-import javassist.bytecode.AttributeInfo;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.Descriptor;
 import javassist.bytecode.LocalVariableAttribute;
@@ -478,10 +477,11 @@ public class ClassPatcher {
 
         int lvaLength = lva.tableLength();
         int syntheticArgsCount = 0;
-        while ((syntheticArgsCount < lvaLength && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(lva.variableName(syntheticArgsCount)).matches())) {
+        while ((syntheticArgsCount < lvaLength && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(getParameterName(lva, syntheticArgsCount, 0)).matches())) {
             syntheticArgsCount++;
         }
-        if (isConstructor && isAnonymousInnerClass && syntheticArgsCount == lvaLength) {
+
+        if (isConstructor && isAnonymousInnerClass && syntheticArgsCount >= lvaLength) {
             return EMPTY_PARAMETER_INFO;
         }
 
@@ -489,8 +489,7 @@ public class ClassPatcher {
         ParameterInfo[] parameterInfo = new ParameterInfo[parameterCount];
 
         for (int i = 0; i < parameterCount; i++) {
-            int idxLva = syntheticArgsCount + i;
-            String name = idxLva < lvaLength ? lva.variableName(idxLva) : "[parameter " + (i + 1) + "]";
+            String name = getParameterName(lva, syntheticArgsCount, i);
             boolean isNotNullAnnotated = false;
             boolean isNullableAnnotated = false;
             for (Object annotation : parameterAnnotations[i]) {
@@ -505,6 +504,19 @@ public class ClassPatcher {
         LOG.finest(() -> methodName + ": " + Arrays.toString(parameterInfo));
 
         return parameterInfo;
+    }
+
+    private static String getParameterName(LocalVariableAttribute lva, int syntheticArgsCount, int i) {
+        int idx = syntheticArgsCount + i;
+        for (int j = 0; j < lva.tableLength(); j++) {
+            if (lva.index(j) == idx) {
+                return lva.variableName(j);
+            }
+        }
+        if (idx < lva.tableLength()) {
+            return lva.variableName(idx);
+        }
+        return "[parameter " + (i + 1) + "]";
     }
 
     /**
