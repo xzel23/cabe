@@ -174,10 +174,10 @@ class ClassPatcherTest {
                     for (ClassPatcher.ParameterInfo parameterType : parameterTypes) {
                         fmtCode.format("if ((%2$s.getClass()==java.lang.String.class) && !\"%1$s\".equals(%2$s))" +
                                         "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
-                                parameterType.name, parameterType.param);
+                                parameterType.name(), parameterType.param());
                         fmtCode.format("if ((%2$s.getClass()==Object[].class) && !\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))" +
                                         "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
-                                parameterType.name, parameterType.param);
+                                parameterType.name(), parameterType.param());
                     }
                     String code = fmtCode.toString();
                     if (!code.isEmpty()) {

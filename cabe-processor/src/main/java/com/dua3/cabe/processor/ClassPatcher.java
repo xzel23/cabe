@@ -385,20 +385,7 @@ public class ClassPatcher {
     /**
      * Class representing information about a method parameter.
      */
-    public static class ParameterInfo {
-        final String param;
-        final String name;
-        final String type;
-        final boolean isNotNullAnnotated;
-        final boolean isNullableAnnotated;
-
-        ParameterInfo(String param, String name, String type, boolean isNotNullAnnotated, boolean isNullableAnnotated) {
-            this.name = name;
-            this.param = param;
-            this.type = type;
-            this.isNotNullAnnotated = isNotNullAnnotated;
-            this.isNullableAnnotated = isNullableAnnotated;
-        }
+    public record ParameterInfo(String param, String name, String type, boolean isNotNullAnnotated, boolean isNullableAnnotated) {
 
         @Override
         public String toString() {
