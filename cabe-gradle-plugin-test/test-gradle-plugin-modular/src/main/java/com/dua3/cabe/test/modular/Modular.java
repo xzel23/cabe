@@ -41,8 +41,9 @@ public class Modular {
             assertionMessage = "error: " + ae.getMessage();
         }
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
-            System.err.format("expected: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
-            throw new IllegalStateException();
+            String msg = String.format("expected: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
         }
     }
 
