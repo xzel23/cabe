@@ -263,12 +263,12 @@ public class ClassPatcher {
 
                 LOG.fine("instrumenting class file successful: " + classFile);
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
+                throw new ClassFileProcessingFailedException("Failed to modify class file " + classFile, e);
             } finally {
                 ctClass.detach();
             }
         } catch (IOException e) {
-            throw e;
+            throw new IOException("Failed to modify class file " + classFile, e);
         } catch (Exception e) {
             LOG.log(Level.WARNING, "instrumenting class file failed: " + classFile, e);
             throw new ClassFileProcessingFailedException("Failed to modify class file " + classFile, e);
@@ -347,6 +347,7 @@ public class ClassPatcher {
                 if (pi.isNotNullAnnotated && pi.isNullableAnnotated) {
                     throw new IllegalStateException(
                             "parameter " + pi.name + " is annotated with both @NotNull and @Nullable"
+                                    + " in method " + methodName
                     );
                 }
 
@@ -423,7 +424,7 @@ public class ClassPatcher {
 
         MethodInfo methodInfo = method.getMethodInfo();
         if (methodInfo == null) {
-            throw new IllegalStateException("could not get method info");
+            throw new IllegalStateException("could not get method info for method " + methodName);
         }
 
         CtClass declaringClass = method.getDeclaringClass();
@@ -470,10 +471,10 @@ public class ClassPatcher {
         // determine the number of synthetic arguments (i.e. 'this' of parent classes for inner classes)
         CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
         if (codeAttribute == null) {
-            throw new IllegalStateException("code attribute is null");
+            throw new IllegalStateException("code attribute is null for method " + methodName);
         }
         if (!(codeAttribute.getAttribute(LocalVariableAttribute.tag) instanceof LocalVariableAttribute lva)) {
-            throw new IllegalStateException("could not get local variable info");
+            throw new IllegalStateException("could not get local variable info for method " + methodName);
         }
 
         int lvaLength = lva.tableLength();
@@ -532,13 +533,13 @@ public class ClassPatcher {
         String paramsDesc = Descriptor.getParamDescriptor(descriptor);
 
         if (paramsDesc.length() < 2) {
-            throw new IllegalStateException("parameter descriptor length expected to be at least 2: \"" + paramsDesc + "\"");
+            throw new IllegalStateException("parameter descriptor length expected to be at least 2: \"" + paramsDesc + "\" for method " + method.getLongName());
         }
         if (paramsDesc.charAt(0) != '(') {
-            throw new IllegalStateException("'(' expected at the beginning of parameter descriptor: \"" + paramsDesc + "\"");
+            throw new IllegalStateException("'(' expected at the beginning of parameter descriptor: \"" + paramsDesc + "\" for method " + method.getLongName());
         }
         if (paramsDesc.charAt(paramsDesc.length() - 1) != ')') {
-            throw new IllegalStateException("'(' expected at the end of parameter descriptor: ': \"" + paramsDesc + "\"");
+            throw new IllegalStateException("'(' expected at the end of parameter descriptor: ': \"" + paramsDesc + "\" for method " + method.getLongName());
         }
 
         ArrayList<String> params = new ArrayList<>();
