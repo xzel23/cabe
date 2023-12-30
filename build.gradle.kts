@@ -2,8 +2,8 @@ plugins {
     id("java")
 }
 
-extra["plugin_version"] = "2.0-rc11"
-extra["processor_version"] = "2.0.4"
+extra["plugin_version"] = "2.0-rc12"
+extra["processor_version"] = "2.0.5"
 extra["annotations_version"] = "2.0"
 
 subprojects {
