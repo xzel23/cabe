@@ -20,8 +20,8 @@ public class ParameterAnnotations {
         check(() -> parameterWithExternalClass(null), null, "error: parameter 'p' must not be null");
 
         // test with generic parameters
-        check(() -> new C("hello world!").toString(), "hello world!", null);
-        check(() -> new C(null).toString(), null, "error: parameter 't' must not be null");
+        check(() -> new C<>("hello world!").toString(), "hello world!", null);
+        check(() -> new C<>(null).toString(), null, "error: parameter 't' must not be null");
 
         check(() -> genericArguments("hello", "world", obj -> " " + obj + "!"), "hello world!", null);
         check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "error: parameter 'prefix' must not be null");
@@ -77,9 +77,8 @@ public class ParameterAnnotations {
         check(() -> secondArgumentNullableAnnotated(null, null), "null null", null);
 
         // record parameter
-        check(() -> new MyPair("A", 1).toString(), "MyPair[first=A, second=1]", null);
-        check(() -> new MyPair(null, 1).toString(), "MyPair[first=null, second=1]", null);
-        // TODO not null record parameter
+        check(() -> new MyPair<>("A", 1).toString(), "MyPair[first=A, second=1]", null);
+        check(() -> new MyPair<>(null, 1).toString(), "MyPair[first=null, second=1]", null);
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
@@ -226,7 +225,7 @@ public class ParameterAnnotations {
     }
 
     public String genericArguments(@NotNull String prefix, @NotNull String suffix, @NotNull Function<C<? extends Object>, String> func) {
-        return prefix + func.apply(new C(suffix));
+        return prefix + func.apply(new C<>(suffix));
     }
 
 }

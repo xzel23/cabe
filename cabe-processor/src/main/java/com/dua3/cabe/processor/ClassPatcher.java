@@ -338,8 +338,8 @@ public class ClassPatcher {
         try (Formatter assertions = new Formatter()) {
             ParameterInfo[] parameterInfo = getParameterInfo(method);
             for (ParameterInfo pi : parameterInfo) {
-                // do not add assertions for primitive types
-                if (PRIMITIVES.contains(pi.type)) {
+                // do not add assertions for primitive types and constructors of anonymous classes
+                if (PRIMITIVES.contains(pi.type) || (pi.isConstructor && pi.isClassAnonymous)) {
                     continue;
                 }
 
@@ -385,7 +385,10 @@ public class ClassPatcher {
     /**
      * Class representing information about a method parameter.
      */
-    public record ParameterInfo(String param, String name, String type, boolean isNotNullAnnotated, boolean isNullableAnnotated) {
+    public record ParameterInfo(String param, String name, String type,
+                                boolean isNotNullAnnotated, boolean isNullableAnnotated,
+                                boolean isClassStatic, boolean isClassInner, boolean isClassAnonymous, boolean isMethod,
+                                boolean isConstructor, boolean isInterface, boolean isAbstract) {
 
         @Override
         public String toString() {
@@ -487,7 +490,9 @@ public class ClassPatcher {
             }
             String type = types[typeOffset + i];
             String param = "$" + (firstParameterNumber + i);
-            parameterInfo[i] = new ParameterInfo(param, name, type, isNotNullAnnotated, isNullableAnnotated);
+            parameterInfo[i] = new ParameterInfo(param, name, type, isNotNullAnnotated, isNullableAnnotated,
+                    isStaticClass, isInnerClass, isAnonymousInnerClass,
+                    isMethod, isConstructor, isInterface, isAbstract);
         }
 
         LOG.finest(() -> methodName + ": " + Arrays.toString(parameterInfo));

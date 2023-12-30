@@ -45,8 +45,8 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17;
-    targetCompatibility = JavaVersion.VERSION_17;
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     application {
         mainClass.set("com.dua3.cabe.processor.ClassPatcher")
@@ -54,7 +54,7 @@ java {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set("${project.name}")
+    archiveBaseName.set(project.name)
     archiveVersion.set("")
     mergeServiceFiles()
 }
@@ -138,7 +138,7 @@ configurations.named("spotbugs").configure {
     }
 }
 
-tasks.withType<com.github.spotbugs.snom.SpotBugsTask>() {
+tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
     reports.create("html") {
         required.set(true)
         outputLocation = project.layout.buildDirectory.file("reports/spotbugs.html").get().asFile
@@ -151,10 +151,10 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask>() {
 }
 
 // === PUBLISHING ===
-tasks.withType<PublishToMavenRepository>() {
+tasks.withType<PublishToMavenRepository> {
     dependsOn(tasks.publishToMavenLocal)
 }
 
-tasks.withType<Jar>() {
+tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
