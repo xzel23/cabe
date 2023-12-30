@@ -52,7 +52,12 @@ public class NotNullPackage {
         check(() -> secondArgumentNullableAnnotated(null, null), null, "error: parameter 'arg1' must not be null");
 
         // record parameter
+        check(() -> new Pair("A", 1).toString(), "Pair[first=A, second=1]", null);
+        check(() -> new Pair(null, 1).toString(), null, "error: parameter 'first' must not be null");
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
+        check(() -> new NullablePair("A", 1).toString(), "NullablePair[first=A, second=1]", null);
+        check(() -> new NullablePair("A", null).toString(), "NullablePair[first=A, second=null]", null);
+        check(() -> new NullablePair(null, 1).toString(), null, "error: parameter 'first' must not be null");
 
         // primitive argument
         check(() -> primitiveArgument(1), "hello 1", null);
@@ -152,6 +157,12 @@ public class NotNullPackage {
     public record Pair<T1, T2>(T1 first, T2 second) {
         public static <T1, T2> Pair<T1, T2> of(T1 first, T2 second) {
             return new Pair<>(first, second);
+        }
+    }
+
+    public record NullablePair<T1, T2>(T1 first, @Nullable T2 second) {
+        public static <T1, T2> NullablePair<T1, T2> of(T1 first, @Nullable T2 second) {
+            return new NullablePair<>(first, second);
         }
     }
 
