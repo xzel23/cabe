@@ -155,6 +155,12 @@ public class ClassPatcher {
             this.outputFolder = Objects.requireNonNull(outputFolder, "output folder is null");
             this.pool = new ClassPool(true);
 
+            // no directory
+            if (!Files.isDirectory(inputFolder)) {
+                LOG.warning("does not exist or is not a directory: " + inputFolder);
+                return;
+            }
+
             classpath.forEach(cp -> {
                 try {
                     pool.appendClassPath(cp.toString());
@@ -167,12 +173,6 @@ public class ClassPatcher {
                 pool.appendClassPath(inputFolder.toString());
             } catch (NotFoundException e) {
                 throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + inputFolder, e);
-            }
-
-            // no directory
-            if (!Files.isDirectory(inputFolder)) {
-                LOG.warning("does not exist or is not a directory: " + inputFolder);
-                return;
             }
 
             List<Path> classFiles;

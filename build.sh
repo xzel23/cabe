@@ -8,18 +8,20 @@ FLAGS=--stacktrace
 cd "`dirname $0`" \
 && ./gradlew -Dnotest clean build test publishToMavenLocal \
   && echo "build successful" \
-&& ./gradlew --no-daemon test-cabe-gradle-plugin:clean test-cabe-gradle-plugin:run ${FLAGS} \
-&& ./gradlew --no-daemon test-cabe-gradle-plugin:build ${FLAGS} \
-&& ./gradlew --no-daemon test-cabe-gradle-plugin:clean ${FLAGS} \
-  && echo "non-modular test successful" \
-&& ./gradlew --no-daemon test-cabe-gradle-plugin-with-modules:clean test-cabe-gradle-plugin-with-modules:run ${FLAGS} \
-&& ./gradlew --no-daemon test-cabe-gradle-plugin-with-modules:clean ${FLAGS} \
-  && echo "modular test successful" \
+&& ./gradlew --no-daemon \
+  cabe-gradle-plugin-test:clean \
+  cabe-gradle-plugin-test:test-gradle-plugin:run \
+  cabe-gradle-plugin-test:test-gradle-plugin-modular:run \
+  ${FLAGS} \
+  && ./gradlew --no-daemon cabe-gradle-plugin-test:build ${FLAGS} \
+  && ./gradlew --no-daemon cabe-gradle-plugin-test:clean ${FLAGS} \
+  && echo "plugin test successful" \
 && ./gradlew cabe-processor:shadowJar \
+  && echo "shadow jar created" \
 && for D in regressiontest/* ; do \
-  echo "test regressions: ${D}" ;\
-  java -jar cabe-processor/build/libs/cabe-processor-all.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
-done \
+    echo "test regressions: ${D}" ;\
+    java -jar cabe-processor/build/libs/cabe-processor-all.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
+  done \
 && ./gradlew publishToMavenLocal \
   && echo "plugin published to local repository" \
 || { echo "ERROR" ; exit 1 ; }
