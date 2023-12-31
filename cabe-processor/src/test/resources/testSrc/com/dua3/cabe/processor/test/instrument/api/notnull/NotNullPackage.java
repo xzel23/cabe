@@ -4,6 +4,7 @@ import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class NotNullPackage {
@@ -67,6 +68,10 @@ public class NotNullPackage {
 
         // check that enum constructors work
         check(() -> F.WITH_INITIALISER_1.toString(), null, "error: parameter 'txt' must not be null");
+
+        // check that lambdas are not instrumented
+        // FIXME       check(() -> apply(a -> String.valueOf(a), 1), "1", null);
+        // FIXME       check(() -> apply(a -> String.valueOf(a), null), "null", null);
     }
 
     private static String unannotatedArgument(String arg) {
@@ -203,5 +208,9 @@ public class NotNullPackage {
         F(int i, @NotNull String txt) {
             // nop
         }
+    }
+
+    static String apply(Function<Object, String> f, @Nullable Object arg) {
+        return f.apply(arg);
     }
 }
