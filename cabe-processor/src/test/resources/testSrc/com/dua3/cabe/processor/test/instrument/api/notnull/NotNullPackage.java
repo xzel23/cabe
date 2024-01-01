@@ -70,8 +70,8 @@ public class NotNullPackage {
         check(() -> F.WITH_INITIALISER_1.toString(), null, "error: parameter 'txt' must not be null");
 
         // check that lambdas are not instrumented
-        // FIXME       check(() -> apply(a -> String.valueOf(a), 1), "1", null);
-        // FIXME       check(() -> apply(a -> String.valueOf(a), null), "null", null);
+        check(() -> apply(a -> String.valueOf(a), 1), "1", null);
+        check(() -> apply(a -> String.valueOf(a), null), "null", null);
     }
 
     private static String unannotatedArgument(String arg) {
@@ -166,9 +166,6 @@ public class NotNullPackage {
     }
 
     public record NullablePair<T1, T2>(T1 first, @Nullable T2 second) {
-        public static <T1, T2> NullablePair<T1, T2> of(T1 first, @Nullable T2 second) {
-            return new NullablePair<>(first, second);
-        }
     }
 
     static class A {
