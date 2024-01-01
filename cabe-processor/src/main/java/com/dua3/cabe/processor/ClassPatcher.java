@@ -238,6 +238,7 @@ public class ClassPatcher {
 
         boolean isChanged = false;
         try (Formatter assertions = new Formatter()) {
+            assertions.format("if (%1$s.class.desiredAssertionStatus()) {%n", ci.name());
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
                 if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
@@ -249,14 +250,15 @@ public class ClassPatcher {
                 if (isNotNull) {
                     LOG.fine(() -> "adding assertion for parameter " + pi.name() + " in " + ci.name());
                     assertions.format(
-                            "if (%1$s.class.desiredAssertionStatus() && (%2$s==null)) {%n"
-                                    + "  throw new AssertionError((Object) \"parameter '%3$s' must not be null\");%n"
-                                    + "}%n",
+                            "  if (%2$s==null) {%n"
+                                    + "    throw new AssertionError((Object) \"parameter '%3$s' must not be null\");%n"
+                                    + "  }%n",
                             ci.name(), pi.param(), pi.name()
                     );
                     isChanged = true;
                 }
             }
+            assertions.format("}%n", ci.name());
 
             // modify class
             if (isChanged) {
