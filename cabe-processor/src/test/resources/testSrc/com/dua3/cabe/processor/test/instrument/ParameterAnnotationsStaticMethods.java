@@ -53,12 +53,12 @@ public class ParameterAnnotationsStaticMethods {
 
         // record parameter
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
-        // FIXME check(() -> new NotNullRecord(null, "b").toString(), null, "error: parameter 'a' must not be null");
+        check(() -> new NotNullRecord(null, "b").toString(), null, "error: parameter 'a' must not be null");
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
-        // FIXME check(() -> new B(null, " world!").toString(), null, "error: parameter 'a' must not be null");
-// FIXME       check(() -> new B("hello", null).toString(), null, "error: parameter 'b' must not be null");
+        check(() -> new B(null, " world!").toString(), null, "error: parameter 'a' must not be null");
+        check(() -> new B("hello", null).toString(), null, "error: parameter 'b' must not be null");
     }
 
     private static String unannotatedArgument(String arg) {
