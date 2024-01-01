@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 record ParameterInfo(String param, String name, String type, boolean isSynthetic, MethodInfo methodInfo,
                      boolean isNotNullAnnotated, boolean isNullableAnnotated) {
-    private static final ParameterInfo[] EMPTY_PARAMETER_INFO = {};
     private static final Set<String> PRIMITIVES = Set.of(
             "byte",
             "char",
