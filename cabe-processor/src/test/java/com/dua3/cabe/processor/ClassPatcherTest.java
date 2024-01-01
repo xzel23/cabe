@@ -167,26 +167,67 @@ class ClassPatcherTest {
         // Failure is signaled by a thrown exception
         assertDoesNotThrow(() -> {
             String className = getClassName(classFile);
-            CtClass ctClass = pool.get(className);
-            for (CtBehavior method : ctClass.getDeclaredBehaviors()) {
-                ClassPatcher.ParameterInfo[] parameterTypes = ClassPatcher.getParameterInfo(method);
+            ClassInfo ci = ClassInfo.forClass(pool, className);
+            for (var mi : ci.methods()) {
+                String methodName = mi.name();
                 try (Formatter fmtCode = new Formatter()) {
-                    for (ClassPatcher.ParameterInfo parameterType : parameterTypes) {
-                        fmtCode.format("if ((%2$s.getClass()==java.lang.String.class) && !\"%1$s\".equals(%2$s))" +
-                                        "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
-                                parameterType.name(), parameterType.param());
-                        fmtCode.format("if ((%2$s.getClass()==Object[].class) && !\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))" +
-                                        "  throw new java.lang.IllegalArgumentException(\"expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
-                                parameterType.name(), parameterType.param());
+                    for (var pi : mi.parameters()) {
+                        if (pi.isSynthetic() || ci.isAnonymousClass() && mi.isConstructor()) {
+                            continue;
+                        }
+                        if (mi.name().equals("com.dua3.cabe.processor.test.parameterinfo.Base$1(java.lang.String,java.lang.String)")) {
+                            // arguments for the inner class constructor are synthetic and names are not available
+                            switch (pi.type()) {
+                                case "java.lang.String":
+                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(\"java.lang.String\"))" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type String but was: '\" + %2$s.getClass().getName() + \"'\");%n",
+                                            pi.name(), pi.param(), mi.name());
+                                    fmtCode.format("if (!\"%1$s\".equals(%2$s))" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
+                                            pi.name().replace("arg", "param#"), pi.param(), mi.name());
+                                    break;
+                                case "java.lang.Object[]":
+                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(java.lang.Object[].class.getName()))%n" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type Object[] but was: '\" + %2$s.getClass().getName() + \"'\");%n",
+                                            pi.name(), pi.param(), mi.name());
+                                    fmtCode.format("if (!\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
+                                            pi.name().replace("arg", "param#"), pi.param(), mi.name());
+                                    break;
+                                default:
+                                    throw new IllegalStateException("unexpected type: " + pi.type());
+                            }
+                        } else {
+                            switch (pi.type()) {
+                                case "java.lang.String":
+                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(\"java.lang.String\"))%n" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type String but was: '\" + %2$s.getClass().getName() + \"'\");%n",
+                                            pi.name(), pi.param(), mi.name());
+                                    fmtCode.format("if (!\"%1$s\".equals(%2$s))%n" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
+                                            pi.name(), pi.param(), mi.name());
+                                    break;
+                                case "java.lang.Object[]":
+                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(java.lang.Object[].class.getName()))%n" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type Object[] but was: '\" + %2$s.getClass().getName() + \"'\");%n",
+                                            pi.name(), pi.param(), mi.name());
+                                    fmtCode.format("if (!\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))%n" +
+                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
+                                            pi.name(), pi.param(), mi.name());
+                                    break;
+                                default:
+                                    throw new IllegalStateException("unexpected type: " + pi.type() + " [" + methodName + "]");
+                            }
+                        }
                     }
                     String code = fmtCode.toString();
                     if (!code.isEmpty()) {
-                        method.insertBefore(code);
+                        mi.ctMethod().insertBefore(code);
                     }
                 }
             }
-            ctClass.writeFile(testClassesProcessedParameterInfoDir.toString());
-        });
+            ci.ctClass().writeFile(testClassesProcessedParameterInfoDir.toString());
+        }, "failed: " + classFile);
     }
 
     @ParameterizedTest
@@ -211,7 +252,7 @@ class ClassPatcherTest {
                 var test = cls.getDeclaredMethod("test");
                 test.invoke(null);
             }
-        });
+        }, "failed: " + className);
     }
 
     private static String getClassName(Path classFile) {
@@ -249,7 +290,7 @@ class ClassPatcherTest {
                 var test = cls.getDeclaredMethod("test");
                 test.invoke(null);
             }
-        });
+        }, "Failed to instrument " + className);
     }
 
     @Test

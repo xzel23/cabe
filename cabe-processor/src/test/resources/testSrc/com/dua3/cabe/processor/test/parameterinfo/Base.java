@@ -1,5 +1,7 @@
 package com.dua3.cabe.processor.test.parameterinfo;
 
+import com.dua3.cabe.annotations.Nullable;
+
 public class Base {
     public static void test() {
         new Base().runTests();
@@ -183,7 +185,7 @@ public class Base {
         System.out.format("%s.sm(String arg1, Object... args)%n", Base.class.getSimpleName());
     }
 
-    public static void smAnonymousInnerClass(String arg1, String arg2) {
+    public static void smAnonymousInnerClass(@Nullable String arg1, @Nullable String arg2) {
         System.out.format("%s.smAnonymousInnerClass(String arg1, String arg2)%n", Base.class.getSimpleName());
         new Runnable() {
             {

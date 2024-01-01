@@ -174,13 +174,15 @@ public class ParameterAnnotations {
         }
 
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
-            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
-            throw new IllegalStateException();
+            String msg = String.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
         }
 
         if (!Objects.equals(result, expectedResult)) {
-            System.err.format("expected result:    %s%nactual:   %s%n", expectedResult, result);
-            throw new IllegalStateException();
+            String msg = String.format("expected result:    %s%nactual:   %s%n", expectedResult, result);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
         }
     }
 
