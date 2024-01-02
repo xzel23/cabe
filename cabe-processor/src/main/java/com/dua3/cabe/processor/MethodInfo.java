@@ -1,7 +1,11 @@
 package com.dua3.cabe.processor;
 
 import javassist.CtBehavior;
+import javassist.CtClass;
+import javassist.CtConstructor;
+import javassist.CtField;
 import javassist.Modifier;
+import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
 
 import java.util.ArrayList;
@@ -11,12 +15,13 @@ import java.util.List;
 /**
  * Represents information about a method.
  */
-record MethodInfo(String name, boolean isConstructor, boolean isMethod, boolean isAbstract, boolean isStatic,
+record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod, boolean isAbstract, boolean isStatic,
                   boolean isSynthetic, boolean isBridge, boolean isNative,
                   List<ParameterInfo> parameters, ClassInfo classInfo, CtBehavior ctMethod) {
     public static MethodInfo forMethod(ClassInfo ci, CtBehavior ctMethod) {
         var methodInfo = ctMethod.getMethodInfo();
         boolean isConstructor = methodInfo.isConstructor();
+        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, ctMethod);
         boolean isMethod = methodInfo.isMethod();
         boolean isAbstract = Modifier.isAbstract(ctMethod.getModifiers());
         boolean isStatic = Modifier.isStatic(ctMethod.getModifiers());
@@ -31,6 +36,7 @@ record MethodInfo(String name, boolean isConstructor, boolean isMethod, boolean 
         MethodInfo mi = new MethodInfo(
                 ctMethod.getLongName(),
                 isConstructor,
+                isCanonicalRecordConstructor,
                 isMethod,
                 isAbstract,
                 isStatic,
@@ -39,12 +45,39 @@ record MethodInfo(String name, boolean isConstructor, boolean isMethod, boolean 
                 isNative,
                 parameters,
                 ci,
-                ctMethod
-        );
+                ctMethod);
 
         parameters.addAll(ParameterInfo.forMethod(mi));
 
         return mi;
+    }
+
+    private static boolean isCanonicalRecordConstructor(ClassInfo ci, CtBehavior method) {
+        // is it a record constructor?
+        if (!ci.isRecord() || !(method instanceof CtConstructor constructor)) {
+            return false;
+        }
+
+        try {
+            CtClass declaringClass = constructor.getDeclaringClass();
+            CtClass[] parameterTypes = constructor.getParameterTypes();
+
+            // constructor arguments must match record components
+            if (parameterTypes.length != declaringClass.getDeclaredFields().length) {
+                return false;
+            }
+            for (int i = 0; i < parameterTypes.length; i++) {
+                CtField field = declaringClass.getDeclaredFields()[i];
+                if (!field.getType().equals(parameterTypes[i])) {
+                    return false;
+                }
+            }
+
+            // it is the canonical constructor
+            return true;
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     @Override

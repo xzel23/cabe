@@ -3,7 +3,6 @@ package com.dua3.cabe.processor;
 import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.Nullable;
 import javassist.CtBehavior;
-import javassist.Modifier;
 import javassist.bytecode.Descriptor;
 import javassist.bytecode.LocalVariableAttribute;
 
@@ -66,6 +65,7 @@ record ParameterInfo(String param, String name, String type, boolean isSynthetic
 
             boolean isSynthetic = i < syntheticParameterCount + extraSyntheticParameters;
             String type = "?";
+
             boolean isNotNullAnnotated = false;
             boolean isNullableAnnotated = false;
             if (!isSynthetic && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(name).matches()) {

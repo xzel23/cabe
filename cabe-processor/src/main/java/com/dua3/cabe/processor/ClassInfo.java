@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * The ClassInfo class represents information about a Java class.
  */
 record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boolean isInterface, boolean isEnum,
-                 boolean isDerived, boolean isAnonymousClass, boolean isNotNullApi, List<MethodInfo> methods,
+                 boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isNotNullApi, List<MethodInfo> methods,
                  CtClass ctClass) {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassInfo.class.getName());
     private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
@@ -46,7 +46,8 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isAnonymousClass = isInnerClass && !isStaticClass && PATTERN_ANONYMOUS_CLASS_SUFFIX.matcher(className).matches();
         boolean isInterface = Modifier.isInterface(modifiers);
         boolean isEnum = ctClass.isEnum();
-        boolean isDerived = !ctClass.getSuperclass().getName().equals(Object.class.getName()) && !isEnum;
+        boolean isRecord = ctClass.getSuperclass().getName().equals(Record.class.getName());
+        boolean isDerived = !ctClass.getSuperclass().getName().equals(Object.class.getName()) && !isEnum && !isRecord;
         boolean isNotNullApi = isNotNullApi(classPool, ctClass.getPackageName());
 
         List<MethodInfo> methods = new ArrayList<>();
@@ -57,6 +58,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                 isStaticClass,
                 isInterface,
                 isEnum,
+                isRecord,
                 isDerived,
                 isAnonymousClass,
                 isNotNullApi,
