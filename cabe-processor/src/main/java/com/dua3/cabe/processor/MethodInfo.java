@@ -15,7 +15,8 @@ import java.util.List;
 /**
  * Represents information about a method.
  */
-record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod, boolean isAbstract, boolean isStatic,
+record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod,
+                  boolean isAbstract, boolean isStatic,
                   boolean isSynthetic, boolean isBridge, boolean isNative,
                   List<ParameterInfo> parameters, ClassInfo classInfo, CtBehavior ctMethod) {
     public static MethodInfo forMethod(ClassInfo ci, CtBehavior ctMethod) {
