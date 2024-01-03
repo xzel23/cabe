@@ -3,7 +3,7 @@ plugins {
 }
 
 extra["plugin_version"] = "2.0-rc15"
-extra["processor_version"] = "2.0.7"
+extra["processor_version"] = "2.0.8"
 extra["annotations_version"] = "2.0"
 
 subprojects {
