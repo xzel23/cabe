@@ -31,9 +31,9 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
   echo "publishing gradle-processor JAR"
-  ./gradlew cabe-processor:publish \
+  ./gradlew cabe-processor:publish --no-parallel \
   && echo "publishing plugin" \
-  && ./gradlew cabe-gradle-plugin:publishPlugins \
+  && ./gradlew cabe-gradle-plugin:publishPlugins --no-parallel \
   && echo "plugin published" \
 || { echo "ERROR" ; exit 1 ; }
 fi
