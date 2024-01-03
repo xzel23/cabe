@@ -19,11 +19,11 @@ a cool thing to have:
 - static analysis tools can inspect the bytecode and infer which parameters are asserted not be null and output warnings
   where this contract is not fulfilled, even without relying on annotations to be present in the compiled library code
 
-I started looking around to see how I could enable this in my gradle build, but did not find any solution. I also did
+I started looking around to see how I could enable this in my Gradle build, but did not find any solution. I also did
 not want to use Lombok because the Lombok assertions have runtime retention and add a runtime dependency to projects
 that use it.
 
-Also Lombok tends to introduce new features that while innovative later are implemented in a different way in standard
+Also, Lombok tends to introduce new features that while innovative later are implemented in a different way in standard
 JDK.
 
 What I wanted is something more or less like Lombok, but closer to standard Java. Thus, the name was born: Cabai is
@@ -69,7 +69,7 @@ This module defines custom annotations that are by Cabe:
 
 - `NotNull` serves the same purpose as the `org.jetbrains.annotations.NotNull`, `javax.annotation.Nonnull` and other
   annotations. It can be used to specify that a method parameter must not be null. In contrast to the mentioned existing
-  annotations, it is declared with a `SOURCE` retention policy, i.e. using this annotation does not introduce any
+  annotations, it is declared with a `SOURCE` retention policy, i.e., using this annotation does not introduce any
   runtime dependencies.
 
 - `Nullable` marks a parameter as nullable.
@@ -100,5 +100,5 @@ This module contains tests for the Gradle plugin.
 ## How to build
 
 Run the shell script `build.sh` to build both packages and run tests. When everything succeeds, the script will
-ask if you want to publish the plugin. Answer `n` unless you have updated the maven publish coordinates and want to
+ask if you want to publish the plugin. Answer `n` unless you have updated the publishing coordinates and want to
 publish the plugin.

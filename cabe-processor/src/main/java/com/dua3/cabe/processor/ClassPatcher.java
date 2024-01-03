@@ -101,8 +101,6 @@ public class ClassPatcher {
             System.exit(1);
         }
 
-        assert (in != null && out != null && classPaths != null);
-
         try {
             ClassPatcher classPatcher = new ClassPatcher(classPaths);
             classPatcher.processFolder(in, out);

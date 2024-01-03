@@ -28,8 +28,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
         // create extension
         CabeExtension extension = project.getExtensions().create("cabe", CabeExtension.class, project);
 
-        // Adds task before the evaluation of the project to access of values
-        // overloaded by the developer.
+        // Add the task before the evaluation of the project to allow access to values overloaded by the developer.
         project.afterEvaluate(p -> {
             // wire the cabe input task
             project.getTasks().create("cabe", CabeTask.class, t -> {
@@ -40,7 +39,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 t.getOutputDirectory().set(extension.getOutputDirectory());
                 t.getClassPath().set(extension.getClassPath());
 
-                // run after the compileJava  task
+                // run after the compileJava task
                 JavaCompile compileJavaTask = Objects.requireNonNull(
                         project.getTasks().withType(JavaCompile.class).findByName("compileJava"),
                         "task 'compileJava' not found"

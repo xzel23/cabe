@@ -1,8 +1,6 @@
 package com.dua3.cabe.processor;
 
 import javassist.ClassPool;
-import javassist.CtBehavior;
-import javassist.CtClass;
 import javassist.NotFoundException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
@@ -84,7 +82,7 @@ class ClassPatcherTest {
         );
         JavaCompiler.CompilationTask task = compiler.getTask(
                 null,   // writer for additional output from the compiler; use System.err if null.
-                null,       // file manager; if null use compiler's standard file manager
+                null,       // file manager; if null, use compiler's standard file manager
                 null,       // diagnostic listener; if null use compiler's default method for reporting diagnostics
                 options,    // options to the compiler
                 null,       // classes to be processed by annotation processing, null means process all
@@ -241,7 +239,7 @@ class ClassPatcherTest {
     void testResultParameterTypes(String className) {
         LOG.info("testing correct results of getParameterInfo(): " + className);
         // The code does call  getParameterInfo() for all constructors and methods.
-        // During the previous test step, assertions have been injected into the code that check the parameter values.
+        // During the previous test step, assertions have been injected into the code to check the parameter values.
         // Methods are called with string arguments "arg1", "arg2" and so on.
         // The generated assertions check that the mapping from internal Javassist variables $1, $2, $3, ... to the
         // parameter names is correct by asserting that the internal variable $n contains the value "argn".
