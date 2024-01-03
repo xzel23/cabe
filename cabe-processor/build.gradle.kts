@@ -34,7 +34,6 @@ repositories {
 dependencies {
     implementation(project(":cabe-annotations"))
     implementation("org.javassist:javassist:3.30.2-GA")
-    implementation("com.dua3.utility:utility:12.0.0-beta10")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 

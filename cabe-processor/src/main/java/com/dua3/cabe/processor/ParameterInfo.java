@@ -58,7 +58,9 @@ record ParameterInfo(String param, String name, String type, boolean isSynthetic
             throw new RuntimeException(e);
         }
         List<ParameterInfo> pi = new ArrayList<>();
-        // i is the global index, k is the number of non-synthetic parameters that have been added
+        // `i` is the global index
+        // `j`is the number of synthetic parameters that have been processed
+        // `k` is the number of non-synthetic parameters that have been added
         for (int i = 0, j = 0, k = 0; i < syntheticParameterCount || extraSyntheticParameters > 0 || k < n; i++) {
             String param = "_";
             String name = getParameterName(lva, syntheticParameterCount + extraSyntheticParameters, i, parameterOffset);

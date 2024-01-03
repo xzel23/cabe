@@ -2,7 +2,6 @@ package com.dua3.cabe.processor.test.instrument;
 
 import com.dua3.cabe.annotations.NotNull;
 import com.dua3.cabe.annotations.Nullable;
-import com.dua3.utility.data.Pair;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -15,10 +14,6 @@ public class ParameterAnnotations {
     }
 
     public void doTest() {
-        // test with external classes
-        check(() -> parameterWithExternalClass(Pair.of("hello", 123)), "Pair[first=hello, second=123]", null);
-        check(() -> parameterWithExternalClass(null), null, "error: parameter 'p' must not be null");
-
         // test with generic parameters
         check(() -> new C("hello world!").toString(), "hello world!", null);
         check(() -> new C(null).toString(), null, "error: parameter 't' must not be null");
@@ -135,12 +130,6 @@ public class ParameterAnnotations {
     private String intermixedWithPrimitives(int a, @NotNull String txt, int b) {
         String s = String.format("%d%s%d", a, txt, b);
         System.out.println("intermixWithPrimitives: " + s);
-        return s;
-    }
-
-    private String parameterWithExternalClass(@NotNull Pair<String,Integer> p) {
-        String s = String.valueOf(p);
-        System.out.println("parameterWithExternalClass: " + s);
         return s;
     }
 

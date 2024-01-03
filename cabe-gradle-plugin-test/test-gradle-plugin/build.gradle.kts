@@ -22,7 +22,6 @@ repositories {
 
 dependencies {
     compileOnly(project(":cabe-annotations"))
-    implementation("com.dua3.utility:utility:12.0.0-beta10")
 }
 
 application {

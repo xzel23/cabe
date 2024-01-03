@@ -1,12 +1,5 @@
 package com.dua3.cabe.processor;
 
-import com.dua3.utility.options.Arguments;
-import com.dua3.utility.options.ArgumentsParser;
-import com.dua3.utility.options.ArgumentsParserBuilder;
-import com.dua3.utility.options.Flag;
-import com.dua3.utility.options.Option;
-import com.dua3.utility.options.OptionException;
-import com.dua3.utility.options.SimpleOption;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.NotFoundException;
@@ -15,9 +8,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Objects;
@@ -42,10 +37,8 @@ public class ClassPatcher {
      * This method is the entry point of the application.
      *
      * @param args an array of command-line arguments
-     * @throws IOException                        if an I/O error occurs
-     * @throws ClassFileProcessingFailedException if processing of a class file fails
      */
-    public static void main(String[] args) throws IOException, ClassFileProcessingFailedException {
+    public static void main(String[] args) {
         Logger rootLogger = Logger.getLogger("");
         Handler consoleHandler = null;
 
@@ -64,35 +57,71 @@ public class ClassPatcher {
         consoleHandler.setLevel(Level.FINEST);
         LOG.setLevel(Level.ALL);
 
-        ArgumentsParserBuilder builder = ArgumentsParser.builder()
-                .name("cabe")
-                .description("Add null checks in Java class file byte code.")
-                .positionalArgs(0, 0);
-        SimpleOption<Path> optInput = builder.simpleOption(Path.class, "--input", "-i", "Input folder containing class files").required();
-        SimpleOption<Path> optOutput = builder.simpleOption(Path.class, "--output", "-o", "Output folder for patched class files").required();
-        Option<Path> optClasspath = builder.option(Path.class, "--classpath", "-c", "Java compile classpath").minArity(0).occurrence(0, 1);
-        Flag optHelp = builder.flag("--help", "-h", "Show help");
-
-        ArgumentsParser argsParser = builder.build();
+        Path in = null;
+        Path out = null;
+        List<Path> classPaths = null;
 
         try {
-            Arguments parsedArgs = argsParser.parse(args);
-
-            if (parsedArgs.isSet(optHelp)) {
-                argsParser.help();
+            List<String> cmdLine = List.of(args);
+            if (cmdLine.contains("--help")) {
+                help();
                 return;
             }
 
-            Path in = parsedArgs.getOrThrow(optInput);
-            Path out = parsedArgs.getOrThrow(optOutput);
-            List<Path> classPaths = parsedArgs.stream(optClasspath).flatMap(List::stream).toList();
+            if (args.length < 4) {
+                throw new IllegalAccessError("Wrong number of arguments");
+            }
+
+            int idxInput = cmdLine.indexOf("-i");
+            String inputFolder = switch (idxInput) {
+                case 0, 2 -> cmdLine.get(idxInput + 1);
+                default -> throw new IllegalArgumentException("option '-i' not found at expected position");
+            };
+
+            int idxOutput = cmdLine.indexOf("-o");
+            String outputFolder = switch (idxOutput) {
+                case 0, 2 -> cmdLine.get(idxOutput + 1);
+                default -> throw new IllegalArgumentException("option '-o' not found at expected position");
+            };
+
+            int idxClasspath = cmdLine.indexOf("-c");
+            List<String> classPathFolder = switch (idxClasspath) {
+                case 4 ->
+                        cmdLine.size() == 5 ? Collections.emptyList() : cmdLine.subList(idxClasspath + 1, cmdLine.size());
+                case -1 -> Collections.emptyList();
+                default -> throw new IllegalArgumentException("option '-c' not found at expected position");
+            };
+
+            in = Paths.get(inputFolder);
+            out = Paths.get(outputFolder);
+            classPaths = classPathFolder.stream().map(Paths::get).toList();
+        } catch (Exception e) {
+            System.err.println("Commandline error: " + e.getMessage());
+            help();
+            System.exit(1);
+        }
+
+        assert (in != null && out != null && classPaths != null);
+
+        try {
             ClassPatcher classPatcher = new ClassPatcher(classPaths);
             classPatcher.processFolder(in, out);
-        } catch (OptionException e) {
-            System.err.println(e.getMessage());
-            System.out.println();
-            System.out.println(argsParser.help());
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            System.exit(2);
         }
+    }
+
+    private static void help() {
+        String msg = """
+                ClassPatcher
+                ============
+                                
+                Add null checks in Java class file byte code.
+                                
+                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <classpath entry> ...]
+                """;
+        System.out.println(msg);
     }
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());

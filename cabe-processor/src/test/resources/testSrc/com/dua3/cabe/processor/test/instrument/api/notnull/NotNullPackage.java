@@ -165,10 +165,10 @@ public class NotNullPackage {
         }
     }
 
-    public record NullablePair<T1, T2>(T1 first, @Nullable T2 second) {
+    private record NullablePair(Object first, @Nullable Object second) {
     }
 
-    static class A {
+    private static class A {
         private String s;
 
         A(String s) {
@@ -180,7 +180,7 @@ public class NotNullPackage {
         }
     }
 
-    static class B extends A {
+    private static class B extends A {
         private String b;
 
         B(@NotNull String a, @NotNull String b) {
