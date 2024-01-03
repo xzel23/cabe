@@ -239,20 +239,17 @@ public class ClassPatcher {
         try {
             ClassInfo classInfo = ClassInfo.forClass(classPool, className);
 
-            try {
-                for (var methodInfo : classInfo.methods()) {
-                    instrumentMethod(classInfo, methodInfo);
-                }
-
-                // Write the class file
-                LOG.fine("writing modified class file: " + classFile);
-                Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
-                classInfo.ctClass().writeFile(outputFolder.toString());
-
-                LOG.fine("instrumenting class file successful: " + classFile);
-            } finally {
-                classInfo.ctClass().detach();
+            for (var methodInfo : classInfo.methods()) {
+                instrumentMethod(classInfo, methodInfo);
+                classInfo.ctClass().defrost();
             }
+
+            // Write the class file
+            LOG.fine("writing modified class file: " + classFile);
+            Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
+            classInfo.ctClass().writeFile(outputFolder.toString());
+
+            LOG.fine("instrumenting class file successful: " + classFile);
         } catch (IOException e) {
             throw new IOException("Failed to modify class file " + classFile, e);
         } catch (Exception e) {
