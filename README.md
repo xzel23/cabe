@@ -60,12 +60,6 @@ Usage
   }
   ```
 
-Issues
-------
-
-- When building cabe under Windows, make sure the TERM variable is set correctly for your system or text output will
-  look garbled. For Git Bash, use `export TERM=cygwin`.
-
 Code
 ----
 
@@ -91,9 +85,13 @@ used.
 **NOTE:** Use the `package-info.java` to annotate a package with `@NotNullApi`. Look at the
 subproject `test-cabe-plugin` for examples.
 
+## cabe-processor
+
+This is the processor that injects assertions into the bytecode.
+
 ## cabe-gradle-plugin
 
-This module contains the Gradle plugin used to process annotations.
+This module contains the Gradle plugin that applies the processor to the class files.
 
 ## test-cabe-gradle-plugin
 
