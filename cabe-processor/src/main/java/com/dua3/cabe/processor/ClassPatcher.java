@@ -144,7 +144,7 @@ public class ClassPatcher {
     /**
      * Process a folder containing class files.
      *
-     * @param inputFolder the folder to process
+     * @param inputFolder  the folder to process
      * @param outputFolder the folder to write the patched files to
      * @throws IOException                        if an I/O error occurs
      * @throws ClassFileProcessingFailedException if processing of a class file fails
@@ -268,6 +268,9 @@ public class ClassPatcher {
 
         LOG.fine(() -> "instrumenting method " + methodName);
 
+        // the default Record.equals() should really be marked as synthetic
+        boolean overRideNotNullApi = ci.isRecord() && mi.name().endsWith(".equals(java.lang.Object)");
+
         boolean isChanged = false;
         try (Formatter assertions = new Formatter()) {
             assertions.format("if (%1$s.class.desiredAssertionStatus()) {%n", ci.name());
@@ -278,7 +281,7 @@ public class ClassPatcher {
                 }
 
                 // create assertion code
-                boolean isNotNull = pi.isNotNullAnnotated() || ci.isNotNullApi() && !pi.isNullableAnnotated();
+                boolean isNotNull = pi.isNotNullAnnotated() || !pi.isNullableAnnotated() && !overRideNotNullApi && ci.isNotNullApi();
                 if (isNotNull) {
                     LOG.fine(() -> "adding assertion for parameter " + pi.name() + " in " + ci.name());
                     assertions.format(
