@@ -293,7 +293,7 @@ public class ClassPatcher {
                     isChanged = true;
                 }
             }
-            assertions.format("}%n", ci.name());
+            assertions.format("}%n");
 
             // modify class
             if (isChanged) {
