@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-extra["plugin_version"] = "2.0-rc15"
+extra["plugin_version"] = "2.0"
 extra["processor_version"] = "2.0.8"
 extra["annotations_version"] = "2.0"
 
