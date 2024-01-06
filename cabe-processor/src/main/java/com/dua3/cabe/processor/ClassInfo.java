@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
  * The ClassInfo class represents information about a Java class.
  */
 record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boolean isInterface, boolean isEnum,
-                 boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isNotNullApi, List<MethodInfo> methods,
-                 CtClass ctClass) {
+                 boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isNotNullApi,
+                 List<MethodInfo> methods, CtClass ctClass) {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassInfo.class.getName());
     private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
     private static final Pattern PATTERN_ANONYMOUS_CLASS_SUFFIX = Pattern.compile(".*\\$\\d+");
