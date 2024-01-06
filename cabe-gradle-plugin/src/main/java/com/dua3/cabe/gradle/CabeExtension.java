@@ -5,9 +5,9 @@ import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 
 import javax.inject.Inject;
 
@@ -33,18 +33,19 @@ public class CabeExtension {
 
         // output into the original classes directory
         outputDirectory = objectFactory.directoryProperty();
-        outputDirectory.fileProvider(project.provider(() -> project.getConvention().getPlugin(JavaPluginConvention.class)
-                .getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-                .getOutput().getClassesDirs()
+        outputDirectory.fileProvider(project.provider(() -> ((SourceSetContainer) project.getExtensions().getByName("sourceSets"))
+                .getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+                .getOutput()
+                .getClassesDirs()
                 .getSingleFile()));
         // input from classes-cabe-input
-        inputDirectory = objectFactory.directoryProperty()
-                .convention(projectLayout.getBuildDirectory().dir("classes-cabe-input"));
+        inputDirectory = objectFactory.directoryProperty();
+        inputDirectory.set(project.getLayout().getBuildDirectory().dir("classes-cabe-input"));
         // compile classpath
         classPath = objectFactory.property(FileCollection.class)
                 .value(project.provider(
-                        () -> project.getConvention().getPlugin(JavaPluginConvention.class)
-                                .getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath()));
+                        () -> ((SourceSetContainer) project.getExtensions().getByName("sourceSets"))
+                                .getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath()));
     }
 
     /**
