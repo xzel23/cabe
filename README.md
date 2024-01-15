@@ -118,6 +118,12 @@ but had the following issues:
 - When debugging, sometimes line numbers were off and the debugger showed a message that source code and class file
   didn't match.
 
+## Version 2.0.1
+
+- Revert combining of assertions because the JVM does not seem to recognize the changed assertion pattern which leads to
+a noticable slowdown when running with assertions disabled.
+- Make sure instrumented classes are released when an exception occurs during compilation.
+
 ## Version 2.0
 
 To solve the issues described above, I decided to do a full rewrite. I switched to working on the byte code instead
