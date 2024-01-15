@@ -121,7 +121,7 @@ but had the following issues:
 ## Version 2.0
 
 To solve the issues described above, I decided to do a full rewrite. I switched to working on the byte code instead
-using Javassist instead of SPOON. This seemed to be easy at first but it turned out to be a little bit more complex
+using Javassist instead of SPOON. This seemed easy at first but it turned out to be a little bit more complex
 than I thought. First of all, I had to change the annotations classes because in Version 1.x annotations had SOURCE
 retention and were not present in the byte code. That's why you now need version 2.0 of cabe-annotations to work
 with the plugin. Also it proved to be much more complicated to get the mapping of parameters to the actual parameter
