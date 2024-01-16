@@ -290,7 +290,7 @@ public class ClassPatcher {
         }
     }
 
-    private boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
+    private static boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
         if (mi.isSynthetic()) {
@@ -299,10 +299,6 @@ public class ClassPatcher {
         }
 
         LOG.fine(() -> "instrumenting method " + methodName);
-
-        // the default Record.equals() should really be marked as synthetic
-        boolean overRideNotNullApi = ci.isRecord() && mi.name().endsWith(".equals(java.lang.Object)");
-
         boolean isChanged = false;
         try (Formatter assertions = new Formatter()) {
             for (ParameterInfo pi : mi.parameters()) {
@@ -316,10 +312,10 @@ public class ClassPatcher {
                 if (isNotNull) {
                     LOG.fine(() -> "adding assertion for parameter " + pi.name() + " in " + ci.name());
                     assertions.format(
-                            "if (%1$s.class.desiredAssertionStatus() && (%2$s==null)) {%n"
+                            "if (!%1$s && (%2$s==null)) {%n"
                                     + "  throw new AssertionError((Object) \"%3$s is null\");%n"
                                     + "}%n",
-                            ci.name(), pi.param(), pi.name()
+                            ci.assertionsDisabledFlagName(), pi.param(), pi.name()
                     );
                     isChanged = true;
                 }

@@ -4,6 +4,7 @@ import com.dua3.cabe.annotations.NotNullApi;
 import com.dua3.cabe.annotations.NullableApi;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtField;
 import javassist.Modifier;
 import javassist.NotFoundException;
 
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
  */
 record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boolean isInterface, boolean isEnum,
                  boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isPublicApi, boolean isNotNullApi,
-                 List<MethodInfo> methods, CtClass ctClass) {
+                 String assertionsDisabledFlagName, List<MethodInfo> methods, CtClass ctClass) {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassInfo.class.getName());
     private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
     private static final Pattern PATTERN_ANONYMOUS_CLASS_SUFFIX = Pattern.compile(".*\\$\\d+");
@@ -50,6 +51,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isDerived = !ctClass.getSuperclass().getName().equals(Object.class.getName()) && !isEnum && !isRecord;
         boolean isNotNullApi = isNotNullApi(classPool, ctClass.getPackageName());
         boolean isPublicApi = Modifier.isPublic(modifiers) || hasPublicApiAncestor(classPool, ctClass);
+        String assertionsDisabledFlagName = getAssertionsDisabledFlagName(ctClass);
 
         List<MethodInfo> methods = new ArrayList<>();
 
@@ -64,13 +66,33 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                 isAnonymousClass,
                 isPublicApi,
                 isNotNullApi,
-                methods, ctClass);
+                assertionsDisabledFlagName,
+                methods,
+                ctClass);
 
         Arrays.stream(ctClass.getDeclaredBehaviors())
                 .map(m -> MethodInfo.forMethod(ci, m))
                 .forEach(methods::add);
 
         return ci;
+    }
+
+    /**
+     * Returns the name of the assertion flag field for a given {@link CtClass}.
+     *
+     * @param ctClass the {@link CtClass} to search for the assertion flag field
+     * @return the fully qualified name of the assertion flag field, or null if not found
+     */
+    private static String getAssertionsDisabledFlagName(CtClass ctClass) throws NotFoundException {
+        for (CtClass cls = ctClass; cls != null; cls = cls.getDeclaringClass()) {
+            CtField assertionsDisabledFlag = Arrays.stream(cls.getFields())
+                    .filter(f -> f.getName().equals("$assertionsDisabled"))
+                    .findFirst().orElse(null);
+            if (assertionsDisabledFlag != null) {
+                return assertionsDisabledFlag.getDeclaringClass().getName() + "." + assertionsDisabledFlag.getName();
+            }
+        }
+        return null;
     }
 
     /**
