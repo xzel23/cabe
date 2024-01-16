@@ -301,6 +301,15 @@ public class ClassPatcher {
         LOG.fine(() -> "instrumenting method " + methodName);
         boolean isChanged = false;
         try (Formatter assertions = new Formatter()) {
+            String assertionsDisabled = ci.assertionsDisabledFlagName();
+            if (assertionsDisabled == null) {
+                LOG.warning(() -> "could not determine assertion flag for class " + ci.name() + " while instrumenting " + methodName);
+                assertionsDisabled = "desiredAssertionStatus()";
+            }
+
+            // create assertion code
+            String as = assertionsDisabled;
+            assertions.format("if (!%1$s) {%n", as); // --> "if (!assertionsDisabled) {"
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
                 if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
@@ -312,14 +321,13 @@ public class ClassPatcher {
                 if (isNotNull) {
                     LOG.fine(() -> "adding assertion for parameter " + pi.name() + " in " + ci.name());
                     assertions.format(
-                            "if (!%1$s && (%2$s==null)) {%n"
-                                    + "  throw new AssertionError((Object) \"%3$s is null\");%n"
-                                    + "}%n",
-                            ci.assertionsDisabledFlagName(), pi.param(), pi.name()
+                            "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
+                            pi.param(), pi.name()
                     );
                     isChanged = true;
                 }
             }
+            assertions.format("}%n"); // <-- "}"
 
             // modify class
             if (isChanged) {
