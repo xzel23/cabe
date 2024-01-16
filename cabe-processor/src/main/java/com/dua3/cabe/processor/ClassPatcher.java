@@ -290,7 +290,7 @@ public class ClassPatcher {
         }
     }
 
-    private static boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
+    private boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
         if (mi.isSynthetic()) {
