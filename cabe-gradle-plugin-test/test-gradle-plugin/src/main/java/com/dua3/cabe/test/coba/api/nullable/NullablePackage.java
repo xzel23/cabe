@@ -15,22 +15,22 @@ public class NullablePackage {
 
         // NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullAnnotatedArgument(null), null, "error: parameter 'arg' must not be null");
+        check(() -> oneNotNullAnnotatedArgument(null), null, "error: arg is null");
 
         check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: parameter 'arg1' must not be null");
-        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: parameter 'arg2' must not be null");
-        check(() -> twoNotNullAnnotatedArguments(null, null), null, "error: parameter 'arg1' must not be null");
+        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: arg2 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, null), null, "error: arg1 is null");
 
         check(() -> firstArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "error: parameter 'arg1' must not be null");
+        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "error: arg1 is null");
         check(() -> firstArgumentNotNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg1' must not be null");
+        check(() -> firstArgumentNotNullAnnotated(null, null), null, "error: arg1 is null");
 
         check(() -> secondArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
         check(() -> secondArgumentNotNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: parameter 'arg2' must not be null");
-        check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg2' must not be null");
+        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: arg2 is null");
+        check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: arg2 is null");
 
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);

@@ -16,12 +16,12 @@ public class ParameterAnnotations {
     public void doTest() {
         // test with generic parameters
         check(() -> new C<>("hello world!").toString(), "hello world!", null);
-        check(() -> new C<>(null).toString(), null, "error: parameter 't' must not be null");
+        check(() -> new C<>(null).toString(), null, "error: t is null");
 
-        check(() -> genericArguments("hello", "world", obj -> " " + obj + "!"), "hello world!", null);
-        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "error: parameter 'prefix' must not be null");
-        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "error: parameter 'suffix' must not be null");
-        check(() -> genericArguments("hello", "world", null), null, "error: parameter 'func' must not be null");
+        check(() -> genericArguments("hello", "world", obj -> obj + "!"), "hello world!", null);
+        check(() -> genericArguments(null, "world", obj -> obj + " "), null, "error: prefix is null");
+        check(() -> genericArguments("hello", null, obj -> obj + " "), null, "error: suffix is null");
+        check(() -> genericArguments("hello", "world", null), null, "error: func is null");
 
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
@@ -29,28 +29,28 @@ public class ParameterAnnotations {
 
         // NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullAnnotatedArgument(null), null, "error: parameter 'arg' must not be null");
+        check(() -> oneNotNullAnnotatedArgument(null), null, "error: arg is null");
 
         check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: parameter 'arg1' must not be null");
-        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: parameter 'arg2' must not be null");
-        check(() -> twoNotNullAnnotatedArguments(null, null), null, "error: parameter 'arg1' must not be null");
+        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: arg2 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, null), null, "error: arg1 is null");
 
         check(() -> firstArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "error: parameter 'arg1' must not be null");
+        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "error: arg1 is null");
         check(() -> firstArgumentNotNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg1' must not be null");
+        check(() -> firstArgumentNotNullAnnotated(null, null), null, "error: arg1 is null");
 
         check(() -> secondArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
         check(() -> secondArgumentNotNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: parameter 'arg2' must not be null");
-        check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: parameter 'arg2' must not be null");
+        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: arg2 is null");
+        check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: arg2 is null");
 
         check(() -> intermixedWithPrimitives(87, " hello ", 99), "87 hello 99", null);
-        check(() -> intermixedWithPrimitives(87, null, 99), null, "error: parameter 'txt' must not be null");
+        check(() -> intermixedWithPrimitives(87, null, 99), null, "error: txt is null");
 
         check(() -> genericParameter(new A("hello world!")), "hello world!", null);
-        check(() -> genericParameter(null), null, "error: parameter 'arg' must not be null");
+        check(() -> genericParameter(null), null, "error: arg is null");
 
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
@@ -77,8 +77,8 @@ public class ParameterAnnotations {
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
-        check(() -> new B(null, " world!").toString(), null, "error: parameter 'a' must not be null");
-        check(() -> new B("hello", null).toString(), null, "error: parameter 'b' must not be null");
+        check(() -> new B(null, " world!").toString(), null, "error: a is null");
+        check(() -> new B("hello", null).toString(), null, "error: b is null");
     }
 
     private String unannotatedArgument(String arg) {
@@ -158,13 +158,13 @@ public class ParameterAnnotations {
         }
 
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
-            String msg = String.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+            String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);
         }
 
         if (!Objects.equals(result, expectedResult)) {
-            String msg = String.format("expected result:    %s%nactual:   %s%n", expectedResult, result);
+            String msg = String.format("expected result: %s%nactual: %s%n", expectedResult, result);
             System.err.println(msg);
             throw new IllegalStateException(msg);
         }
