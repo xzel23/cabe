@@ -18,9 +18,9 @@ public class ParameterAnnotations {
         check(() -> new C<>("hello world!").toString(), "hello world!", null);
         check(() -> new C<>(null).toString(), null, "error: t is null");
 
-        check(() -> genericArguments("hello", "world", obj -> obj + "!"), "hello world!", null);
-        check(() -> genericArguments(null, "world", obj -> obj + " "), null, "error: prefix is null");
-        check(() -> genericArguments("hello", null, obj -> obj + " "), null, "error: suffix is null");
+        check(() -> genericArguments("hello", "world", obj -> " " + obj + "!"), "hello world!", null);
+        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "error: prefix is null");
+        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "error: suffix is null");
         check(() -> genericArguments("hello", "world", null), null, "error: func is null");
 
         // check processing of annotated arguments
