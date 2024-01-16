@@ -17,7 +17,7 @@ import java.util.List;
  */
 record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod,
                   boolean isAbstract, boolean isStatic,
-                  boolean isSynthetic, boolean isBridge, boolean isNative,
+                  boolean isPublic, boolean isSynthetic, boolean isBridge, boolean isNative,
                   List<ParameterInfo> parameters, ClassInfo classInfo, CtBehavior ctMethod) {
     public static MethodInfo forMethod(ClassInfo ci, CtBehavior ctMethod) {
         var methodInfo = ctMethod.getMethodInfo();
@@ -26,6 +26,7 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
         boolean isMethod = methodInfo.isMethod();
         boolean isAbstract = Modifier.isAbstract(ctMethod.getModifiers());
         boolean isStatic = Modifier.isStatic(ctMethod.getModifiers());
+        boolean isPublicApi = ci.isPublicApi() && Modifier.isPublic(ctMethod.getModifiers());
 
         int accessFlags = ctMethod.getMethodInfo().getAccessFlags();
         boolean isSynthetic = (accessFlags & AccessFlag.SYNTHETIC) != 0;
@@ -41,6 +42,7 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
                 isMethod,
                 isAbstract,
                 isStatic,
+                isPublicApi,
                 isSynthetic,
                 isBridge,
                 isNative,

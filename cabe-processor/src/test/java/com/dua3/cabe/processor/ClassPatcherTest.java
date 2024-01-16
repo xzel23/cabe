@@ -274,6 +274,7 @@ class ClassPatcherTest {
     @ParameterizedTest
     @Order(4)
     @ValueSource(strings = {
+            "com.dua3.cabe.processor.test.instrument.NoAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotationsStaticMethods",
             "com.dua3.cabe.processor.test.instrument.api.notnull.NotNullPackage",

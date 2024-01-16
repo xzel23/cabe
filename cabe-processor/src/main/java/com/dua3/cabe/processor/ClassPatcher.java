@@ -317,7 +317,7 @@ public class ClassPatcher {
                     LOG.fine(() -> "adding assertion for parameter " + pi.name() + " in " + ci.name());
                     assertions.format(
                             "if (%1$s.class.desiredAssertionStatus() && (%2$s==null)) {%n"
-                                    + "  throw new AssertionError((Object) \"parameter '%3$s' must not be null\");%n"
+                                    + "  throw new AssertionError((Object) \"%3$s is null\");%n"
                                     + "}%n",
                             ci.name(), pi.param(), pi.name()
                     );

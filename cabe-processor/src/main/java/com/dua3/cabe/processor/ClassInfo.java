@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * The ClassInfo class represents information about a Java class.
  */
 record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boolean isInterface, boolean isEnum,
-                 boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isNotNullApi,
+                 boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isPublicApi, boolean isNotNullApi,
                  List<MethodInfo> methods, CtClass ctClass) {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassInfo.class.getName());
     private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*");
@@ -49,6 +49,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isRecord = ctClass.getSuperclass().getName().equals(Record.class.getName());
         boolean isDerived = !ctClass.getSuperclass().getName().equals(Object.class.getName()) && !isEnum && !isRecord;
         boolean isNotNullApi = isNotNullApi(classPool, ctClass.getPackageName());
+        boolean isPublicApi = Modifier.isPublic(modifiers) || hasPublicApiAncestor(classPool, ctClass);
 
         List<MethodInfo> methods = new ArrayList<>();
 
@@ -61,15 +62,35 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                 isRecord,
                 isDerived,
                 isAnonymousClass,
+                isPublicApi,
                 isNotNullApi,
-                methods,
-                ctClass);
+                methods, ctClass);
 
         Arrays.stream(ctClass.getDeclaredBehaviors())
                 .map(m -> MethodInfo.forMethod(ci, m))
                 .forEach(methods::add);
 
         return ci;
+    }
+
+    /**
+     * Checks if the given class or any of its superclasses have a public API ancestor.
+     *
+     * @param classPool the ClassPool instance to use
+     * @param ctClass the CtClass to check
+     * @return true if the given class or any of its superclasses have a public API ancestor, false otherwise
+     * @throws NotFoundException if the superclass of the CtClass cannot be found in the ClassPool
+     */
+    private static boolean hasPublicApiAncestor(ClassPool classPool, CtClass ctClass) throws NotFoundException {
+        for (CtClass superClass = ctClass.getSuperclass(); superClass != null; superClass = superClass.getSuperclass()) {
+            if (superClass.getName().equals(Object.class.getName())) {
+                break;
+            }
+            if (Modifier.isPublic(superClass.getModifiers())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
