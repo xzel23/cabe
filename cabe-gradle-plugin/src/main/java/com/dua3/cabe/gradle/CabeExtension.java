@@ -1,10 +1,12 @@
 package com.dua3.cabe.gradle;
 
+import com.dua3.cabe.processor.Config;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -20,6 +22,7 @@ public class CabeExtension {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
+    private final Property<Config> config;
 
     /**
      * Construct a new instance of the extension.
@@ -30,6 +33,9 @@ public class CabeExtension {
     @Inject
     public CabeExtension(Project project, ProjectLayout projectLayout) {
         ObjectFactory objectFactory = project.getObjects();
+
+        // get value of config
+        config = objectFactory.property(Config.class).value(Config.StandardConfig.DEVELOPMENT.config);
 
         // output into the original classes directory
         outputDirectory = objectFactory.directoryProperty();
@@ -75,4 +81,10 @@ public class CabeExtension {
         return classPath;
     }
 
+    public Property<Config> getConfig() {
+        return config;
+    }
+    public void setConfig(Config config) {
+        this.config.set(config);
+    }
 }

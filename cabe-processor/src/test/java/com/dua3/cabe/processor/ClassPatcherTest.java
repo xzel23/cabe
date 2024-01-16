@@ -266,7 +266,7 @@ class ClassPatcherTest {
         // processFolder will report errors by throwing an exception
         assertDoesNotThrow(() -> {
             Collection<Path> classPath = List.of();
-            ClassPatcher patcher = new ClassPatcher(classPath);
+            ClassPatcher patcher = new ClassPatcher(classPath, Config.StandardConfig.DEVELOPMENT.config);
             patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
         });
     }

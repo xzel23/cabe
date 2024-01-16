@@ -1,5 +1,6 @@
 package com.dua3.cabe.gradle;
 
+import com.dua3.cabe.processor.Config;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -33,6 +34,9 @@ public class CabeGradlePlugin implements Plugin<Project> {
             // wire the cabe input task
             project.getTasks().create("cabe", CabeTask.class, t -> {
                 log.debug("initialising cabe task");
+
+                // set the configuration
+                t.getConfig().set(extension.getConfig().getOrElse(Config.StandardConfig.DEVELOPMENT.config));
 
                 // set directories
                 t.getInputDirectory().set(extension.getInputDirectory());

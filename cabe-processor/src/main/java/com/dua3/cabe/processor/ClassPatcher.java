@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  */
 public class ClassPatcher {
 
-    private static final Pattern PATTERN_FQCN = Pattern.compile("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$");
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
 
     /**
      * This method is the entry point of the application.
@@ -60,6 +60,7 @@ public class ClassPatcher {
         Path in = null;
         Path out = null;
         List<Path> classPaths = null;
+        Config configuration = null;
 
         try {
             List<String> cmdLine = List.of(args);
@@ -72,42 +73,59 @@ public class ClassPatcher {
                 throw new IllegalAccessError("Wrong number of arguments");
             }
 
-            int idxInput = cmdLine.indexOf("-i");
-            String inputFolder = switch (idxInput) {
-                case 0, 2 -> cmdLine.get(idxInput + 1);
-                default -> throw new IllegalArgumentException("option '-i' not found at expected position");
+            String inputFolder = getOptionString(cmdLine, "-i");
+            String outputFolder = getOptionString (cmdLine, "-o");
+            String configurationName = getOptionString(cmdLine, "-c", "release");
+
+            configuration = switch (configurationName) {
+                case "release" -> Config.StandardConfig.RELEASE.config;
+                case "development" -> Config.StandardConfig.DEVELOPMENT.config;
+                case "no-checks" -> Config.StandardConfig.NO_CHECKS.config;
+                default -> throw new IllegalArgumentException("invalid configuration: " + configurationName);
             };
 
-            int idxOutput = cmdLine.indexOf("-o");
-            String outputFolder = switch (idxOutput) {
-                case 0, 2 -> cmdLine.get(idxOutput + 1);
-                default -> throw new IllegalArgumentException("option '-o' not found at expected position");
-            };
-
-            int idxClasspath = cmdLine.indexOf("-c");
+            int idxClasspath = cmdLine.indexOf("-cl");
             List<String> classPathFolder = switch (idxClasspath) {
                 case 4 ->
                         cmdLine.size() == 5 ? Collections.emptyList() : cmdLine.subList(idxClasspath + 1, cmdLine.size());
                 case -1 -> Collections.emptyList();
-                default -> throw new IllegalArgumentException("option '-c' not found at expected position");
+                default -> throw new IllegalArgumentException("option '-cl' not found at expected position");
             };
 
             in = Paths.get(inputFolder);
             out = Paths.get(outputFolder);
             classPaths = classPathFolder.stream().map(Paths::get).toList();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.println("Commandline error: " + e.getMessage());
             help();
             System.exit(1);
         }
 
         try {
-            ClassPatcher classPatcher = new ClassPatcher(classPaths);
+            ClassPatcher classPatcher = new ClassPatcher(classPaths, configuration);
             classPatcher.processFolder(in, out);
-        } catch (Exception e) {
+        } catch (RuntimeException | IOException | ClassFileProcessingFailedException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(2);
         }
+    }
+
+    private static String messageOptionNotFound(String option) {
+        return String.format("option '%s' not found at expected position", option);
+    }
+
+    private static String getOptionString(List<String> cmdLine, String option) {
+        String value = getOptionString(cmdLine, option, null);
+        return Objects.requireNonNull(value, () -> messageOptionNotFound(option));
+    }
+
+    private static String getOptionString(List<String> cmdLine, String option, String defaultValue) {
+        int idxInput = cmdLine.indexOf(option);
+        return switch (idxInput) {
+            case 0, 2, 4 -> cmdLine.get(idxInput + 1);
+            case -1 -> defaultValue;
+            default -> throw new IllegalArgumentException(messageOptionNotFound(option));
+        };
     }
 
     private static void help() {
@@ -117,15 +135,23 @@ public class ClassPatcher {
                                 
                 Add null checks in Java class file byte code.
                                 
-                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <classpath entry> ...]
+                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-cl <classpath entry> ...]
                 """;
         System.out.println(msg);
     }
 
-    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
+    /**
+     * Regular expression pattern for matching Fully Qualified Class Names (FQCN).
+     * FQCN is a string representing the package and class name of a Java class.
+     * The pattern matches valid Java identifiers separated by dots, allowing for nested classes.
+     * It does not match reserved keywords or invalid identifier characters.
+     */
+    private static final Pattern PATTERN_FQCN = Pattern.compile("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$");
+
     private static final Pattern GET_CLASS_NAME_PATTERN = Pattern.compile("\\.[^.]*$");
 
     private final List<Path> classpath;
+    private final Config configuration;
     private ClassPool classPool;
     private Path inputFolder;
     private Path outputFolder;
@@ -133,10 +159,12 @@ public class ClassPatcher {
     /**
      * This class represents a ClassPatcher object that manipulates class files in a given classpath.
      *
-     * @param classpath the compile classpath
+     * @param classpath     the compile classpath
+     * @param configuration
      */
-    public ClassPatcher(Collection<Path> classpath) {
-        this.classpath = new ArrayList<>(classpath);
+    public ClassPatcher(Collection<Path> classpath, Config configuration) {
+        this.classpath = new ArrayList<>(Objects.requireNonNull(classpath, "classpath is null"));
+        this.configuration = Objects.requireNonNull(configuration, "configuration is null");
     }
 
     /**

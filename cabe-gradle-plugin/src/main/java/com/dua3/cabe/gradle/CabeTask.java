@@ -2,6 +2,7 @@ package com.dua3.cabe.gradle;
 
 
 import com.dua3.cabe.processor.ClassPatcher;
+import com.dua3.cabe.processor.Config;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
@@ -10,6 +11,7 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -27,6 +29,7 @@ public abstract class CabeTask extends DefaultTask {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
+    private final Property<Config> config;
 
     /**
      * This task injects assertions for parameters marked as not allowing null values into the source code.
@@ -39,6 +42,7 @@ public abstract class CabeTask extends DefaultTask {
         inputDirectory = objectFactory.directoryProperty();
         outputDirectory = objectFactory.directoryProperty();
         classPath = objectFactory.property(FileCollection.class);
+        config = objectFactory.property(Config.class);
     }
 
     /**
@@ -71,13 +75,19 @@ public abstract class CabeTask extends DefaultTask {
         return (Property<FileCollection>) classPath;
     }
 
+    @Input
+    public Property<Config> getConfig() {
+        return config;
+    }
+
     @TaskAction
     void run() {
         try {
             List<Path> classpath = getClassPath().get().getFiles().stream()
                     .map(File::toPath)
                     .collect(Collectors.toList());
-            ClassPatcher classPatcher = new ClassPatcher(classpath);
+            Config configuration = config.get();
+            ClassPatcher classPatcher = new ClassPatcher(classpath, configuration);
             classPatcher.processFolder(
                     getInputDirectory().get().getAsFile().toPath(),
                     getOutputDirectory().get().getAsFile().toPath()
