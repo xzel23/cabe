@@ -109,6 +109,7 @@ public class ClassPatcher {
             ClassPatcher classPatcher = new ClassPatcher(classPaths, configuration);
             classPatcher.processFolder(in, out);
         } catch (RuntimeException | IOException | ClassFileProcessingFailedException e) {
+            LOG.log(Level.SEVERE, "Error processing class files", e);
             System.err.println("Error: " + e.getMessage());
             System.exit(2);
         }
@@ -255,7 +256,7 @@ public class ClassPatcher {
      * @throws IOException                        if an I/O error occurs
      */
     private void instrumentClassFile(Path classFile) throws ClassFileProcessingFailedException, IOException {
-        LOG.fine(() -> "Instrumenting class file: " + classFile);
+        LOG.info(() -> "Instrumenting class file: " + classFile);
 
         Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
 
@@ -294,10 +295,9 @@ public class ClassPatcher {
                 classInfo.ctClass().detach();
             }
         } catch (IOException e) {
-            throw new IOException("Failed to modify class file " + classFile, e);
+            throw new IOException("IOException while instrumenting class file " + classFile, e);
         } catch (Exception e) {
-            LOG.log(Level.WARNING, "instrumenting class file failed: " + classFile, e);
-            throw new ClassFileProcessingFailedException("Failed to modify class file " + classFile, e);
+            throw new ClassFileProcessingFailedException("instrumenting failed for class file " + classFile, e);
         }
     }
 
@@ -312,13 +312,13 @@ public class ClassPatcher {
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
-            LOG.warning(() -> "field $assertionsDisabled not found in class, adding checks unconditionally: " + ci.name());
+            LOG.fine(() -> "field $assertionsDisabled not found in class, adding checks unconditionally: " + ci.name());
             CtClass ctClass = ci.ctClass();
 
             if (Arrays.stream(ctClass.getFields()).map(CtField::getName).anyMatch(name -> name.equals("$assertionsDisabled"))) {
-                LOG.info(() -> "field $assertionsDisabled has already been injected in class: " + ci.name());
+                LOG.fine(() -> "field $assertionsDisabled has already been injected in class: " + ci.name());
             } else {
-                LOG.info(() -> "injecting field $assertionsDisabled in class: " + ci.name());
+                LOG.fine(() -> "injecting field $assertionsDisabled in class: " + ci.name());
                 CtField field = new CtField(CtClass.booleanType, "$assertionsDisabled", ctClass);
                 field.setModifiers(Modifier.STATIC | Modifier.FINAL);
                 //ctClass.addField(field, CtField.Initializer.constant(false));
