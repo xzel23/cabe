@@ -290,6 +290,15 @@ public class ClassPatcher {
         }
     }
 
+    private static String getAssertionEnabledExpression(ClassInfo ci) {
+        String assertionsDisabledFlagName = ci.assertionsDisabledFlagName();
+        if (assertionsDisabledFlagName != null) {
+            return "!" + assertionsDisabledFlagName;
+        } else {
+            return ci.name() + ".class.desiredAssertionStatus()";
+        }
+    }
+
     private static boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
@@ -301,15 +310,8 @@ public class ClassPatcher {
         LOG.fine(() -> "instrumenting method " + methodName);
         boolean isChanged = false;
         try (Formatter assertions = new Formatter()) {
-            String assertionsDisabled = ci.assertionsDisabledFlagName();
-            if (assertionsDisabled == null) {
-                LOG.warning(() -> "could not determine assertion flag for class " + ci.name() + " while instrumenting " + methodName);
-                assertionsDisabled = "desiredAssertionStatus()";
-            }
-
             // create assertion code
-            String as = assertionsDisabled;
-            assertions.format("if (!%1$s) {%n", as); // --> "if (!assertionsDisabled) {"
+            assertions.format("if (%1$s) {%n", getAssertionEnabledExpression(ci)); // --> "if (!assertionsDisabled) {"
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
                 if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
