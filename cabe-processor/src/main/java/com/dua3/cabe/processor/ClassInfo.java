@@ -85,11 +85,13 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
      */
     private static String getAssertionsDisabledFlagName(CtClass ctClass) throws NotFoundException {
         for (CtClass cls = ctClass; cls != null; cls = cls.getDeclaringClass()) {
-            CtField assertionsDisabledFlag = Arrays.stream(cls.getFields())
+            final CtClass currentClass = cls;
+            CtField flag = Arrays.stream(cls.getFields())
                     .filter(f -> f.getName().equals("$assertionsDisabled"))
+                    .filter(f -> f.getDeclaringClass().equals(currentClass))
                     .findFirst().orElse(null);
-            if (assertionsDisabledFlag != null) {
-                return assertionsDisabledFlag.getDeclaringClass().getName() + "." + assertionsDisabledFlag.getName();
+            if (flag != null) {
+                return flag.getDeclaringClass().getName() + "." + flag.getName();
             }
         }
         return null;
