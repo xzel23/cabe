@@ -312,9 +312,7 @@ public class ClassPatcher {
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
-            LOG.fine(() -> "field $assertionsDisabled not found in class, adding checks unconditionally: " + ci.name());
             CtClass ctClass = ci.ctClass();
-
             if (Arrays.stream(ctClass.getFields()).map(CtField::getName).anyMatch(name -> name.equals("$assertionsDisabled"))) {
                 LOG.fine(() -> "field $assertionsDisabled has already been injected in class: " + ci.name());
             } else {
