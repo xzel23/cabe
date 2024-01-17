@@ -81,9 +81,19 @@ public class CabeExtension {
         return classPath;
     }
 
+    /**
+     * Retrieves the configuration property for the Cabe plugin.
+     *
+     * @return the configuration property as a Property object of type Config
+     */
     public Property<Config> getConfig() {
         return config;
     }
+    /**
+     * Sets the configuration property for the Cabe plugin.
+     *
+     * @param config the configuration to set
+     */
     public void setConfig(Config config) {
         this.config.set(config);
     }
