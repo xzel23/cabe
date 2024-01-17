@@ -75,10 +75,10 @@ public class ClassPatcher {
 
             String inputFolder = getOptionString(cmdLine, "-i");
             String outputFolder = getOptionString (cmdLine, "-o");
-            String configurationName = getOptionString(cmdLine, "-c", "release");
+            String configurationName = getOptionString(cmdLine, "-c", "standard");
 
             configuration = switch (configurationName) {
-                case "release" -> Config.StandardConfig.RELEASE.config;
+                case "standard" -> Config.StandardConfig.STANDARD.config;
                 case "development" -> Config.StandardConfig.DEVELOPMENT.config;
                 case "no-checks" -> Config.StandardConfig.NO_CHECKS.config;
                 default -> throw new IllegalArgumentException("invalid configuration: " + configurationName);
@@ -135,7 +135,14 @@ public class ClassPatcher {
                                 
                 Add null checks in Java class file byte code.
                                 
-                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-cl <classpath entry> ...]
+                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cl <classpath entry> ...]
+                                
+                    <configurations> : standard|development|no-checks (default: standard)
+                    
+                                       'standard'    - use standard (runtime controlled) assertions for private API methods,
+                                                       throw NullPointerException for public API methods 
+                                       'development' - failed checks will always throw an AssertionError 
+                                       'no-check'    - do not add any null checks
                 """;
         System.out.println(msg);
     }
@@ -274,7 +281,7 @@ public class ClassPatcher {
                 }
 
                 // Write the class file
-                LOG.fine("writing modified class file: " + classFile);
+                LOG.fine("writing class file: " + classFile);
                 Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
                 classInfo.ctClass().writeFile(outputFolder.toString());
 
@@ -301,6 +308,7 @@ public class ClassPatcher {
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
+            LOG.warning(() -> "field $assertionsDisabled not found in class, using desiredAssertionStatus(): " + ci.name());
             return ci.name() + ".class.desiredAssertionStatus()";
         }
     }
@@ -313,7 +321,7 @@ public class ClassPatcher {
      * @return true if the method was changed and instrumented, false otherwise
      * @throws ClassFileProcessingFailedException if processing of the class file fails
      */
-    private static boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
+    private boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
         if (mi.isSynthetic()) {
@@ -322,10 +330,11 @@ public class ClassPatcher {
         }
 
         LOG.fine(() -> "instrumenting method " + methodName);
-        boolean isChanged = false;
-        try (Formatter assertions = new Formatter()) {
+        boolean hasStandardAssertions = false;
+        boolean hasOtherChecks = false;
+        try (Formatter standardAssertions = new Formatter(); Formatter otherChecks = new Formatter()) {
             // create assertion code
-            assertions.format("if (%1$s) {%n", getAssertionEnabledExpression(ci)); // --> "if (!assertionsDisabled) {"
+            standardAssertions.format("if (%1$s) {%n", getAssertionEnabledExpression(ci)); // --> "if (!assertionsDisabled) {"
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
                 if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
@@ -335,24 +344,48 @@ public class ClassPatcher {
                 // create assertion code
                 boolean isNotNull = pi.isNotNullAnnotated() || ci.isNotNullApi() && !pi.isNullableAnnotated();
                 if (isNotNull) {
-                    LOG.fine(() -> "adding assertion for parameter " + pi.name() + " in " + ci.name());
-                    assertions.format(
-                            "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                            pi.param(), pi.name()
-                    );
-                    isChanged = true;
+                    Config.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
+                    switch (check) {
+                        case IGNORE -> {
+                            // nop
+                        }
+                        case ASSERT -> {
+                            standardAssertions.format(
+                                    "  if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
+                                    pi.param(), pi.name()
+                            );
+                            hasStandardAssertions = true;
+                        }
+                        case ASSERT_ALWAYS -> {
+                            otherChecks.format(
+                                    "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
+                                    pi.param(), pi.name()
+                            );
+                            hasOtherChecks = true;
+                        }
+                        case THROW_NPE -> {
+                            otherChecks.format(
+                                    "if (%1$s==null) { throw new NullPointerException(\"%2$s is null\"); }%n",
+                                    pi.param(), pi.name()
+                            );
+                            hasOtherChecks = true;
+                        }
+                    }
+                    LOG.fine(() -> "adding null check for parameter " + pi.name() + " in " + ci.name());
                 }
             }
-            assertions.format("}%n"); // <-- "}"
+            standardAssertions.format("}%n"); // <-- "}"
 
             // modify class
-            if (isChanged) {
-                String src = assertions.toString();
-                LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n" + src.indent(2));
-                mi.ctMethod().insertBefore(src);
+            String code = (hasStandardAssertions ? standardAssertions.toString() : "")
+                    + (hasOtherChecks ? otherChecks.toString() : "");
+            if (!code.isEmpty()) {
+                LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n" + code.indent(2));
+                mi.ctMethod().insertBefore(code);
+                return true;
+            } else {
+                return false;
             }
-
-            return isChanged;
         } catch (CannotCompileException e) {
             throw new ClassFileProcessingFailedException("compilation failed for method '" + methodName + "'", e);
         } catch (RuntimeException e) {

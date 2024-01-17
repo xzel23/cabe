@@ -36,7 +36,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 log.debug("initialising cabe task");
 
                 // set the configuration
-                t.getConfig().set(extension.getConfig().getOrElse(Config.StandardConfig.DEVELOPMENT.config));
+                t.getConfig().set(extension.getConfig().getOrElse(Config.StandardConfig.STANDARD.config));
 
                 // set directories
                 t.getInputDirectory().set(extension.getInputDirectory());
