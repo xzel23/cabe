@@ -2,6 +2,9 @@ package com.dua3.cabe.processor;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtField;
+import javassist.Modifier;
 import javassist.NotFoundException;
 
 import java.io.File;
@@ -11,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
@@ -303,13 +307,25 @@ public class ClassPatcher {
      * @param ci the ClassInfo object representing the class
      * @return the assertion enabled expression as a String
      */
-    private static String getAssertionEnabledExpression(ClassInfo ci) {
+    private static String getAssertionEnabledExpression(ClassInfo ci) throws CannotCompileException {
         String assertionsDisabledFlagName = ci.assertionsDisabledFlagName();
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
             LOG.warning(() -> "field $assertionsDisabled not found in class, adding checks unconditionally: " + ci.name());
-            return "true";
+            CtClass ctClass = ci.ctClass();
+
+            if (Arrays.stream(ctClass.getFields()).map(CtField::getName).anyMatch(name -> name.equals("$assertionsDisabled"))) {
+                LOG.info(() -> "field $assertionsDisabled has already been injected in class: " + ci.name());
+            } else {
+                LOG.info(() -> "injecting field $assertionsDisabled in class: " + ci.name());
+                CtField field = new CtField(CtClass.booleanType, "$assertionsDisabled", ctClass);
+                field.setModifiers(Modifier.STATIC | Modifier.FINAL);
+                //ctClass.addField(field, CtField.Initializer.constant(false));
+                ctClass.addField(field);
+            }
+
+            return "!" + ctClass.getName() + ".$assertionsDisabled";
         }
     }
 
@@ -334,7 +350,6 @@ public class ClassPatcher {
         boolean hasOtherChecks = false;
         try (Formatter standardAssertions = new Formatter(); Formatter otherChecks = new Formatter()) {
             // create assertion code
-            standardAssertions.format("if (%1$s) {%n", getAssertionEnabledExpression(ci)); // --> "if (!assertionsDisabled) {"
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
                 if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
@@ -374,11 +389,14 @@ public class ClassPatcher {
                     LOG.fine(() -> "adding null check for parameter " + pi.name() + " in " + ci.name());
                 }
             }
-            standardAssertions.format("}%n"); // <-- "}"
 
             // modify class
-            String code = (hasStandardAssertions ? standardAssertions.toString() : "")
-                    + (hasOtherChecks ? otherChecks.toString() : "");
+            String code = (hasStandardAssertions
+                    ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardAssertions)
+                    : "")
+                    +
+                    (hasOtherChecks ? otherChecks : "");
+
             if (!code.isEmpty()) {
                 LOG.fine(() -> "injecting code into: " + methodName + "\n" + code.indent(2).stripTrailing());
                 mi.ctMethod().insertBefore(code);
