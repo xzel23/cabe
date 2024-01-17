@@ -290,6 +290,12 @@ public class ClassPatcher {
         }
     }
 
+    /**
+     * Retrieves the expression that represents whether assertions are enabled or disabled for a given class.
+     *
+     * @param ci the ClassInfo object representing the class
+     * @return the assertion enabled expression as a String
+     */
     private static String getAssertionEnabledExpression(ClassInfo ci) {
         String assertionsDisabledFlagName = ci.assertionsDisabledFlagName();
         if (assertionsDisabledFlagName != null) {
@@ -299,6 +305,14 @@ public class ClassPatcher {
         }
     }
 
+    /**
+     * Instruments a method by adding null-check assertions for method parameters.
+     *
+     * @param ci the ClassInfo object representing the class
+     * @param mi the MethodInfo object representing the method
+     * @return true if the method was changed and instrumented, false otherwise
+     * @throws ClassFileProcessingFailedException if processing of the class file fails
+     */
     private static boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
