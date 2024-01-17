@@ -12,7 +12,7 @@ public class NoAnnotations {
 
     public void doTest() {
         check(() -> oneNotNullArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullArgument(null), null, "error: arg is null");
+        check(() -> oneNotNullArgument(null), null, "assertion failed: arg is null");
     }
 
     private String oneNotNullArgument(String arg) {
@@ -27,7 +27,7 @@ public class NoAnnotations {
         try {
             result = task.get();
         } catch (AssertionError ae) {
-            assertionMessage = "error: " + ae.getMessage();
+            assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {

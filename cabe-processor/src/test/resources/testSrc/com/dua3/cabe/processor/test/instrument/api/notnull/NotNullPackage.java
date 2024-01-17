@@ -12,26 +12,26 @@ public class NotNullPackage {
     public static void test() {
         // check processing of unannotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
-        check(() -> unannotatedArgument(null), null, "error: arg is null");
+        check(() -> unannotatedArgument(null), null, "assertion failed: arg is null");
 
         // @NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullAnnotatedArgument(null), null, "error: arg is null");
+        check(() -> oneNotNullAnnotatedArgument(null), null, "assertion failed: arg is null");
 
         check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: arg1 is null");
-        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: arg2 is null");
-        check(() -> twoNotNullAnnotatedArguments(null, null), null, "error: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, null), null, "assertion failed: arg1 is null");
 
         check(() -> firstArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "error: arg1 is null");
-        check(() -> firstArgumentNotNullAnnotated("hello", null), null, "error: arg2 is null");
-        check(() -> firstArgumentNotNullAnnotated(null, null), null, "error: arg1 is null");
+        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNotNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> firstArgumentNotNullAnnotated(null, null), null, "assertion failed: arg1 is null");
 
         check(() -> secondArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> secondArgumentNotNullAnnotated(null, "world!"), null, "error: arg1 is null");
-        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: arg2 is null");
-        check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: arg1 is null");
+        check(() -> secondArgumentNotNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> secondArgumentNotNullAnnotated(null, null), null, "assertion failed: arg1 is null");
 
         // @Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
@@ -44,21 +44,21 @@ public class NotNullPackage {
 
         check(() -> firstArgumentNullableAnnotated("hello", "world!"), "hello world!", null);
         check(() -> firstArgumentNullableAnnotated(null, "world!"), "null world!", null);
-        check(() -> firstArgumentNullableAnnotated("hello", null), null, "error: arg2 is null");
-        check(() -> firstArgumentNullableAnnotated(null, null), null, "error: arg2 is null");
+        check(() -> firstArgumentNullableAnnotated("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> firstArgumentNullableAnnotated(null, null), null, "assertion failed: arg2 is null");
 
         check(() -> secondArgumentNullableAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> secondArgumentNullableAnnotated(null, "world!"), null, "error: arg1 is null");
+        check(() -> secondArgumentNullableAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
         check(() -> secondArgumentNullableAnnotated("hello", null), "hello null", null);
-        check(() -> secondArgumentNullableAnnotated(null, null), null, "error: arg1 is null");
+        check(() -> secondArgumentNullableAnnotated(null, null), null, "assertion failed: arg1 is null");
 
         // record parameter
         check(() -> new Pair("A", 1).toString(), "Pair[first=A, second=1]", null);
-        check(() -> new Pair(null, 1).toString(), null, "error: first is null");
+        check(() -> new Pair(null, 1).toString(), null, "assertion failed: first is null");
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
         check(() -> new NullablePair("A", 1).toString(), "NullablePair[first=A, second=1]", null);
         check(() -> new NullablePair("A", null).toString(), "NullablePair[first=A, second=null]", null);
-        check(() -> new NullablePair(null, 1).toString(), null, "error: first is null");
+        check(() -> new NullablePair(null, 1).toString(), null, "assertion failed: first is null");
 
         // primitive argument
         check(() -> primitiveArgument(1), "hello 1", null);
@@ -67,7 +67,7 @@ public class NotNullPackage {
         assert new B("hello", " world!").toString().equals("hello world!");
 
         // check that enum constructors work
-        check(() -> F.WITH_INITIALISER_1.toString(), null, "error: txt is null");
+        check(() -> F.WITH_INITIALISER_1.toString(), null, "assertion failed: txt is null");
 
         // check that lambdas are not instrumented
         check(() -> apply(a -> String.valueOf(a), 1), "1", null);
@@ -141,7 +141,7 @@ public class NotNullPackage {
         try {
             result = task.get();
         } catch (AssertionError ae) {
-            assertionMessage = "error: " + ae.getMessage();
+            assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {

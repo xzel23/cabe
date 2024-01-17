@@ -16,12 +16,13 @@ public class ParameterAnnotations {
     public void doTest() {
         // test with generic parameters
         check(() -> new C<>("hello world!").toString(), "hello world!", null);
-        check(() -> new C<>(null).toString(), null, "error: t is null");
+        check(() -> new C<>(null).toString(), null, "assertion failed: t is null");
 
+        // generic arguments is public, so 
         check(() -> genericArguments("hello", "world", obj -> " " + obj + "!"), "hello world!", null);
-        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "error: prefix is null");
-        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "error: suffix is null");
-        check(() -> genericArguments("hello", "world", null), null, "error: func is null");
+        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "npe: prefix is null");
+        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "npe: suffix is null");
+        check(() -> genericArguments("hello", "world", null), null, "npe: func is null");
 
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
@@ -29,28 +30,28 @@ public class ParameterAnnotations {
 
         // NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullAnnotatedArgument(null), null, "error: arg is null");
+        check(() -> oneNotNullAnnotatedArgument(null), null, "assertion failed: arg is null");
 
         check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "error: arg1 is null");
-        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "error: arg2 is null");
-        check(() -> twoNotNullAnnotatedArguments(null, null), null, "error: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, null), null, "assertion failed: arg1 is null");
 
         check(() -> firstArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "error: arg1 is null");
+        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
         check(() -> firstArgumentNotNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNotNullAnnotated(null, null), null, "error: arg1 is null");
+        check(() -> firstArgumentNotNullAnnotated(null, null), null, "assertion failed: arg1 is null");
 
         check(() -> secondArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
         check(() -> secondArgumentNotNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "error: arg2 is null");
-        check(() -> secondArgumentNotNullAnnotated(null, null), null, "error: arg2 is null");
+        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> secondArgumentNotNullAnnotated(null, null), null, "assertion failed: arg2 is null");
 
         check(() -> intermixedWithPrimitives(87, " hello ", 99), "87 hello 99", null);
-        check(() -> intermixedWithPrimitives(87, null, 99), null, "error: txt is null");
+        check(() -> intermixedWithPrimitives(87, null, 99), null, "assertion failed: txt is null");
 
         check(() -> genericParameter(new A("hello world!")), "hello world!", null);
-        check(() -> genericParameter(null), null, "error: arg is null");
+        check(() -> genericParameter(null), null, "assertion failed: arg is null");
 
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
@@ -77,8 +78,8 @@ public class ParameterAnnotations {
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
-        check(() -> new B(null, " world!").toString(), null, "error: a is null");
-        check(() -> new B("hello", null).toString(), null, "error: b is null");
+        check(() -> new B(null, " world!").toString(), null, "assertion failed: a is null");
+        check(() -> new B("hello", null).toString(), null, "assertion failed: b is null");
     }
 
     private String unannotatedArgument(String arg) {
@@ -154,7 +155,9 @@ public class ParameterAnnotations {
         try {
             result = task.get();
         } catch (AssertionError ae) {
-            assertionMessage = "error: " + ae.getMessage();
+            assertionMessage = "assertion failed: " + ae.getMessage();
+        } catch (NullPointerException npe) {
+            assertionMessage = "npe: " + npe.getMessage();
         }
 
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
