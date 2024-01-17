@@ -30,7 +30,7 @@ read -p "Publish plugin? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-  echo "publishing gradle-processor JAR"
+  echo "publishing cabe-processor JAR"
   ./gradlew cabe-processor:publish --no-parallel \
   && echo "publishing plugin" \
   && ./gradlew cabe-gradle-plugin:publishPlugins --no-parallel \
