@@ -308,8 +308,8 @@ public class ClassPatcher {
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
-            LOG.warning(() -> "field $assertionsDisabled not found in class, using desiredAssertionStatus(): " + ci.name());
-            return ci.name() + ".class.desiredAssertionStatus()";
+            LOG.warning(() -> "field $assertionsDisabled not found in class, adding checks unconditionally: " + ci.name());
+            return "true";
         }
     }
 
@@ -380,7 +380,7 @@ public class ClassPatcher {
             String code = (hasStandardAssertions ? standardAssertions.toString() : "")
                     + (hasOtherChecks ? otherChecks.toString() : "");
             if (!code.isEmpty()) {
-                LOG.fine(() -> "injecting code\n  method: " + methodName + "  code:\n" + code.indent(2));
+                LOG.fine(() -> "injecting code into: " + methodName + "\n" + code.indent(2).stripTrailing());
                 mi.ctMethod().insertBefore(code);
                 return true;
             } else {
