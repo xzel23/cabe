@@ -307,23 +307,29 @@ public class ClassPatcher {
      * @param ci the ClassInfo object representing the class
      * @return the assertion enabled expression as a String
      */
-    private static String getAssertionEnabledExpression(ClassInfo ci) throws CannotCompileException {
+    private String getAssertionEnabledExpression(ClassInfo ci) throws CannotCompileException {
         String assertionsDisabledFlagName = ci.assertionsDisabledFlagName();
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
             CtClass ctClass = ci.ctClass();
+            String flagName;
             if (Arrays.stream(ctClass.getFields()).map(CtField::getName).anyMatch(name -> name.equals("$assertionsDisabled"))) {
                 LOG.fine(() -> "field $assertionsDisabled has already been injected in class: " + ci.name());
+                flagName = "!" + ctClass.getName() + ".$assertionsDisabled";
             } else {
+                // inject directly into the current class
                 LOG.fine(() -> "injecting field $assertionsDisabled in class: " + ci.name());
                 CtField field = new CtField(CtClass.booleanType, "$assertionsDisabled", ctClass);
-                field.setModifiers(Modifier.STATIC | Modifier.FINAL);
-                //ctClass.addField(field, CtField.Initializer.constant(false));
+                int modifiers = ctClass.isInterface()
+                        ? Modifier.STATIC | Modifier.FINAL | Modifier.PUBLIC
+                        : Modifier.STATIC | Modifier.FINAL;
+                field.setModifiers(modifiers);
                 ctClass.addField(field);
+                flagName = "!" + ctClass.getName() + ".$assertionsDisabled";
             }
 
-            return "!" + ctClass.getName() + ".$assertionsDisabled";
+            return flagName;
         }
     }
 
@@ -403,7 +409,7 @@ public class ClassPatcher {
                 return false;
             }
         } catch (CannotCompileException e) {
-            throw new ClassFileProcessingFailedException("compilation failed for method '" + methodName + "'", e);
+            throw new ClassFileProcessingFailedException("compilation failed for instrumented method '" + methodName + "'", e);
         } catch (RuntimeException e) {
             throw new ClassFileProcessingFailedException("exception while instrumenting method '" + methodName + "'", e);
         }

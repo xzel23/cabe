@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * The ClassInfo class represents information about a Java class.
@@ -86,15 +88,23 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
     private static String getAssertionsDisabledFlagName(CtClass ctClass) throws NotFoundException {
         for (CtClass cls = ctClass; cls != null; cls = cls.getDeclaringClass()) {
             final CtClass currentClass = cls;
-            CtField flag = Arrays.stream(cls.getFields())
-                    .filter(f -> f.getName().equals("$assertionsDisabled"))
-                    .filter(f -> f.getDeclaringClass().equals(currentClass))
+            // does the current class or one of its nested classes contain the flag?
+            CtField flag = Stream.concat(Stream.of(cls), Stream.of(cls.getNestedClasses()))
+                    .map(ClassInfo::getAssertionsDisabledField)
+                    .filter(Objects::nonNull)
                     .findFirst().orElse(null);
             if (flag != null) {
                 return flag.getDeclaringClass().getName() + "." + flag.getName();
             }
         }
         return null;
+    }
+
+    private static CtField getAssertionsDisabledField(CtClass cls) {
+        return Arrays.stream(cls.getFields())
+                .filter(f -> f.getName().equals("$assertionsDisabled"))
+                .filter(f -> f.getDeclaringClass().equals(cls)) // filter fields declared in superclasses
+                .findFirst().orElse(null);
     }
 
     /**
