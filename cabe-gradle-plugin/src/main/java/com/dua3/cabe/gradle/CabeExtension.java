@@ -35,7 +35,7 @@ public class CabeExtension {
         ObjectFactory objectFactory = project.getObjects();
 
         // get value of config
-        config = objectFactory.property(Config.class).value(Config.StandardConfig.DEVELOPMENT.config);
+        config = objectFactory.property(Config.class).value(Config.StandardConfig.STANDARD.config);
 
         // output into the original classes directory
         outputDirectory = objectFactory.directoryProperty();
