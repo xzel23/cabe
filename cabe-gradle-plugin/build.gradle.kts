@@ -15,7 +15,6 @@ repositories {
 dependencies {
     implementation(project(":cabe-annotations"))
     implementation(project(":cabe-processor"))
-    implementation("org.javassist:javassist:3.30.2-GA")
 }
 
 gradlePlugin {

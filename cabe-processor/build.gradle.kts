@@ -5,8 +5,8 @@ plugins {
     id("application")
     id("maven-publish")
     id("signing")
-    id("com.github.spotbugs") version "6.0.4"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.github.spotbugs") version "6.0.6"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 
-    runtimeOnly("org.apache.logging.log4j:log4j-core:2.22.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-core:2.22.1")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
