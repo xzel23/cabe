@@ -26,11 +26,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -296,5 +298,201 @@ class ClassPatcherTest {
     @Order(5)
     void testInstrumentationModuleInfo() {
         assertTrue(Files.isRegularFile(testClassesProcessedInstrumentedDir.resolve("module-info.class")), "module-info.class is missing");
+    }
+
+    /**
+     * Test generating null checks for different configurations. This test also makes sure that null checks for
+     * {@link Config.Check#ASSERT} are work the same as standard assertions i.e., can be en-/disabled using the
+     * standard JVM flags ('-ea and '-da').
+     *
+     * @param configName the name of the configuration as defined in {@link Config.StandardConfig}
+     * @throws IOException                           if an I/O error occurs
+     * @throws ClassFileProcessingFailedException    if processing of a class file fails
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "NO_CHECKS",
+            "DEVELOPMENT",
+            "STANDARD"
+    })
+    @Order(6)
+    public void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
+        Config.StandardConfig config = Config.StandardConfig.valueOf(configName);
+
+        // create directories
+        Path unprocessedDir = testDir.resolve("classes-unprocessed-" + configName);
+        Files.createDirectories(unprocessedDir);
+        Path processedDir = testDir.resolve("classes-processed-" + configName);
+        Files.createDirectories(processedDir);
+
+        // copy sources
+        copyFolder(
+                testClassesUnprocessedDir.resolve("com/dua3/cabe/processor/test/config"),
+                unprocessedDir.resolve("com/dua3/cabe/processor/test/config")
+        );
+
+        // process classes
+        Collection<Path> classPath = List.of();
+        ClassPatcher patcher = new ClassPatcher(classPath, config.config);
+        patcher.processFolder(unprocessedDir, processedDir);
+
+        // test processed classes
+        try (Formatter fmt = new Formatter()) {
+            String header = "Config: " + config.name();
+            fmt.format("%s%n", header);
+            fmt.format("%s%n", "=".repeat(header.length()));
+
+            try (Stream<Path> pathStream = Files.walk(processedDir)) {
+                String result = pathStream
+                        .filter(Files::isRegularFile)
+                        .filter(p -> p.toString().endsWith(".class"))
+                        .map(path -> runAndtestConfig(config.name(), processedDir, processedDir.relativize(path)))
+                        .collect(Collectors.joining());
+                fmt.format("%s", result);
+            }
+
+            String actual = fmt.toString();
+            String expected = EXPECTED_FOR_CONFIG.getOrDefault(config, "");
+            assertEquals(expected, actual, "failed: " + config);
+        }
+    }
+
+    private static final Map<Config.StandardConfig, String> EXPECTED_FOR_CONFIG = Map.of(
+            Config.StandardConfig.NO_CHECKS, """
+                    Config: NO_CHECKS
+                    =================
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
+                    ---------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : -
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
+                    --------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : -
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
+                    ------------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
+                    -----------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    """,
+            Config.StandardConfig.DEVELOPMENT, """
+                    Config: DEVELOPMENT
+                    ===================
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
+                    ---------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.AssertionError
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
+                    --------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.AssertionError
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
+                    ------------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
+                    -----------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    """,
+            Config.StandardConfig.STANDARD, """
+                    Config: STANDARD
+                    ================
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
+                    ---------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
+                    --------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
+                    ------------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
+                    -----------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                                        
+                    """
+    );
+
+    private String runAndtestConfig(String name, Path root, Path path) {
+        String text = "";
+        try (Formatter fmt = new Formatter()) {
+            for (boolean assertionsEnabled : new boolean[]{false, true}) {
+                String header = String.format("Testing %s with assertions %s", path, assertionsEnabled);
+                fmt.format("%s%n", header);
+                fmt.format("%s%n", "-".repeat(header.length()));
+
+                ProcessBuilder processBuilder =
+                        new ProcessBuilder("java", (assertionsEnabled ? "-ea" : "-da"), path.toString().replaceFirst(".class$", ""))
+                                .directory(root.toFile());
+                Process process = processBuilder.start();
+
+                int exitCode = process.waitFor();
+                if (exitCode != 0) {
+                    fmt.format("%s", new String(process.getErrorStream().readAllBytes()));
+                } else {
+                    fmt.format("%s", new String(process.getInputStream().readAllBytes()));
+                }
+            }
+            text = fmt.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return text;
     }
 }

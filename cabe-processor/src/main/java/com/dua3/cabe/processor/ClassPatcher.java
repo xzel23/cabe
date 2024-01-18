@@ -3,9 +3,11 @@ package com.dua3.cabe.processor;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import javassist.bytecode.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
@@ -322,10 +324,21 @@ public class ClassPatcher {
                 LOG.fine(() -> "injecting field $assertionsDisabled in class: " + ci.name());
                 CtField field = new CtField(CtClass.booleanType, "$assertionsDisabled", ctClass);
                 int modifiers = ctClass.isInterface()
-                        ? Modifier.STATIC | Modifier.FINAL | Modifier.PUBLIC
-                        : Modifier.STATIC | Modifier.FINAL;
+                        ? Modifier.STATIC | Modifier.FINAL | Modifier.PUBLIC | AccessFlag.SYNTHETIC
+                        : Modifier.STATIC | Modifier.FINAL | AccessFlag.SYNTHETIC;
                 field.setModifiers(modifiers);
                 ctClass.addField(field);
+                // also make sure the field is initialized correctly
+                CtConstructor initializer = ctClass.getClassInitializer();
+                String initializercode = "{ $assertionsDisabled = !" + ctClass.getName() + ".class.desiredAssertionStatus(); }";
+                if (initializer == null) {
+                    initializer = ctClass.makeClassInitializer();
+                    initializer.setBody(initializercode);
+                } else {
+                    initializer.insertBefore(initializercode);
+                }
+
+                // finally return the flag name
                 flagName = "!" + ctClass.getName() + ".$assertionsDisabled";
             }
 
