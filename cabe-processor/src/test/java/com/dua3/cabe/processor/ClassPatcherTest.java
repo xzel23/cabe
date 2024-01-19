@@ -15,8 +15,10 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -346,6 +348,7 @@ class ClassPatcherTest {
                 String result = pathStream
                         .filter(Files::isRegularFile)
                         .filter(p -> p.toString().endsWith(".class"))
+                        .filter(p -> !p.toString().contains("$")) // filter out anonymous classes
                         .map(path -> runAndtestConfig(config.name(), processedDir, processedDir.relativize(path)))
                         .collect(Collectors.joining());
                 fmt.format("%s", result);
@@ -393,6 +396,26 @@ class ClassPatcherTest {
                     publicNullable      : -
                     publicNotNull       : java.lang.NullPointerException
                                         
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
+                    -------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : -
+                    publicNullableDefault: -
+                    publicNotNullDefault: -
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
+                    ------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : -
+                    publicNullableDefault: -
+                    publicNotNullDefault: -
+                                        
                     """,
             Config.StandardConfig.DEVELOPMENT, """
                     Config: DEVELOPMENT
@@ -428,6 +451,26 @@ class ClassPatcherTest {
                     privateNotNull      : java.lang.AssertionError
                     publicNullable      : -
                     publicNotNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
+                    -------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.AssertionError
+                    publicNullableDefault: -
+                    publicNotNullDefault: java.lang.AssertionError
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
+                    ------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.AssertionError
+                    publicNullableDefault: -
+                    publicNotNullDefault: java.lang.AssertionError
                                         
                     """,
             Config.StandardConfig.STANDARD, """
@@ -465,6 +508,26 @@ class ClassPatcherTest {
                     publicNullable      : -
                     publicNotNull       : java.lang.NullPointerException
                                         
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
+                    -------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNotNull      : -
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                    publicNullableDefault: -
+                    publicNotNullDefault: java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
+                    ------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNotNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNotNull       : java.lang.NullPointerException
+                    publicNullableDefault: -
+                    publicNotNullDefault: java.lang.NullPointerException
+                                        
                     """
     );
 
@@ -483,12 +546,16 @@ class ClassPatcherTest {
 
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
-                    fmt.format("%s", new String(process.getErrorStream().readAllBytes()));
+                    fmt.format("%s", new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
                 } else {
-                    fmt.format("%s", new String(process.getInputStream().readAllBytes()));
+                    fmt.format("%s", new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
                 }
             }
             text = fmt.toString();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
