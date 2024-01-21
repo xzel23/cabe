@@ -1,7 +1,5 @@
 package com.dua3.cabe.processor;
 
-import javassist.ClassPool;
-import javassist.NotFoundException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -11,9 +9,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
@@ -21,10 +16,7 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
@@ -41,14 +33,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ClassPatcherTest {
     private static final Logger LOG = Logger.getLogger(ClassPatcherTest.class.getName());
 
-    static Path buildDir = Paths.get(System.getProperty("user.dir")).resolve("build");
-    static Path resourceDir = Paths.get(System.getProperty("user.dir")).resolve("src/test/resources");
-    static Path testDir = buildDir.resolve(ClassPatcherTest.class.getSimpleName());
+    static Path testDir = TestUtil.buildDir.resolve(ClassPatcherTest.class.getSimpleName());
     static Path testSrcDir = testDir.resolve("src");
     static Path testClassesUnprocessedDir = testDir.resolve("classes-unprocessed");
     static Path testClassesProcessedParameterInfoDir = testDir.resolve("classes-processed-parameterinfo");
     static Path testClassesProcessedInstrumentedDir = testDir.resolve("classes-processed-instrumented");
-    static ClassPool pool = new ClassPool(true);
     static List<Path> classFiles = new ArrayList<>();
 
 
@@ -57,103 +46,32 @@ class ClassPatcherTest {
         LOG.info("ClassPatcherTest.setUp()");
 
         // make sure the build and resource directories exist
-        if (!Files.isDirectory(buildDir)) {
-            throw new IllegalStateException("build directory not found: " + buildDir);
+        if (!Files.isDirectory(TestUtil.buildDir)) {
+            throw new IllegalStateException("build directory not found: " + TestUtil.buildDir);
         }
-        if (!Files.isDirectory(resourceDir)) {
-            throw new IllegalStateException("resource directory not found: " + resourceDir);
+        if (!Files.isDirectory(TestUtil.resourceDir)) {
+            throw new IllegalStateException("resource directory not found: " + TestUtil.resourceDir);
         }
 
         // create directories
         LOG.info("creating directories ...");
         Files.createDirectories(testDir);
-        Files.createDirectories(testSrcDir);
         Files.createDirectories(testClassesUnprocessedDir);
         Files.createDirectories(testClassesProcessedInstrumentedDir);
 
         // copy test source files
         LOG.info("copying test sources ...");
-        copyFolder(resourceDir.resolve("testsrc"), testSrcDir);
+        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testsrc"), testSrcDir);
 
         // compile source files to classes-unprocessed folder
         LOG.info("compiling test sources ...");
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        List<String> options = List.of(
-                "-d", testClassesUnprocessedDir.toString(),
-                "-p", resourceDir.resolve("testLib").toString(),
-                "-proc:full",
-                "-g"
-        );
-        JavaCompiler.CompilationTask task = compiler.getTask(
-                null,   // writer for additional output from the compiler; use System.err if null.
-                null,       // file manager; if null, use compiler's standard file manager
-                null,       // diagnostic listener; if null use compiler's default method for reporting diagnostics
-                options,    // options to the compiler
-                null,       // classes to be processed by annotation processing, null means process all
-                compiler.getStandardFileManager(null, null, null)
-                        .getJavaFileObjects(fetchJavaFiles(testSrcDir)) // source files to compile
-        );
-        boolean success = task.call();
-        if (!success) {
-            throw new IllegalStateException("Compilation of test sources failed.");
-        }
+        TestUtil.compileSources(testSrcDir, testClassesUnprocessedDir, TestUtil.resourceDir.resolve("testLib"));
 
         // Load classes into class pool
         LOG.info("loading class files ...");
-        Arrays.stream(System.getProperty("java.class.path").split(File.pathSeparator))
-                .forEach(cp -> {
-                    try {
-                        pool.appendClassPath(cp);
-                    } catch (NotFoundException e) {
-                        LOG.warning("could not add to classpath: " + cp);
-                    }
-                });
-
-        try {
-            pool.appendClassPath(testClassesUnprocessedDir.toString());
-        } catch (NotFoundException e) {
-            throw new IllegalStateException("could not append classes folder to classpath: " + testSrcDir, e);
-        }
-
-        classFiles.clear();
-        try (Stream<Path> paths = Files.walk(testClassesUnprocessedDir)) {
-            classFiles = paths
-                    .filter(Files::isRegularFile)
-                    .filter(f -> f.getFileName().toString().endsWith(".class"))
-                    .map(f -> testClassesUnprocessedDir.relativize(f))
-                    .collect(Collectors.toList());
-        }
+        classFiles = TestUtil.loadClasses(testClassesUnprocessedDir);
 
         LOG.info("setup complete, " + classFiles.size() + " classes loaded");
-    }
-
-    private static void copyFolder(Path src, Path dest) throws IOException {
-        try (Stream<Path> files = Files.walk(src)) {
-            files.forEach(source -> copy(source, dest.resolve(src.relativize(source))));
-        }
-    }
-
-    private static void copy(Path source, Path dest) {
-        try {
-            if (Files.isDirectory(source)) {
-                if (!Files.exists(dest)) {
-                    Files.createDirectories(dest);
-                }
-            } else {
-                Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private static Path[] fetchJavaFiles(Path dir) throws IOException {
-        try (Stream<Path> paths = Files.walk(dir)) {
-            return paths
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".java"))
-                    .toArray(Path[]::new);
-        }
     }
 
     private static Stream<Path> parameterinfoClassFiles() {
@@ -168,8 +86,8 @@ class ClassPatcherTest {
         // The code does call  getParameterInfo() for all constructors and methods.
         // Failure is signaled by a thrown exception
         assertDoesNotThrow(() -> {
-            String className = getClassName(classFile);
-            ClassInfo ci = ClassInfo.forClass(pool, className);
+            String className = TestUtil.getClassName(classFile);
+            ClassInfo ci = ClassInfo.forClass(TestUtil.pool, className);
             for (var mi : ci.methods()) {
                 String methodName = mi.name();
                 try (Formatter fmtCode = new Formatter()) {
@@ -257,12 +175,6 @@ class ClassPatcherTest {
         }, "failed: " + className);
     }
 
-    private static String getClassName(Path classFile) {
-        return classFile.toString()
-                .replaceFirst("\\.[^.]*$", "")
-                .replace(File.separatorChar, '.');
-    }
-
     @Test
     @Order(3)
     void processFolder() {
@@ -323,20 +235,16 @@ class ClassPatcherTest {
 
         // create directories
         Path unprocessedDir = testDir.resolve("classes-unprocessed-" + configName);
-        Files.createDirectories(unprocessedDir);
         Path processedDir = testDir.resolve("classes-processed-" + configName);
-        Files.createDirectories(processedDir);
 
         // copy sources
-        copyFolder(
+        TestUtil.copyRecursive(
                 testClassesUnprocessedDir.resolve("com/dua3/cabe/processor/test/config"),
                 unprocessedDir.resolve("com/dua3/cabe/processor/test/config")
         );
 
         // process classes
-        Collection<Path> classPath = List.of();
-        ClassPatcher patcher = new ClassPatcher(classPath, config.config);
-        patcher.processFolder(unprocessedDir, processedDir);
+        TestUtil.processClasses(unprocessedDir, processedDir, config.config);
 
         // test processed classes
         try (Formatter fmt = new Formatter()) {
@@ -349,7 +257,7 @@ class ClassPatcherTest {
                         .filter(Files::isRegularFile)
                         .filter(p -> p.toString().endsWith(".class"))
                         .filter(p -> !p.toString().contains("$")) // filter out anonymous classes
-                        .map(path -> runAndtestConfig(config.name(), processedDir, processedDir.relativize(path)))
+                        .map(path -> runAndTestProcessedClassesForConfig(processedDir, processedDir.relativize(path)))
                         .collect(Collectors.joining());
                 fmt.format("%s", result);
             }
@@ -531,25 +439,17 @@ class ClassPatcherTest {
                     """
     );
 
-    private String runAndtestConfig(String name, Path root, Path path) {
-        String text = "";
+    private String runAndTestProcessedClassesForConfig(Path root, Path path) {
+        String text;
         try (Formatter fmt = new Formatter()) {
             for (boolean assertionsEnabled : new boolean[]{false, true}) {
                 String header = String.format("Testing %s with assertions %s", path, assertionsEnabled);
                 fmt.format("%s%n", header);
                 fmt.format("%s%n", "-".repeat(header.length()));
 
-                ProcessBuilder processBuilder =
-                        new ProcessBuilder("java", (assertionsEnabled ? "-ea" : "-da"), path.toString().replaceFirst(".class$", ""))
-                                .directory(root.toFile());
-                Process process = processBuilder.start();
 
-                int exitCode = process.waitFor();
-                if (exitCode != 0) {
-                    fmt.format("%s", new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
-                } else {
-                    fmt.format("%s", new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
-                }
+                String className = path.toString().replaceFirst(".class$", "");
+                fmt.format("%s", TestUtil.runClass(root, className, assertionsEnabled));
             }
             text = fmt.toString();
         } catch (RuntimeException e) {
@@ -559,7 +459,6 @@ class ClassPatcherTest {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-
         return text;
     }
 }
