@@ -11,6 +11,7 @@ import javassist.bytecode.AccessFlag;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Represents information about a method.
@@ -19,6 +20,8 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
                   boolean isAbstract, boolean isStatic,
                   boolean isPublic, boolean isSynthetic, boolean isBridge, boolean isNative,
                   List<ParameterInfo> parameters, ClassInfo classInfo, CtBehavior ctMethod) {
+    private static final Pattern PATTERN_EXTRACT_METHOD_NAME = Pattern.compile(".*\\.([\\w$]+)\\(.*");
+
     public static MethodInfo forMethod(ClassInfo ci, CtBehavior ctMethod) {
         var methodInfo = ctMethod.getMethodInfo();
         boolean isConstructor = methodInfo.isConstructor();
@@ -86,6 +89,10 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
     @Override
     public List<ParameterInfo> parameters() {
         return Collections.unmodifiableList(parameters);
+    }
+
+    public String methodName() {
+        return PATTERN_EXTRACT_METHOD_NAME.matcher(name()).replaceFirst("$1");
     }
 
     @Override

@@ -362,6 +362,11 @@ public class ClassPatcher {
             return false;
         }
 
+        // special case: for record equals ignore NotNull annotations except directly on the method parameter
+        // see https://github.com/xzel23/cabe/issues/2
+        boolean ignoreNonMethodNotNullAnnotation = ci.isRecord()
+                && mi.methodName().equals("equals") && mi.parameters().size() == 2;
+
         LOG.fine(() -> "instrumenting method " + methodName);
         boolean hasStandardAssertions = false;
         boolean hasOtherChecks = false;
@@ -374,9 +379,16 @@ public class ClassPatcher {
                 }
 
                 // create assertion code
-                boolean isNotNull = pi.isNotNullAnnotated() || ci.isNotNullApi() && !pi.isNullableAnnotated();
+                boolean isNotNull = pi.isNotNullAnnotated()
+                        || (!ignoreNonMethodNotNullAnnotation && ci.isNotNullApi() && !pi.isNullableAnnotated()
+                );
                 if (isNotNull) {
                     Config.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
+                    if (ci.isRecord() && check== Config.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
+                        LOG.warning("cannot use assert in record " + ci.name() + " / https://github.com/xzel23/cabe/issues/1");
+                        LOG.info("using THROW_NPE instead of ASSERT for " + methodName);
+                        check = Config.Check.THROW_NPE;
+                    }
                     switch (check) {
                         case IGNORE -> {
                             // nop
