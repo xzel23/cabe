@@ -85,7 +85,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
      * @param ctClass the {@link CtClass} to search for the assertion flag field
      * @return the fully qualified name of the assertion flag field, or null if not found
      */
-    private static String getAssertionsDisabledFlagName(CtClass ctClass) throws NotFoundException {
+    public static String getAssertionsDisabledFlagName(CtClass ctClass) throws NotFoundException {
         for (CtClass cls = ctClass; cls != null; cls = cls.getDeclaringClass()) {
             final CtClass currentClass = cls;
             // does the current class or one of its nested classes contain the flag?
