@@ -52,6 +52,12 @@ java {
     }
 }
 
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "com.dua3.cabe.processor.ClassPatcher"
+    }
+}
+
 tasks.shadowJar {
     archiveBaseName.set(project.name)
     archiveVersion.set("")
@@ -60,6 +66,10 @@ tasks.shadowJar {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.register("publishAllToMavenLocal") {
+    dependsOn("publishMavenAllPublicationToMavenLocal", "publishMavenPublicationToMavenLocal")
 }
 
 // === publication: MAVEN = == >
@@ -79,6 +89,42 @@ publishing {
                     val root = asNode()
                     root.appendNode("description", project.description)
                     root.appendNode("name", project.name)
+                    root.appendNode("url", Meta.SCM)
+                }
+
+                licenses {
+                    license {
+                        name.set(Meta.LICENSE_NAME)
+                        url.set(Meta.LICENSE_URL)
+                    }
+                }
+                developers {
+                    developer {
+                        id.set(Meta.DEVELOPER_ID)
+                        name.set(Meta.DEVELOPER_NAME)
+                        email.set(Meta.DEVELOPER_EMAIL)
+                        organization.set(Meta.ORGANIZATION_NAME)
+                        organizationUrl.set(Meta.ORGANIZATION_URL)
+                    }
+                }
+
+                scm {
+                    url.set(Meta.SCM)
+                }
+            }
+        }
+        create<MavenPublication>("mavenAll") {
+            groupId = Meta.GROUP
+            artifactId = "${project.name}-all"
+            version = project.version.toString()
+
+            artifact(tasks.shadowJar)
+
+            pom {
+                withXml {
+                    val root = asNode()
+                    root.appendNode("description", project.description)
+                    root.appendNode("name", project.name + "-all")
                     root.appendNode("url", Meta.SCM)
                 }
 
@@ -126,17 +172,6 @@ signing {
 }
 
 // === SPOTBUGS ===
-// spotbugs.excludeFilter.set(rootProject.file("spotbugs-exclude.xml"))
-
-configurations.named("spotbugs").configure {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "org.ow2.asm") {
-            useVersion("9.5")
-            because("Asm 9.5 is required for JDK 21 support")
-        }
-    }
-}
-
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
     reports.create("html") {
         required.set(true)
