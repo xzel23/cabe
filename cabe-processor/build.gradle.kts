@@ -119,6 +119,8 @@ publishing {
             version = project.version.toString()
 
             artifact(tasks.shadowJar)
+            artifact(tasks.javadocJar)
+            artifact(tasks.sourcesJar)
 
             pom {
                 withXml {
