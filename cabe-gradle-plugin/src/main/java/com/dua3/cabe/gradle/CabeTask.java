@@ -17,12 +17,13 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
+import java.io.BufferedReader;
 import java.io.File;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
+import java.io.Reader;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -99,21 +100,66 @@ public abstract class CabeTask extends DefaultTask {
                     "-i", getInputDirectory().get().getAsFile().toString(),
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
-                    "-cl", projectClasspath
+                    "-dl", projectClasspath
             );
-
-            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 
             Process process = pb.start();
 
-            int exitCode = process.waitFor();
-            if (exitCode != 0) {
-                throw new GradleException("instrumentig class files failed");
+            try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
+                 CopyOutput copyStdOut = new CopyOutput(process.inputReader(), System.out::println)) {
+                int exitCode = process.waitFor();
+                if (exitCode != 0) {
+                    throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
+                }
             }
         } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes", e);
         }
     }
 
+    /**
+     * This class is responsible for copying the output of a Reader to a specified Consumer.
+     * The first 10 lines are stored.
+     */
+    private class CopyOutput implements AutoCloseable {
+        public static final int MAX_LINES = 10;
+        Thread thread;
+        List<String> firstLines = new ArrayList<>();
+
+        CopyOutput(Reader reader, Consumer<String> printer) {
+            thread = new Thread(() -> {
+                try (BufferedReader r = new BufferedReader(reader)) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        printer.accept(line);
+                        if (firstLines.size() < MAX_LINES) {
+                            firstLines.add(line);
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warn("exception reading ClassPatcher error output");
+                }
+            });
+            thread.start();
+        }
+
+        @Override
+        public void close() throws Exception {
+            try {
+                thread.join(5000); // Wait 5000ms for the thread to die.
+            } catch(InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            if (thread.isAlive()) {
+                getLogger().warn("output thread did not stop");
+                thread.interrupt();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return firstLines.stream().collect(Collectors.joining("\n"));
+        }
+    }
 }

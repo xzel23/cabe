@@ -89,6 +89,7 @@ public class CabeExtension {
     public Property<Config> getConfig() {
         return config;
     }
+
     /**
      * Sets the configuration property for the Cabe plugin.
      *
