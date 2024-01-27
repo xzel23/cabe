@@ -16,8 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Objects;
@@ -67,6 +67,7 @@ public class ClassPatcher {
         List<Path> classPaths = null;
         Config configuration = null;
 
+        BitSet usedArgs = new BitSet(args.length);
         try {
             List<String> cmdLine = List.of(args);
             if (cmdLine.contains("--help")) {
@@ -75,30 +76,46 @@ public class ClassPatcher {
             }
 
             if (args.length < 4) {
-                throw new IllegalAccessError("Wrong number of arguments");
+                throw new IllegalAccessError("Wrong number of arguments.");
             }
 
-            String inputFolder = getOptionString(cmdLine, "-i");
-            String outputFolder = getOptionString (cmdLine, "-o");
-            String configStr = getOptionString(cmdLine, "-c", "standard");
+            String inputFolder = getOptionString(cmdLine, "-i", usedArgs);
+            String outputFolder = getOptionString (cmdLine, "-o", usedArgs);
+            String configStr = getOptionString(cmdLine, "-c", usedArgs, "standard");
 
             configuration = Config.parseConfigString(configStr);
 
             int idxClasspath = cmdLine.indexOf("-cl");
-            List<String> classPathFolder = switch (idxClasspath) {
-                case 4, 6 ->
-                        cmdLine.size() == idxClasspath + 1 ? Collections.emptyList() : cmdLine.subList(idxClasspath + 1, cmdLine.size());
-                case -1 -> Collections.emptyList();
-                default -> throw new IllegalArgumentException("option '-cl' not found at expected position");
-            };
+            List<String> classPathFolder = new ArrayList();
+            switch (idxClasspath) {
+                case 4, 6 -> {
+                    for (int i = idxClasspath; i < cmdLine.size(); i++) {
+                        if (usedArgs.get(i)) {
+                            System.err.println("Commandline error: '-cl' must be the last option on the command line.");
+                            System.exit(1);
+                        }
+                        classPathFolder.add(args[i]);
+                        usedArgs.set(i);
+                    }
+                }
+                case -1 -> {}
+                default -> throw new IllegalArgumentException("Option '-cl' not found at expected position.");
+            }
 
             in = Paths.get(inputFolder);
             out = Paths.get(outputFolder);
             classPaths = classPathFolder.stream().map(Paths::get).toList();
         } catch (RuntimeException e) {
             System.err.println("Commandline error: " + e.getMessage());
-            help();
             System.exit(1);
+        }
+
+        // check that all arguments have been processed
+        for (int i = 0; i < args.length; i++) {
+            if (!usedArgs.get(i)) {
+                System.err.println("Unexpected argument: " + args[i]);
+                System.exit(2);
+            }
         }
 
         try {
@@ -112,18 +129,21 @@ public class ClassPatcher {
     }
 
     private static String messageOptionNotFound(String option) {
-        return String.format("option '%s' not found at expected position", option);
+        return String.format("Option '%s' not found at expected position", option);
     }
 
-    private static String getOptionString(List<String> cmdLine, String option) {
-        String value = getOptionString(cmdLine, option, null);
+    private static String getOptionString(List<String> cmdLine, String option, BitSet usedArgs) {
+        String value = getOptionString(cmdLine, option, usedArgs, null);
         return Objects.requireNonNull(value, () -> messageOptionNotFound(option));
     }
 
-    private static String getOptionString(List<String> cmdLine, String option, String defaultValue) {
+    private static String getOptionString(List<String> cmdLine, String option, BitSet usedArgs, String defaultValue) {
         int idxInput = cmdLine.indexOf(option);
         return switch (idxInput) {
-            case 0, 2, 4 -> cmdLine.get(idxInput + 1);
+            case 0, 2, 4 -> {
+                usedArgs.set(idxInput, idxInput + 2);
+                yield cmdLine.get(idxInput + 1);
+            }
             case -1 -> defaultValue;
             default -> throw new IllegalArgumentException(messageOptionNotFound(option));
         };
