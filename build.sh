@@ -26,18 +26,24 @@ cd "`dirname $0`" \
   && echo "plugin published to local repository" \
 || { echo "ERROR" ; exit 1 ; }
 
-read -p "Publish plugin? " -n 1 -r
+read -p "publish cabe-processor? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-  echo "publishing cabe-processor JAR"
+  echo "publishing cabe-processor jar"
   ./gradlew cabe-processor:publish --no-parallel \
-  && echo "publishing plugin" \
-  && ./gradlew cabe-gradle-plugin:publishPlugins --no-parallel \
-  && echo "plugin published" \
-|| { echo "ERROR" ; exit 1 ; }
+  && echo "cabe-processor jar published" \
+  || { echo "ERROR" ; exit 1 ; }
 fi
 
-echo "to publish the library, run ./gradlew publish"
+read -p "publish cabe-plugin? " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  echo "publishing cabe-plugin" \
+  && ./gradlew cabe-gradle-plugin:publishPlugins --no-parallel \
+  && echo "cabe-plugin published" \
+  || { echo "ERROR" ; exit 1 ; }
+fi
 
 echo "SUCCESS"
