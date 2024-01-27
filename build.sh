@@ -20,7 +20,7 @@ cd "`dirname $0`" \
   && echo "shadow jar created" \
 && for D in regressiontest/* ; do \
     echo "test regressions: ${D}" ;\
-    java -jar cabe-processor/build/libs/cabe-processor-all.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
+    java -jar cabe-processor/build/libs/cabe-processor-all-*.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
   done \
 && ./gradlew publishToMavenLocal \
   && echo "plugin published to local repository" \

@@ -14,7 +14,12 @@ repositories {
 
 dependencies {
     implementation(project(":cabe-annotations"))
-    implementation(project(":cabe-processor"))
+    var processor_version = rootProject.extra["processor_version"] as String
+    implementation("com.dua3.cabe:cabe-processor-all:${processor_version}")
+}
+
+tasks.named("compileJava") {
+    dependsOn(":cabe-processor:publishToMavenLocal")
 }
 
 gradlePlugin {

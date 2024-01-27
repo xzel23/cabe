@@ -59,8 +59,8 @@ tasks.jar {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set(project.name)
-    archiveVersion.set("")
+    archiveBaseName.set(project.name+"-all")
+    archiveClassifier.set("")
     mergeServiceFiles()
 }
 
@@ -68,8 +68,8 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.register("publishAllToMavenLocal") {
-    dependsOn("publishMavenAllPublicationToMavenLocal", "publishMavenPublicationToMavenLocal")
+tasks.register(/* name = */ "publishAllToMavenLocal") {
+    dependsOn("publishMavenPublicationToMavenLocal", "publishMavenAllPublicationToMavenLocal")
 }
 
 // === publication: MAVEN = == >
@@ -82,7 +82,7 @@ publishing {
             artifactId = project.name
             version = project.version.toString()
 
-            from(components["java"])
+            artifact(tasks.jar)
 
             pom {
                 withXml {
@@ -169,6 +169,7 @@ publishing {
 signing {
     isRequired = isReleaseVersion && gradle.taskGraph.hasTask("publish")
     sign(publishing.publications["maven"])
+    sign(publishing.publications["mavenAll"])
 }
 
 // === SPOTBUGS ===
@@ -185,10 +186,6 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 }
 
 // === PUBLISHING ===
-tasks.withType<PublishToMavenRepository> {
-    dependsOn(tasks.publishToMavenLocal)
-}
-
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }

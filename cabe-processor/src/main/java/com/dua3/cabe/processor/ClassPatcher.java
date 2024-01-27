@@ -80,19 +80,14 @@ public class ClassPatcher {
 
             String inputFolder = getOptionString(cmdLine, "-i");
             String outputFolder = getOptionString (cmdLine, "-o");
-            String configurationName = getOptionString(cmdLine, "-c", "standard");
+            String configStr = getOptionString(cmdLine, "-c", "standard");
 
-            configuration = switch (configurationName) {
-                case "standard" -> Config.StandardConfig.STANDARD.config;
-                case "development" -> Config.StandardConfig.DEVELOPMENT.config;
-                case "no-checks" -> Config.StandardConfig.NO_CHECKS.config;
-                default -> throw new IllegalArgumentException("invalid configuration: " + configurationName);
-            };
+            configuration = Config.parseConfigString(configStr);
 
             int idxClasspath = cmdLine.indexOf("-cl");
             List<String> classPathFolder = switch (idxClasspath) {
-                case 4 ->
-                        cmdLine.size() == 5 ? Collections.emptyList() : cmdLine.subList(idxClasspath + 1, cmdLine.size());
+                case 4, 6 ->
+                        cmdLine.size() == idxClasspath + 1 ? Collections.emptyList() : cmdLine.subList(idxClasspath + 1, cmdLine.size());
                 case -1 -> Collections.emptyList();
                 default -> throw new IllegalArgumentException("option '-cl' not found at expected position");
             };
@@ -145,7 +140,7 @@ public class ClassPatcher {
                                 
                     <configurations> : standard|development|no-checks (default: standard)
                     
-                                       'standard'    - use standard (runtime controlled) assertions for private API methods,
+                                       'standard'    - use standard assertions for private API methods,
                                                        throw NullPointerException for public API methods 
                                        'development' - failed checks will always throw an AssertionError 
                                        'no-check'    - do not add any null checks
@@ -387,7 +382,7 @@ public class ClassPatcher {
                         check = Config.Check.THROW_NPE;
                     }
                     switch (check) {
-                        case IGNORE -> {
+                        case NO_CHECK -> {
                             // nop
                         }
                         case ASSERT -> {

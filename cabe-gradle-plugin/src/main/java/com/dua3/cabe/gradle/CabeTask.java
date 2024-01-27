@@ -18,7 +18,10 @@ import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,15 +86,31 @@ public abstract class CabeTask extends DefaultTask {
     @TaskAction
     void run() {
         try {
-            List<Path> classpath = getClassPath().get().getFiles().stream()
-                    .map(File::toPath)
-                    .collect(Collectors.toList());
-            Config configuration = config.get();
-            ClassPatcher classPatcher = new ClassPatcher(classpath, configuration);
-            classPatcher.processFolder(
-                    getInputDirectory().get().getAsFile().toPath(),
-                    getOutputDirectory().get().getAsFile().toPath()
+            String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
+            String systemClassPath = System.getProperty("java.class.path");
+            String projectClasspath = getClassPath().get().getFiles().stream()
+                    .map(File::toString)
+                    .collect(Collectors.joining(File.pathSeparator));
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "java",
+                    "-classpath", systemClassPath,
+                    "-jar", jarLocation,
+                    "-i", getInputDirectory().get().getAsFile().toString(),
+                    "-o", getOutputDirectory().get().getAsFile().toString(),
+                    "-c", config.get().getConfigString(),
+                    "-cl", projectClasspath
             );
+
+            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+            Process process = pb.start();
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new GradleException("instrumentig class files failed");
+            }
         } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes", e);
         }
