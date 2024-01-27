@@ -82,6 +82,17 @@ tasks.create("javadocAllJar", Jar::class.java) {
     from(tasks.named("javadocAll"))
 }
 
+tasks.create("sourcesAll", Copy::class.java) {
+    from(sourceSets.getByName("main").allSource)
+    into(reporting.file("sourcesAll"))
+}
+
+tasks.create("sourcesAllJar", Jar::class.java) {
+    archiveBaseName = "${project.name}-all"
+    archiveClassifier.set("sources")
+    from(tasks.named("sourcesAll"))
+}
+
 // Create the publication with the pom configuration:
 publishing {
     publications {
@@ -130,7 +141,7 @@ publishing {
 
             artifact(tasks.shadowJar)
             artifact(tasks.named("javadocAllJar"))
-//            artifact(tasks.sourcesAllJar)
+            artifact(tasks.named("sourcesAllJar"))
 
             pom {
                 withXml {
