@@ -18,6 +18,24 @@ subprojects {
     }
 }
 
+tasks.create("printProcessorVersion") {
+    doLast {
+        println(rootProject.extra["processor_version"])
+    }
+}
+
+tasks.create("printPluginVersion") {
+    doLast {
+        println(rootProject.extra["plugin_version"])
+    }
+}
+
+tasks.create("printAnnotationsVersion") {
+    doLast {
+        println(rootProject.extra["annotations_version"])
+    }
+}
+
 allprojects {
     tasks.create("printTaskInputsAndOutputs") {
         doLast {

@@ -68,11 +68,19 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.register(/* name = */ "publishAllToMavenLocal") {
-    dependsOn("publishMavenPublicationToMavenLocal", "publishMavenAllPublicationToMavenLocal")
+// === publication: MAVEN = == >
+
+tasks.create("javadocAll", Javadoc::class.java) {
+    source = sourceSets.getByName("main").allJava
+    classpath = sourceSets["main"].runtimeClasspath
+    setDestinationDir(reporting.file("javadocAll"))
 }
 
-// === publication: MAVEN = == >
+tasks.create("javadocAllJar", Jar::class.java) {
+    archiveBaseName = "${project.name}-all"
+    archiveClassifier.set("javadoc")
+    from(tasks.named("javadocAll"))
+}
 
 // Create the publication with the pom configuration:
 publishing {
@@ -83,6 +91,8 @@ publishing {
             version = project.version.toString()
 
             artifact(tasks.jar)
+            artifact(tasks.javadocJar)
+            artifact(tasks.sourcesJar)
 
             pom {
                 withXml {
@@ -119,8 +129,8 @@ publishing {
             version = project.version.toString()
 
             artifact(tasks.shadowJar)
-            artifact(tasks.javadocJar)
-            artifact(tasks.sourcesJar)
+            artifact(tasks.named("javadocAllJar"))
+//            artifact(tasks.sourcesAllJar)
 
             pom {
                 withXml {

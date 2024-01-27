@@ -4,6 +4,17 @@
 
 FLAGS=--stacktrace
 
+PROCESSOR_VERSION=$(./gradlew -Dnotest -q printProcessorVersion)
+PLUGIN_VERSION=$(./gradlew -Dnotest -q printPluginVersion)
+ANNOTATIONS_VERSION=$(./gradlew -Dnotest -q printAnnotationsVersion)
+
+echo
+echo "current versions"
+echo "annotations ..... " ${ANNOTATIONS_VERSION}
+echo "processor ....... " ${PROCESSOR_VERSION}
+echo "gradle plugin ... " ${PLUGIN_VERSION}
+echo
+
 # run a second build and then a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
 && ./gradlew -Dnotest clean build test publishToMavenLocal \
@@ -20,7 +31,7 @@ cd "`dirname $0`" \
   && echo "shadow jar created" \
 && for D in regressiontest/* ; do \
     echo "test regressions: ${D}" ;\
-    java -jar cabe-processor/build/libs/cabe-processor-all-*.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
+    java -jar cabe-processor/build/libs/cabe-processor-all-${PROCESSOR_VERSION}.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
   done \
 && ./gradlew publishToMavenLocal \
   && echo "plugin published to local repository" \

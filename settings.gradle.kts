@@ -11,7 +11,7 @@ rootProject.name = "cabe"
 include("cabe-annotations", "cabe-processor", "cabe-gradle-plugin")
 
 if (System.getProperty("notest") != null) {
-    println("skipping plugin tests")
+    System.err.println("skipping plugin tests")
 } else {
     include("cabe-gradle-plugin-test")
     include("cabe-gradle-plugin-test:test-gradle-plugin")
