@@ -20,9 +20,9 @@ a cool thing to have:
   where this contract is not fulfilled, even without relying on annotations to be present in the compiled library code
 
 I started looking around to see how I could enable this in my Gradle build, but did not find any solution. I also did
-not want to use Lombok — there's a big controversy about Lombok in the Java community that I will not comment. My
-personal reason to not using Lombok is that it introduced many things that plain Java in newer versions does out of the
-box, but differently (i.e., Java records vs Lombok records). I want my code to use standard Java wherever possible,
+not want to use Lombok — there's a big controversy about Lombok in the Java community that I will not comment on. My
+personal reason not to use Lombok is that it introduced many things that plain Java in newer versions does out of the
+box, but differently (i.e., Java records vs. Lombok records). I want my code to use standard Java wherever possible,
 that's all.
 
 What I wanted is something more or less like Lombok, but closer to standard Java. Thus, the name was born: Cabai is
@@ -51,10 +51,12 @@ Usage
       ...
   }
   ```
-  will be compiled to the equivalent of this (see below for a list of the supported annotations):
+
+  ... will be compiled to the equivalent of this (see below for a list of the supported annotations):
+
   ```
   public void foo(Bar bar) {
-      assert ( bar != null, " bar is null" );
+      assert bar != null : " bar is null";
       ...
   }
   ```
@@ -62,7 +64,8 @@ Usage
 Plugin configuration
 --------------------
 
-The plugin provides a Gradle extension named "cabe". You can use it to control the kind of null checks that are
+The plugin provides a Gradle extension named "cabe."
+You can use it to control the kind of null checks that are
 generated.
 
 There are three different predefined configurations:
@@ -117,7 +120,7 @@ The first parameter is for public API methods, the second one for private API.
 The possible values are:
 
 - NO_CHECK: do not generate any checks
-- ASSERT: use standard assertions that can be controled by JVM parameters
+- ASSERT: use standard assertions that can be controlled by JVM parameters
 - THROW_NPE: throw NullPointerException for failed null checks
 - ASSERT_ALWAYS: throw AssertionError for failed null checks regardless of the JVM assertion settings
 
@@ -134,12 +137,12 @@ This module defines custom annotations that are by Cabe:
 - `@Nullable` marks a parameter as nullable.
 
 - `@NotNullApi` marks all parameters as not being nullable by default for an entire package or class. Use `@Nullable`
-where a parameter might be `null`.
+  where a parameter might be `null`.
 
 - `@NullableApi` marks all parameters as `@Nullable` by default for an entire package or class.
 
-For each unannotated parameter, the annotations are checked on the declaring class. If no class level annotation is 
-found, annotations from the package are used.
+For each unannotated parameter, the annotations are checked on the declaring class.
+If no class level annotation is found, annotations from the package are used.
 
 **NOTE:** Use the `package-info.java` to annotate a package with `@NotNullApi`. Look at the
 subproject `test-cabe-plugin` for examples.
@@ -188,17 +191,16 @@ Changes
 - The processing now runs in a separate thread so that classes loaded during instrumentation cannot
   influence later builds.
 
-
 ## Version 2.0.1
 
 - Revert combining of assertions because the JVM does not seem to recognize the changed assertion pattern which leads to
-  a noticable slowdown when running with assertions disabled.
+  a noticeable slowdown when running with assertions disabled.
 - Make sure instrumented classes are released when an exception occurs during compilation.
 
 ## Version 2.0
 
 To solve the issues described above, I decided to do a full rewrite. I switched to working on the byte code instead
-using Javassist instead of SPOON. This seemed easy at first but it turned out to be a little bit more complex
+using Javassist instead of SPOON. This seemed easy at first, but it turned out to be a little bit more complex
 than I thought. First of all, I had to change the annotations classes because in Version 1.x annotations had SOURCE
 retention and were not present in the byte code. That's why you now need version 2.0 of cabe-annotations to work
 with the plugin. Also it proved to be much more complicated to get the mapping of parameters to the actual parameter
