@@ -105,7 +105,7 @@ public abstract class CabeTask extends DefaultTask {
                     "-i", getInputDirectory().get().getAsFile().toString(),
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
-                    "-cl", projectClasspath
+                    "-cp", projectClasspath
             );
 
             Process process = pb.start();

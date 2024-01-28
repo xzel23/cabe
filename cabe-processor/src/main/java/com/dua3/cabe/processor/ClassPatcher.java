@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Formatter;
@@ -75,38 +76,21 @@ public class ClassPatcher {
                 return;
             }
 
-            if (args.length < 4) {
-                throw new IllegalAccessError("Wrong number of arguments.");
-            }
-
             String inputFolder = getOptionString(cmdLine, "-i", usedArgs);
-            String outputFolder = getOptionString (cmdLine, "-o", usedArgs);
+            String outputFolder = getOptionString(cmdLine, "-o", usedArgs);
             String configStr = getOptionString(cmdLine, "-c", usedArgs, "standard");
+            String classpath = getOptionString(cmdLine, "-cp", usedArgs, "");
 
             configuration = Config.parseConfigString(configStr);
 
-            int idxClasspath = cmdLine.indexOf("-cl");
-            List<String> classPathFolder = new ArrayList();
-            switch (idxClasspath) {
-                case 4, 6 -> {
-                    for (int i = idxClasspath; i < cmdLine.size(); i++) {
-                        if (usedArgs.get(i)) {
-                            System.err.println("Commandline error: '-cl' must be the last option on the command line.");
-                            System.exit(1);
-                        }
-                        classPathFolder.add(args[i]);
-                        usedArgs.set(i);
-                    }
-                }
-                case -1 -> {}
-                default -> throw new IllegalArgumentException("Option '-cl' not found at expected position.");
-            }
-
             in = Paths.get(inputFolder);
             out = Paths.get(outputFolder);
-            classPaths = classPathFolder.stream().map(Paths::get).toList();
+            classPaths = Arrays.stream(classpath.split(File.pathSeparator)).map(Paths::get).toList();
         } catch (RuntimeException e) {
             System.err.println("Commandline error: " + e.getMessage());
+            System.err.println("Command Arguments: " + Arrays.stream(args)
+                    .map(s -> "\"" + s.replaceAll("\"", "\\\"") + "\"")
+                    .collect(Collectors.joining(" ")));
             System.exit(1);
         }
 
@@ -139,14 +123,21 @@ public class ClassPatcher {
 
     private static String getOptionString(List<String> cmdLine, String option, BitSet usedArgs, String defaultValue) {
         int idxInput = cmdLine.indexOf(option);
-        return switch (idxInput) {
-            case 0, 2, 4 -> {
-                usedArgs.set(idxInput, idxInput + 2);
-                yield cmdLine.get(idxInput + 1);
-            }
-            case -1 -> defaultValue;
-            default -> throw new IllegalArgumentException(messageOptionNotFound(option));
-        };
+        if (idxInput < 0) {
+            return defaultValue;
+        }
+
+        if (usedArgs.get(idxInput)) {
+            throw new IllegalArgumentException("Could not parse the command line at '" + cmdLine.get(idxInput) + "'");
+        }
+        usedArgs.set(idxInput);
+
+        if (usedArgs.get(idxInput + 1)) {
+            throw new IllegalArgumentException("Missing argument to option '" + cmdLine.get(idxInput) + "'");
+        }
+        usedArgs.set(idxInput + 1);
+
+        return cmdLine.get(idxInput + 1);
     }
 
     private static void help() {
@@ -156,7 +147,7 @@ public class ClassPatcher {
                                 
                 Add null checks in Java class file byte code.
                                 
-                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cl <classpath entry> ...]
+                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>]
                                 
                     <configurations> : standard|development|no-checks (default: standard)
                     
