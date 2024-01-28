@@ -3,8 +3,8 @@ plugins {
     id("com.dorongold.task-tree") version "2.1.1"
 }
 
-extra["plugin_version"] = "2.1-rc5"
-extra["processor_version"] = "2.1-rc5"
+extra["plugin_version"] = "2.1"
+extra["processor_version"] = "2.1"
 extra["annotations_version"] = "2.0"
 
 subprojects {
