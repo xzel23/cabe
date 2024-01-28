@@ -201,9 +201,9 @@ Changes
 
 To solve the issues described above, I decided to do a full rewrite. I switched to working on the byte code instead
 using Javassist instead of SPOON. This seemed easy at first, but it turned out to be a little bit more complex
-than I thought. First of all, I had to change the annotations classes because in Version 1.x annotations had SOURCE
+than I thought. First of all, I had to change the annotation classes because in Version 1.x annotations had SOURCE
 retention and were not present in the byte code. That's why you now need version 2.0 of cabe-annotations to work
-with the plugin. Also it proved to be much more complicated to get the mapping of parameters to the actual parameter
+with the plugin. Also, it proved to be much more complicated to get the mapping of parameters to the actual parameter
 names correct. I added lots of test cases to make sure everything works correctly now.
 
 So these are the main changes:
@@ -232,6 +232,6 @@ Next on my list are these features (in no specific order) that might or might no
 
 - Add support for annotations on return values.
 - Support different annotations like JetBrains or JSpecify. The reason I currently use my own annotations library is
-  that I wanted a package wide annotation, @NotNullAPI. While for example JSpecify has something comparable, it also
+  that I wanted a package wide annotation, @NotNullAPI. While, for example, JSpecify has something comparable, it also
   has annotations on modules and return values, and that is not yet supported.
 - Add support for annotation modules (`module-info.java`).
