@@ -79,6 +79,11 @@ public abstract class CabeTask extends DefaultTask {
         return (Property<FileCollection>) classPath;
     }
 
+    /**
+     * Retrieves the configuration property for the Cabe task.
+     *
+     * @return The configuration property for the Cabe task.
+     */
     @Input
     public Property<Config> getConfig() {
         return config;
@@ -100,7 +105,7 @@ public abstract class CabeTask extends DefaultTask {
                     "-i", getInputDirectory().get().getAsFile().toString(),
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
-                    "-dl", projectClasspath
+                    "-cl", projectClasspath
             );
 
             Process process = pb.start();

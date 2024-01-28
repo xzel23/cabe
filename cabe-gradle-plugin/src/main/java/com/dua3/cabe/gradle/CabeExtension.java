@@ -28,10 +28,9 @@ public class CabeExtension {
      * Construct a new instance of the extension.
      *
      * @param project the project to configure
-     * @param projectLayout the project layout
      */
     @Inject
-    public CabeExtension(Project project, ProjectLayout projectLayout) {
+    public CabeExtension(Project project) {
         ObjectFactory objectFactory = project.getObjects();
 
         // get value of config
