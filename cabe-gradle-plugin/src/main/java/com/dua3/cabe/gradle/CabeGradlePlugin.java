@@ -31,6 +31,8 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
         // Add the task before the evaluation of the project to allow access to values overloaded by the developer.
         project.afterEvaluate(p -> {
+            log.info("plugin {} applied successfully", getClass().getSimpleName());
+
             // wire the cabe input task
             project.getTasks().create("cabe", CabeTask.class, t -> {
                 log.debug("initialising cabe task");

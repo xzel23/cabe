@@ -4,7 +4,6 @@ import com.dua3.cabe.processor.Config;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -51,6 +50,8 @@ public class CabeExtension {
                 .value(project.provider(
                         () -> ((SourceSetContainer) project.getExtensions().getByName("sourceSets"))
                                 .getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath()));
+
+        project.getLogger().info("{} instance creation success", CabeExtension.class.getSimpleName());
     }
 
     /**
