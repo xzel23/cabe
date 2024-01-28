@@ -1,3 +1,6 @@
+import com.dua3.cabe.gradle.CabeExtension
+import com.dua3.cabe.processor.Config
+
 buildscript {
     repositories {
         mavenLocal()
@@ -14,6 +17,10 @@ plugins {
 }
 
 apply(plugin = "com.dua3.cabe")
+
+configure<CabeExtension> {
+    config.set(Config.StandardConfig.STANDARD.config)
+}
 
 repositories {
     mavenLocal()
