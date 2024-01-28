@@ -20,14 +20,13 @@ a cool thing to have:
   where this contract is not fulfilled, even without relying on annotations to be present in the compiled library code
 
 I started looking around to see how I could enable this in my Gradle build, but did not find any solution. I also did
-not want to use Lombok because the Lombok assertions have runtime retention and add a runtime dependency to projects
-that use it.
-
-Also, Lombok tends to introduce new features that while innovative later are implemented in a different way in standard
-JDK.
+not want to use Lombok — there's a big controversy about Lombok in the Java community that I will not comment. My
+personal reason to not using Lombok is that it introduced many things that plain Java in newer versions does out of the
+box, but differently (i.e., Java records vs Lombok records). I want my code to use standard Java wherever possible,
+that's all.
 
 What I wanted is something more or less like Lombok, but closer to standard Java. Thus, the name was born: Cabai is
-another name for Lombok, but on the island of Java, it is commonly called ***Cabe***!
+another name for Lombok, but on the island of Java, it is commonly called ***Cabe***.
 
 Usage
 -----
@@ -39,10 +38,10 @@ Usage
    }
    ```
 
-- Add a compile time dependency on cabe-annotations:
+- Add a dependency on cabe-annotations:
    ```
    dependencies {
-       compileOnly "com.dua3.cabe:cabe-annotations:<version>"
+       implementation "com.dua3.cabe:cabe-annotations:2.0"
    }
    ```
 
@@ -60,6 +59,68 @@ Usage
   }
   ```
 
+Plugin configuration
+--------------------
+
+The plugin provides a Gradle extension named "cabe". You can use it to control the kind of null checks that are
+generated.
+
+There are three different predefined configurations:
+
+- STANDARD: uses standard assertions for private and throws NullPointerException for public API method parameters.
+  Assertions for privat API parameters can be controlled using the standard `-ea` and `-da` JVM flags.
+
+- DEVELOPMENT: Always throws AssertionError for a failed check in both public and private API. These cannot be disabled
+  using the `-da` JVM flag.
+
+- NO_CHECKS: No checks are generated for both public and private API.
+
+**Example for a custom configuration**
+
+This example uses the Gradle Kotlin DSL:
+
+```
+    plugins {
+      id("com.dua3.cabe") version "2.1-rc5"
+    }
+
+    // is it a snapshot or a release version?    
+    val isReleaseVersion = !project.version.toString().endsWith("SNAPSHOT")
+
+    // use different configurations for snapshots and releases
+    cabe {
+        if (isReleaseVersion) {
+            config.set(Config.StandardConfig.STANDARD.config)
+        } else {
+            config.set(Config.StandardConfig.DEVELOPMENT.config)
+        }
+    }
+```
+
+**Custom Configuration**
+
+If more control is needed, a custom configuration can be used like in this example:
+
+```
+    plugins {
+      id("com.dua3.cabe") version "2.1-rc5"
+    }
+    
+    cabe {
+        // 
+        config.set(Config(Check.NO_CHECK, Check.ASSERT))
+    }
+```
+
+The first parameter is for public API methods, the second one for private API.
+
+The possible values are:
+
+- NO_CHECK: do not generate any checks
+- ASSERT: use standard assertions that can be controled by JVM parameters
+- THROW_NPE: throw NullPointerException for failed null checks
+- ASSERT_ALWAYS: throw AssertionError for failed null checks regardless of the JVM assertion settings
+
 Code
 ----
 
@@ -67,41 +128,50 @@ Code
 
 This module defines custom annotations that are by Cabe:
 
-- `NotNull` serves the same purpose as the `org.jetbrains.annotations.NotNull`, `javax.annotation.Nonnull` and other
-  annotations. It can be used to specify that a method parameter is null. In contrast to the mentioned existing
-  annotations, it is declared with a `SOURCE` retention policy, i.e., using this annotation does not introduce any
-  runtime dependencies.
+- `@NotNull` serves the same purpose as the `@org.jetbrains.annotations.NotNull`, `œjavax.annotation.Nonnull` and other
+  annotations. It can be used to specify that a method parameter is null.
 
-- `Nullable` marks a parameter as nullable.
+- `@Nullable` marks a parameter as nullable.
 
-- `NotNullApi` marks all parameters as `@NotNull` by default for an entire package or class.
+- `@NotNullApi` marks all parameters as not being nullable by default for an entire package or class. Use `@Nullable`
+where a parameter might be `null`.
 
-- `NullableApi` marks all parameters as `@Nullable` by default for an entire package or class.
+- `@NullableApi` marks all parameters as `@Nullable` by default for an entire package or class.
 
-For each unannotated parameter, the annotations are checked on the declaring class where inner classes inherit
-annotation from the class they are defined in. If no class level annotation is found, annotations from the package are
-used.
+For each unannotated parameter, the annotations are checked on the declaring class. If no class level annotation is 
+found, annotations from the package are used.
 
 **NOTE:** Use the `package-info.java` to annotate a package with `@NotNullApi`. Look at the
 subproject `test-cabe-plugin` for examples.
 
 ## cabe-processor
 
-This is the processor that injects assertions into the bytecode.
+This is the processor that injects assertions into the bytecode. It can be run separately from the command line if
+you download the `cabe-processor-all<version>.jar` and run with `java -jar cabe-processor-all<version>.jar <options>`.
+Use the option "-h" to display the possible options and their values.
 
 ## cabe-gradle-plugin
 
 This module contains the Gradle plugin that applies the processor to the class files.
 
-## test-cabe-gradle-plugin
+## cabe-gradle-plugin-test
 
 This module contains tests for the Gradle plugin.
 
 ## How to build
 
 Run the shell script `build.sh` to build both packages and run tests. When everything succeeds, the script will
-ask if you want to publish the plugin. Answer `n` unless you have updated the publishing coordinates and want to
-publish the plugin.
+ask if you want to publish the processor library and plugin. Answer `n` unless you have updated the publishing
+coordinates and want to publish the plugin.
+
+How does it work?
+-----------------
+
+**The plugin** changes the compileJava output folder to `classes-cabe-input`. It then calls `ClassPatcher` to instrument
+the compiled classes and write the modified classes to the `classes` folder.
+
+**The **processor** is implemented in the class `ClassPatcher`. It uses the Javassist library to analyse the bytecode
+and inject null-checks for method parameters.
 
 Changes
 -------
@@ -114,13 +184,10 @@ Changes
   exceptions are disabled.
 - Error messages for failed checks have been shortened from "parameter 'X' must not be null" to "X is null" to reduce
   the footprint added by the null checks.
-- Make the process configurable. Three standard configurations are provided:
-    - DEVELOPMENT: this configuration unconditionally adds checks that throw an AssertionError regardless of whether
-      the code is run with `-ea` or `-da` VM flags.
-    - STANDARD: in this configuration, standard assertions are used for private API methods (non-public methods or
-      methods declared in a non-public class). For all other methods, failed checks throw a
-      NullPointerException.
-    - NO_CHECKS: do not generate any checks
+- Make the process configurable. See "Plugin configuration" above.
+- The processing now runs in a separate thread so that classes loaded during instrumentation cannot
+  influence later builds.
+
 
 ## Version 2.0.1
 
@@ -159,11 +226,10 @@ but had the following issues:
 
 ## Outlook
 
-Next on my list are these features (in no specific order):
+Next on my list are these features (in no specific order) that might or might not make it into a future release:
 
 - Add support for annotations on return values.
-- Make the plugin configurable, for example to use Objects.requireNonNull() for public and assertions for nun public
-  APIs.
 - Support different annotations like JetBrains or JSpecify. The reason I currently use my own annotations library is
   that I wanted a package wide annotation, @NotNullAPI. While for example JSpecify has something comparable, it also
   has annotations on modules and return values, and that is not yet supported.
+- Add support for annotation modules (`module-info.java`).
