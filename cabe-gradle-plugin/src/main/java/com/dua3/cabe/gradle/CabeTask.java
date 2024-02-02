@@ -7,6 +7,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -98,7 +99,7 @@ public abstract class CabeTask extends DefaultTask {
                     .map(File::toString)
                     .collect(Collectors.joining(File.pathSeparator));
 
-            ProcessBuilder pb = new ProcessBuilder(
+            String[] args = {
                     "java",
                     "-classpath", systemClassPath,
                     "-jar", jarLocation,
@@ -106,12 +107,22 @@ public abstract class CabeTask extends DefaultTask {
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
                     "-cp", projectClasspath
-            );
+            };
+
+            Logger logger = getLogger();
+            boolean verbose = logger.isDebugEnabled();
+
+            if (verbose) {
+                logger.debug("Instrumenting class files: " + String.join(" ", args));
+            }
+
+            logger.info(String.join(" ", args));
+            ProcessBuilder pb = new ProcessBuilder(args);
 
             Process process = pb.start();
 
             try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
-                 CopyOutput copyStdOut = new CopyOutput(process.inputReader(), System.out::println)) {
+                 CopyOutput copyStdOut = new CopyOutput(process.inputReader(), verbose ? System.out::println : s -> {})) {
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
@@ -139,6 +150,8 @@ public abstract class CabeTask extends DefaultTask {
                         printer.accept(line);
                         if (firstLines.size() < MAX_LINES) {
                             firstLines.add(line);
+                        } else if (firstLines.size() == MAX_LINES) {
+                            firstLines.add("...");
                         }
                     }
                 } catch (Exception e) {
