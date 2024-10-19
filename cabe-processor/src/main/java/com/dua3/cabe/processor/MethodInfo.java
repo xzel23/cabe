@@ -1,12 +1,9 @@
 package com.dua3.cabe.processor;
 
-import javassist.CtBehavior;
-import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.Modifier;
-import javassist.NotFoundException;
-import javassist.bytecode.AccessFlag;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDescription;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,30 +13,30 @@ import java.util.regex.Pattern;
 /**
  * Represents information about a method.
  */
-record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod,
+record MethodInfo(String name, String fullMethodName, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod,
                   boolean isAbstract, boolean isStatic,
                   boolean isPublic, boolean isSynthetic, boolean isBridge, boolean isNative,
-                  List<ParameterInfo> parameters, ClassInfo classInfo, CtBehavior ctMethod) {
+                  List<ParameterInfo> parameters, ClassInfo classInfo,
+                  MethodDescription.InDefinedShape methodDescription) {
     private static final Pattern PATTERN_EXTRACT_METHOD_NAME = Pattern.compile(".*\\.([\\w$]+)\\(.*");
 
-    public static MethodInfo forMethod(ClassInfo ci, CtBehavior ctMethod) {
-        var methodInfo = ctMethod.getMethodInfo();
-        boolean isConstructor = methodInfo.isConstructor();
-        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, ctMethod);
-        boolean isMethod = methodInfo.isMethod();
-        boolean isAbstract = Modifier.isAbstract(ctMethod.getModifiers());
-        boolean isStatic = Modifier.isStatic(ctMethod.getModifiers());
-        boolean isPublicApi = ci.isPublicApi() && Modifier.isPublic(ctMethod.getModifiers());
+    public static MethodInfo forMethod(ClassInfo ci, MethodDescription.InDefinedShape methodDescription) {
+        boolean isConstructor = methodDescription.isConstructor();
+        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, methodDescription);
+        boolean isMethod = methodDescription.isMethod();
+        boolean isAbstract = methodDescription.isAbstract();
+        boolean isStatic = methodDescription.isStatic();
+        boolean isPublicApi = ci.isPublicApi() && methodDescription.isPublic();
 
-        int accessFlags = ctMethod.getMethodInfo().getAccessFlags();
-        boolean isSynthetic = (accessFlags & AccessFlag.SYNTHETIC) != 0;
-        boolean isBridge = (accessFlags & AccessFlag.BRIDGE) != 0;
-        boolean isNative = (accessFlags & AccessFlag.NATIVE) != 0;
+        boolean isSynthetic = methodDescription.isSynthetic();
+        boolean isBridge = methodDescription.isBridge();
+        boolean isNative = methodDescription.isNative();
 
         List<ParameterInfo> parameters = new ArrayList<>();
 
         MethodInfo mi = new MethodInfo(
-                ctMethod.getLongName(),
+                methodDescription.getInternalName(),
+                getFullMethodName(methodDescription),
                 isConstructor,
                 isCanonicalRecordConstructor,
                 isMethod,
@@ -51,37 +48,54 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
                 isNative,
                 parameters,
                 ci,
-                ctMethod);
+                methodDescription);
 
         parameters.addAll(ParameterInfo.forMethod(mi));
 
         return mi;
     }
 
-    private static boolean isCanonicalRecordConstructor(ClassInfo ci, CtBehavior method) {
+    private static String getFullMethodName(MethodDescription.InDefinedShape methodDescription) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(methodDescription.getDeclaringType().asErasure().getActualName());
+        if (!methodDescription.isConstructor()) {
+            sb.append('.').append(methodDescription.getActualName());
+        }
+        sb.append('(');
+        String separator = "";
+        for (ParameterDescription.InDefinedShape param : methodDescription.getParameters()) {
+            sb.append(separator);
+            sb.append(param.getType().asErasure().getActualName());
+            separator = ",";
+        }
+        sb.append(')');
+        return sb.toString();
+    }
+
+    private static boolean isCanonicalRecordConstructor(ClassInfo ci, MethodDescription method) {
         // is it a record constructor?
-        if (!ci.isRecord() || !(method instanceof CtConstructor constructor)) {
+        if (!ci.isRecord() || !(method instanceof MethodDescription.InDefinedShape)) {
             return false;
         }
 
         try {
-            CtClass declaringClass = constructor.getDeclaringClass();
-            CtClass[] parameterTypes = constructor.getParameterTypes();
+            TypeDescription declaringClass = method.getDeclaringType().asErasure();
+            ParameterList<?> parameterTypes = method.getParameters();
 
             // constructor arguments must match record components
-            if (parameterTypes.length != declaringClass.getDeclaredFields().length) {
+            if (parameterTypes.size() != declaringClass.getDeclaredFields().size()) {
                 return false;
             }
-            for (int i = 0; i < parameterTypes.length; i++) {
-                CtField field = declaringClass.getDeclaredFields()[i];
-                if (!field.getType().equals(parameterTypes[i])) {
+            for (int i = 0; i < parameterTypes.size(); i++) {
+                TypeDescription.Generic fieldType = declaringClass.getDeclaredFields().get(i).getType();
+                if (!fieldType.equals(parameterTypes.get(i).getType())) {
                     return false;
                 }
             }
 
             // it is the canonical constructor
             return true;
-        } catch (NotFoundException e) {
+        } catch (Exception e) {
             return false;
         }
     }
@@ -99,6 +113,7 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
     public String toString() {
         return "MethodInfo{" +
                 "name='" + name + '\'' +
+                ", fullMethodName='" + fullMethodName + '\'' +
                 ", isConstructor=" + isConstructor +
                 ", isMethod=" + isMethod +
                 ", isAbstract=" + isAbstract +
@@ -108,7 +123,7 @@ record MethodInfo(String name, boolean isConstructor, boolean isCanonicalRecordC
                 ", isNative=" + isNative +
                 ", parameters=" + parameters +
                 ", classInfo=" + classInfo.name() +
-                ", ctMethod=" + ctMethod +
+                ", methodDescription=" + methodDescription +
                 '}';
     }
 }

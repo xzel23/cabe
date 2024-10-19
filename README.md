@@ -127,26 +127,6 @@ The possible values are:
 Code
 ----
 
-## cabe-annotations
-
-This module defines custom annotations that are by Cabe:
-
-- `@NotNull` serves the same purpose as the `@org.jetbrains.annotations.NotNull`, `œjavax.annotation.Nonnull` and other
-  annotations. It can be used to specify that a method parameter is null.
-
-- `@Nullable` marks a parameter as nullable.
-
-- `@NotNullApi` marks all parameters as not being nullable by default for an entire package or class. Use `@Nullable`
-  where a parameter might be `null`.
-
-- `@NullableApi` marks all parameters as `@Nullable` by default for an entire package or class.
-
-For each unannotated parameter, the annotations are checked on the declaring class.
-If no class level annotation is found, annotations from the package are used.
-
-**NOTE:** Use the `package-info.java` to annotate a package with `@NotNullApi`. Look at the
-subproject `test-cabe-plugin` for examples.
-
 ## cabe-processor
 
 This is the processor that injects assertions into the bytecode. It can be run separately from the command line if

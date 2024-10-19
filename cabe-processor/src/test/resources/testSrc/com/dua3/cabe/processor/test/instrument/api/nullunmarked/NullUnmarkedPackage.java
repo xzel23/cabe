@@ -1,36 +1,36 @@
-package com.dua3.cabe.processor.test.instrument.api.nullable;
+package com.dua3.cabe.processor.test.instrument.api.nullunmarked;
 
-import com.dua3.cabe.annotations.NotNull;
-import com.dua3.cabe.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class NullablePackage {
+public class NullUnmarkedPackage {
 
     public static void test() {
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);
         check(() -> unannotatedArgument(null), null, null);
 
-        // NotNull
-        check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullAnnotatedArgument(null), null, "assertion failed: arg is null");
+        // NonNull
+        check(() -> oneNonNullAnnotatedArgument("hello world!"), "hello world!", null);
+        check(() -> oneNonNullAnnotatedArgument(null), null, "assertion failed: arg is null");
 
-        check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "assertion failed: arg1 is null");
-        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "assertion failed: arg2 is null");
-        check(() -> twoNotNullAnnotatedArguments(null, null), null, "assertion failed: arg1 is null");
+        check(() -> twoNonNullAnnotatedArguments("hello", "world!"), "hello world!", null);
+        check(() -> twoNonNullAnnotatedArguments(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> twoNonNullAnnotatedArguments("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> twoNonNullAnnotatedArguments(null, null), null, "assertion failed: arg1 is null");
 
-        check(() -> firstArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
-        check(() -> firstArgumentNotNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNotNullAnnotated(null, null), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNonNullAnnotated("hello", "world!"), "hello world!", null);
+        check(() -> firstArgumentNonNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNonNullAnnotated("hello", null), "hello null", null);
+        check(() -> firstArgumentNonNullAnnotated(null, null), null, "assertion failed: arg1 is null");
 
-        check(() -> secondArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> secondArgumentNotNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
-        check(() -> secondArgumentNotNullAnnotated(null, null), null, "assertion failed: arg2 is null");
+        check(() -> secondArgumentNonNullAnnotated("hello", "world!"), "hello world!", null);
+        check(() -> secondArgumentNonNullAnnotated(null, "world!"), "null world!", null);
+        check(() -> secondArgumentNonNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
+        check(() -> secondArgumentNonNullAnnotated(null, null), null, "assertion failed: arg2 is null");
 
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
@@ -63,28 +63,28 @@ public class NullablePackage {
         return arg;
     }
 
-    private static String oneNotNullAnnotatedArgument(@NotNull String arg) {
-        System.out.println("oneNotNullAnnotatedArgument: " + arg);
+    private static String oneNonNullAnnotatedArgument(@NonNull String arg) {
+        System.out.println("oneNonNullAnnotatedArgument: " + arg);
         return arg;
     }
 
-    // @NotNull
+    // @NonNull
 
-    private static String twoNotNullAnnotatedArguments(@NotNull String arg1, @NotNull String arg2) {
+    private static String twoNonNullAnnotatedArguments(@NonNull String arg1, @NonNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("twoNotNullAnnotatedArguments: " + s);
+        System.out.println("twoNonNullAnnotatedArguments: " + s);
         return s;
     }
 
-    private static String firstArgumentNotNullAnnotated(@NotNull String arg1, String arg2) {
+    private static String firstArgumentNonNullAnnotated(@NonNull String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("firstArgumentNotNullAnnotated: " + s);
+        System.out.println("firstArgumentNonNullAnnotated: " + s);
         return s;
     }
 
-    private static String secondArgumentNotNullAnnotated(String arg1, @NotNull String arg2) {
+    private static String secondArgumentNonNullAnnotated(String arg1, @NonNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
-        System.out.println("secondArgumentNotNullAnnotated: " + s);
+        System.out.println("secondArgumentNonNullAnnotated: " + s);
         return s;
     }
 
@@ -154,7 +154,7 @@ public class NullablePackage {
     static class B extends A {
         private String b;
 
-        B(@NotNull String a, @NotNull String b) {
+        B(@NonNull String a, @NonNull String b) {
             super(a);
             this.b = b;
         }

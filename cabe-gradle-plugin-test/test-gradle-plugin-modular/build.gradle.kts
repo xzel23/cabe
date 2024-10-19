@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath("com.dua3.cabe", "com.dua3.cabe.gradle.plugin", rootProject.extra["plugin_version"] as String)
-        classpath("com.dua3.cabe", "cabe-annotations", rootProject.extra["annotations_version"] as String)
+        // FIXME classpath("com.dua3.cabe", "cabe-annotations", rootProject.extra["annotations_version"] as String)
     }
 }
 
@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(project(":cabe-annotations"))
+    // FIXME compileOnly(project(":cabe-annotations"))
 }
 
 application {

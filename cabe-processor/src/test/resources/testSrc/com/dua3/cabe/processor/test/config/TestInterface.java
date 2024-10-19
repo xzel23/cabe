@@ -1,6 +1,6 @@
 package com.dua3.cabe.processor.test.config;
 
-import com.dua3.cabe.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Formatter;
 
@@ -16,11 +16,11 @@ public interface TestInterface {
             TestInterface inst = new TestInterface() {};
             fmt.format(format, "assertions enabled", TestClass.class.desiredAssertionStatus());
             fmt.format(format, "privateNullable", check(() -> privateNullable(null)));
-            fmt.format(format, "privateNotNull", check(() -> privateNotNull(null)));
+            fmt.format(format, "privateNonNull", check(() -> privateNonNull(null)));
             fmt.format(format, "publicNullable", check(() -> publicNullable(null)));
-            fmt.format(format, "publicNotNull", check(() -> publicNotNull(null)));
+            fmt.format(format, "publicNonNull", check(() -> publicNonNull(null)));
             fmt.format(format, "publicNullableDefault", check(() -> inst.publicNullableDefault(null)));
-            fmt.format(format, "publicNotNullDefault", check(() -> inst.publicNotNullDefault(null)));
+            fmt.format(format, "publicNonNullDefault", check(() -> inst.publicNonNullDefault(null)));
             return fmt.toString();
         }
     }
@@ -38,23 +38,23 @@ public interface TestInterface {
         return "privateNullable(" + arg + ")";
     }
 
-    private static String privateNotNull(@NotNull Object arg) {
-        return "privateNotNull(" + arg + ")";
+    private static String privateNonNull(@NonNull Object arg) {
+        return "privateNonNull(" + arg + ")";
     }
 
     public static String publicNullable(Object arg) {
         return "publicNullable(" + arg + ")";
     }
 
-    public static String publicNotNull(@NotNull Object arg) {
-        return "publicNotNull(" + arg + ")";
+    public static String publicNonNull(@NonNull Object arg) {
+        return "publicNonNull(" + arg + ")";
     }
 
     public default String publicNullableDefault(Object arg) {
         return "publicNullable(" + arg + ")";
     }
 
-    public default String publicNotNullDefault(@NotNull Object arg) {
-        return "publicNotNull(" + arg + ")";
+    public default String publicNonNullDefault(@NonNull Object arg) {
+        return "publicNonNull(" + arg + ")";
     }
 }

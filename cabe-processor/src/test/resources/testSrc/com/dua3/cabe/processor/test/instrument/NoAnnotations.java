@@ -7,17 +7,17 @@ import java.util.function.Supplier;
 public class NoAnnotations {
 
     public static void test() {
-        new ParameterAnnotations().doTest();
+        new NoAnnotations().doTest();
     }
 
     public void doTest() {
-        check(() -> oneNotNullArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullArgument(null), null, "assertion failed: arg is null");
+        check(() -> oneNonNullArgument("hello world!"), "hello world!", null);
+        check(() -> oneNonNullArgument(null), null, "assertion failed: arg is null");
     }
 
-    private String oneNotNullArgument(String arg) {
+    private String oneNonNullArgument(String arg) {
         assert arg!=null : "arg is null";
-        System.out.println("oneNotNullAnnotatedArgument: " + arg);
+        System.out.println("oneNonNullAnnotatedArgument: " + arg);
         return arg;
     }
 

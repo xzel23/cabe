@@ -1,6 +1,6 @@
 package com.dua3.cabe.test.modular;
 
-import com.dua3.cabe.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 

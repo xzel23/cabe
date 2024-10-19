@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(project(":cabe-annotations"))
+    // FIXME compileOnly(project(":cabe-annotations"))
 }
 
 application {

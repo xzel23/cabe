@@ -1,16 +1,42 @@
+rootProject.name = "doc"
+val projectVersion = "3.0-SNAPSHOT"
+
+//include("cabe-processor", "cabe-gradle-plugin")
+include("cabe-processor")
+
+dependencyResolutionManagement {
+
+    val isSnapshot = projectVersion.endsWith("SNAPSHOT")
+
+    versionCatalogs {
+        create("libs") {
+            version("projectVersion", "3.0-SNAPSHOT")
+
+            plugin("foojay-resolver", "org.gradle.toolchains.foojay-resolver-convention").version("1.9.22")
+            plugin("versions", "com.github.ben-manes.versions").version("0.51.0")
+            plugin("test-logger", "com.adarshr.test-logger").version("4.0.0")
+            plugin("spotbugs", "com.github.spotbugs").version("6.0.21")
+            plugin("gradle-plugin-publish", "com.gradle.plugin-publish").version("1.2.1")
+            plugin("task-tree", "com.dorongold.task-tree").version("2.1.1")
+
+            version("dua3-utility", "13.0.1")
+            version("jspecify", "1.0.0")
+
+            library("dua3-utility", "com.dua3.utility", "utility").versionRef("dua3-utility")
+            library("jspecify", "org.jspecify", "jspecify").versionRef("jspecify")
+        }
+    }
+}
+
 pluginManagement {
     plugins {
         kotlin("jvm") version "1.9.22"
     }
 }
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-}
+
 rootProject.name = "cabe"
 
-include("cabe-annotations", "cabe-processor", "cabe-gradle-plugin")
-
-if (System.getProperty("notest") != null) {
+if (System.getProperty("test") == null) {
     logger.info("skipping plugin tests")
 } else {
     include("cabe-gradle-plugin-test")

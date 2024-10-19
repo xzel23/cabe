@@ -1,6 +1,6 @@
 package com.dua3.cabe.processor.test.parameterinfo;
 
-import com.dua3.cabe.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class Base {
     public static void test() {
