@@ -3,6 +3,7 @@ package com.dua3.cabe.processor;
 import com.dua3.cabe.annotations.NotNullApi;
 import com.dua3.cabe.annotations.NullableApi;
 import javassist.ClassPool;
+import javassist.CtBehavior;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.Modifier;
@@ -11,6 +12,7 @@ import javassist.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -73,6 +75,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                 ctClass);
 
         Arrays.stream(ctClass.getDeclaredBehaviors())
+                .sorted(Comparator.comparing(CtBehavior::getName))
                 .map(m -> MethodInfo.forMethod(ci, m))
                 .forEach(methods::add);
 
