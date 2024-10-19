@@ -90,7 +90,6 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
      */
     public static String getAssertionsDisabledFlagName(CtClass ctClass) throws NotFoundException {
         for (CtClass cls = ctClass; cls != null; cls = cls.getDeclaringClass()) {
-            final CtClass currentClass = cls;
             // does the current class or one of its nested classes contain the flag?
             CtField flag = Stream.concat(Stream.of(cls), Stream.of(cls.getNestedClasses()))
                     .map(ClassInfo::getAssertionsDisabledField)
