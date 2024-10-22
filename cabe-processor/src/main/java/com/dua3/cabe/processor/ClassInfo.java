@@ -58,7 +58,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isEnum = typeDescription.isEnum();
         boolean isRecord = typeDescription.getSuperClass() != null && typeDescription.getSuperClass().asErasure().represents(Record.class);
         boolean isDerived = typeDescription.getSuperClass() != null && !typeDescription.getSuperClass().asErasure().represents(Object.class) && !isEnum && !isRecord;
-        NullnessOperator nullnessOperator = getPackageNullnessOperator(classLoader, typeDescription.getPackage().getName());
+        NullnessOperator nullnessOperator = getClassNullnessOperator(classLoader, typeDescription);
         boolean isPublicApi = Modifier.isPublic(modifiers) || hasPublicApiAncestor(classLoader, typeDescription);
         String assertionsDisabledFlagName = getAssertionsDisabledFlagName(typeDescription);
 
@@ -86,6 +86,13 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                 .forEach(methods::add);
 
         return ci;
+    }
+
+    private static NullnessOperator getClassNullnessOperator(ClassLoader classLoader, TypeDescription typeDescription) {
+        boolean isNullMarked = isAnnotated(typeDescription, NullMarked.class);
+        boolean isNullUnmarked = isAnnotated(typeDescription, NullUnmarked.class);
+        NullnessOperator classNullness = getNullnessOperator("class", typeDescription.getName(), isNullMarked, isNullUnmarked);
+        return classNullness.combineWithParent(() -> getPackageNullnessOperator(classLoader, typeDescription.getPackage().getName()));
     }
 
     /**
