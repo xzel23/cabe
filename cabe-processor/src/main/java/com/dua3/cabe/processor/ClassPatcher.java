@@ -464,7 +464,7 @@ public class ClassPatcher {
             for (CtConstructor ctConstructor: ctClass.getDeclaredConstructors()) {
                 var paramsA = mi.parameters().stream()
                         .map(ParameterInfo::typeInfo)
-                        .map(TypeInfo::type)
+                        .map(TypeInfo::rawType)
                         .toList();
                 var paramsB = Arrays.stream(ctConstructor.getParameterTypes())
                         .map(CtClass::getName)
