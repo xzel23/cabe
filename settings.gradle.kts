@@ -1,8 +1,7 @@
 rootProject.name = "doc"
 val projectVersion = "3.0-SNAPSHOT"
 
-//include("cabe-processor", "cabe-gradle-plugin")
-include("cabe-processor")
+include("cabe-processor", "cabe-gradle-plugin")
 
 dependencyResolutionManagement {
 

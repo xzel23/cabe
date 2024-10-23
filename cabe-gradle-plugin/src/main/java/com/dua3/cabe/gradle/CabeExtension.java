@@ -1,6 +1,6 @@
 package com.dua3.cabe.gradle;
 
-import com.dua3.cabe.processor.Config;
+import com.dua3.cabe.processor.Configuration;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
@@ -21,7 +21,7 @@ public class CabeExtension {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
-    private final Property<Config> config;
+    private final Property<Configuration> config;
 
     /**
      * Construct a new instance of the extension.
@@ -33,7 +33,7 @@ public class CabeExtension {
         ObjectFactory objectFactory = project.getObjects();
 
         // get value of config
-        config = objectFactory.property(Config.class).value(Config.StandardConfig.STANDARD.config);
+        config = objectFactory.property(Configuration.class).value(Configuration.StandardConfig.STANDARD.config());
 
         // output into the original classes directory
         outputDirectory = objectFactory.directoryProperty();
@@ -84,9 +84,9 @@ public class CabeExtension {
     /**
      * Retrieves the configuration property for the Cabe plugin.
      *
-     * @return the configuration property as a Property object of type Config
+     * @return the configuration property as a Property object of type Configuration
      */
-    public Property<Config> getConfig() {
+    public Property<Configuration> getConfig() {
         return config;
     }
 
@@ -95,7 +95,7 @@ public class CabeExtension {
      *
      * @param config the configuration to set
      */
-    public void setConfig(Config config) {
+    public void setConfig(Configuration config) {
         this.config.set(config);
     }
 }
