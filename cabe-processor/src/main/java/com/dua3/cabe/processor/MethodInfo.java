@@ -1,10 +1,10 @@
 package com.dua3.cabe.processor;
 
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.TypeDescription;
-
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,26 +17,28 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
                   boolean isAbstract, boolean isStatic,
                   boolean isPublic, boolean isSynthetic, boolean isBridge, boolean isNative,
                   List<ParameterInfo> parameters, ClassInfo classInfo,
-                  MethodDescription.InDefinedShape methodDescription) {
+                  Executable method) {
     private static final Pattern PATTERN_EXTRACT_METHOD_NAME = Pattern.compile(".*\\.([\\w$]+)\\(.*");
 
-    public static MethodInfo forMethod(ClassInfo ci, MethodDescription.InDefinedShape methodDescription) {
-        boolean isConstructor = methodDescription.isConstructor();
-        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, methodDescription);
-        boolean isMethod = methodDescription.isMethod();
-        boolean isAbstract = methodDescription.isAbstract();
-        boolean isStatic = methodDescription.isStatic();
-        boolean isPublicApi = ci.isPublicApi() && methodDescription.isPublic();
+    public static MethodInfo forMethod(ClassInfo ci, Executable method) {
+        int modifiers = method.getModifiers();
 
-        boolean isSynthetic = methodDescription.isSynthetic();
-        boolean isBridge = methodDescription.isBridge();
-        boolean isNative = methodDescription.isNative();
+        boolean isConstructor = method instanceof Constructor<?>;
+        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, method);
+        boolean isMethod = method instanceof Method m;
+        boolean isAbstract = Modifier.isAbstract(modifiers);
+        boolean isStatic = Modifier.isStatic(modifiers);
+        boolean isPublicApi = ci.isPublicApi() && Modifier.isPublic(modifiers);
+
+        boolean isSynthetic = method.isSynthetic();
+        boolean isBridge = isMethod && ((Method) method).isBridge();
+        boolean isNative = Modifier.isNative(modifiers);
 
         List<ParameterInfo> parameters = new ArrayList<>();
 
         MethodInfo mi = new MethodInfo(
-                methodDescription.getInternalName(),
-                getFullMethodName(methodDescription),
+                method.getName(),
+                method.toGenericString(),
                 isConstructor,
                 isCanonicalRecordConstructor,
                 isMethod,
@@ -48,47 +50,30 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
                 isNative,
                 parameters,
                 ci,
-                methodDescription);
+                method);
 
         parameters.addAll(ParameterInfo.forMethod(mi));
 
         return mi;
     }
 
-    private static String getFullMethodName(MethodDescription.InDefinedShape methodDescription) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(methodDescription.getDeclaringType().asErasure().getActualName());
-        if (!methodDescription.isConstructor()) {
-            sb.append('.').append(methodDescription.getActualName());
-        }
-        sb.append('(');
-        String separator = "";
-        for (ParameterDescription.InDefinedShape param : methodDescription.getParameters()) {
-            sb.append(separator);
-            sb.append(param.getType().asErasure().getActualName());
-            separator = ",";
-        }
-        sb.append(')');
-        return sb.toString();
-    }
-
-    private static boolean isCanonicalRecordConstructor(ClassInfo ci, MethodDescription method) {
+    private static boolean isCanonicalRecordConstructor(ClassInfo ci, Executable method) {
         // is it a record constructor?
-        if (!ci.isRecord() || !(method instanceof MethodDescription.InDefinedShape)) {
+        if (!ci.isRecord() || !(method  instanceof Constructor<?>)) {
             return false;
         }
 
         try {
-            TypeDescription declaringClass = method.getDeclaringType().asErasure();
-            ParameterList<?> parameterTypes = method.getParameters();
+            Class<?> declaringClass = method.getDeclaringClass();
+            Parameter[] parameterTypes = method.getParameters();
 
             // constructor arguments must match record components
-            if (parameterTypes.size() != declaringClass.getDeclaredFields().size()) {
+            if (parameterTypes.length != declaringClass.getDeclaredFields().length) {
                 return false;
             }
-            for (int i = 0; i < parameterTypes.size(); i++) {
-                TypeDescription.Generic fieldType = declaringClass.getDeclaredFields().get(i).getType();
-                if (!fieldType.equals(parameterTypes.get(i).getType())) {
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> fieldType = declaringClass.getDeclaredFields()[i].getType();
+                if (!fieldType.equals(parameterTypes[i].getType())) {
                     return false;
                 }
             }
@@ -123,7 +108,7 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
                 ", isNative=" + isNative +
                 ", parameters=" + parameters +
                 ", classInfo=" + classInfo.name() +
-                ", methodDescription=" + methodDescription +
+                ", method=" + method +
                 '}';
     }
 }

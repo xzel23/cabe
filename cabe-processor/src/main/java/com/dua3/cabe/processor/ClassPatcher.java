@@ -13,6 +13,7 @@ import javassist.bytecode.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -333,7 +334,7 @@ public class ClassPatcher {
         } else {
             // flag is not present in unprocessed class file
             CtClass ctClass = classPool.getCtClass(ci.name());
-            String flagName = ClassInfo.getAssertionsDisabledFlagName(ci.typeDescription());
+            String flagName = Util.getAssertionsDisabledFlagName(ci.cls());
             if (flagName == null) { // if flagName != null, the flag has already been injected.
                 // inject directly into the current class
                 LOG.fine(() -> "injecting field $assertionsDisabled in class: " + ci.name());
@@ -377,7 +378,7 @@ public class ClassPatcher {
             return false;
         }
 
-        // special case: for record equals ignore NotNull annotations except directly on the method parameter
+        // special case: for record equals ignore NonNull annotations except directly on the method parameter
         // see https://github.com/xzel23/cabe/issues/2
         boolean ignoreNonMethodNonNullAnnotation = ci.isRecord()
                 && mi.methodName().equals("equals") && mi.parameters().size() == 2;
@@ -389,12 +390,12 @@ public class ClassPatcher {
             // create assertion code
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
-                if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.typeInfo().type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
+                if (!mi.isCanonicalRecordConstructor() && pi.isSynthetic() || pi.type().isPrimitive() || (mi.isConstructor() && ci.isAnonymousClass())) {
                     continue;
                 }
 
                 // create assertion code
-                NullnessOperator nullnessOperatorParameter = pi.typeInfo().nullnessOperator();
+                NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
                 boolean isNonNull = (nullnessOperatorParameter == NullnessOperator.MINUS_NULL)
                         || (!ignoreNonMethodNonNullAnnotation && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
                 if (isNonNull) {
@@ -460,29 +461,18 @@ public class ClassPatcher {
     }
 
     static CtBehavior getCtMethod(CtClass ctClass, MethodInfo mi) throws NotFoundException {
+        List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(Class::getCanonicalName).toList();
         if (mi.isConstructor()) {
             for (CtConstructor ctConstructor: ctClass.getDeclaredConstructors()) {
-                var paramsA = mi.parameters().stream()
-                        .map(ParameterInfo::typeInfo)
-                        .map(TypeInfo::rawType)
-                        .toList();
-                var paramsB = Arrays.stream(ctConstructor.getParameterTypes())
-                        .map(CtClass::getName)
-                        .toList();
-                if (paramsA.equals(paramsB)) {
+                List<String> ctParams = Arrays.stream(ctConstructor.getParameterTypes()).map(CtClass::getName).toList();
+                if (ctParams.equals(params)) {
                     return ctConstructor;
                 }
             }
         } else {
             for (CtMethod ctMethod : ctClass.getDeclaredMethods(mi.name())) {
-                var paramsA = mi.parameters().stream()
-                        .map(ParameterInfo::typeInfo)
-                        .map(TypeInfo::rawType)
-                        .toList();
-                var paramsB = Arrays.stream(ctMethod.getParameterTypes())
-                        .map(CtClass::getName)
-                        .toList();
-                if (paramsA.equals(paramsB)) {
+                List<String> ctParams = Arrays.stream(ctMethod.getParameterTypes()).map(CtClass::getName).toList();
+                if (ctParams.equals(params)) {
                     return ctMethod;
                 }
             }

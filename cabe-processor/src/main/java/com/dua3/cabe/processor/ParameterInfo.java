@@ -1,17 +1,14 @@
 package com.dua3.cabe.processor;
 
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.TypeDescription;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-
+import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-record ParameterInfo(int index, String param, String name, TypeInfo typeInfo, boolean isSynthetic, MethodInfo methodInfo) {
+record ParameterInfo(int index, String param, String name, Class<?> type, NullnessOperator nullnessOperator, boolean isSynthetic, MethodInfo methodInfo) {
     private static final Set<String> PRIMITIVES = Set.of(
             "byte",
             "char",
@@ -27,38 +24,31 @@ record ParameterInfo(int index, String param, String name, TypeInfo typeInfo, bo
     public static List<ParameterInfo> forMethod(MethodInfo mi) {
         ClassInfo ci = mi.classInfo();
 
-        ParameterList<ParameterDescription.InDefinedShape> parms = mi.methodDescription().getParameters();
-        int n = parms.size();
+        Executable methodDescription = mi.method();
+        Parameter[] parms = methodDescription.getParameters();
+        int n = parms.length;
 
         List<ParameterInfo> pi = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
+        for (int i = 0, j = 0; i < n; i++) {
             String symbol = "$" + (1 + i);
-            ParameterDescription.InDefinedShape param = parms.get(i);
-
-            String name = param.isNamed() ? param.getActualName() : "arg#" + param.getIndex();
+            Parameter param = parms[i];
+            String name = param.isNamePresent() ? param.getName() : "arg#" + (j + 1);
 
             boolean isSynthetic = param.isSynthetic()
-                    || (mi.isConstructor() && i==0)
-                    || (mi.isConstructor() && ci.isInnerClass() && i==1);
+                    || (mi.isConstructor() && !ci.isStaticClass() && ci.isInnerClass() && i==0);
 
-            TypeDescription.Generic type = param.getType();
+            AnnotatedType type = param.getAnnotatedType();
 
-            TypeInfo typeInfo = getTypeInfo(type);
-            pi.add(new ParameterInfo(i, symbol, name, typeInfo, isSynthetic, mi));
+            NullnessOperator nullnessOperator = Util.getNullnessOperator(param.getDeclaredAnnotations())
+                            .combineWithParent(() -> Util.getNullnessOperator(type.getDeclaredAnnotations()));
+            pi.add(new ParameterInfo(i, symbol, name, param.getType(), nullnessOperator, isSynthetic, mi));
+
+            if (!isSynthetic) {
+                j++;
+            }
         }
 
         return pi;
-    }
-
-    private static TypeInfo getTypeInfo(TypeDescription.Generic type) {
-        String name = type.getActualName();
-        String rawName = type.asRawType().getActualName();
-        boolean isNonNullAnnotated = type.getDeclaredAnnotations().stream().anyMatch(a -> a.getAnnotationType().getName().equals(NonNull.class.getName()));
-        boolean isNullableAnnotated = type.getDeclaredAnnotations().stream().anyMatch(a -> a.getAnnotationType().getName().equals(Nullable.class.getName()));
-        NullnessOperator nullnessOperator = isNonNullAnnotated ? NullnessOperator.MINUS_NULL
-                : isNullableAnnotated ? NullnessOperator.UNION_NULL
-                : NullnessOperator.UNSPECIFIED;
-        return new TypeInfo(name, rawName, nullnessOperator);
     }
 
     public static boolean isPrimitive(String type) {
@@ -70,7 +60,8 @@ record ParameterInfo(int index, String param, String name, TypeInfo typeInfo, bo
         return "ParameterInfo{" +
                 "param='" + param + '\'' +
                 ", name='" + name + '\'' +
-                ", typeInfo='" + typeInfo + '\'' +
+                ", type='" + type + '\'' +
+                ", nullnessOperator=" + nullnessOperator +
                 ", isSynthetic=" + isSynthetic +
                 ", methodInfo=" + methodInfo.name() +
                 '}';

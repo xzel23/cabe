@@ -33,7 +33,6 @@ repositories {
 
 dependencies {
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation("net.bytebuddy:byte-buddy:1.15.5")
     implementation("org.javassist:javassist:3.30.2-GA")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")

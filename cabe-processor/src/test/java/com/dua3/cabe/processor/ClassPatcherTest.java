@@ -102,7 +102,7 @@ class ClassPatcherTest {
                         if (pi.isSynthetic() || ci.isAnonymousClass() && mi.isConstructor()) {
                             continue;
                         }
-                        switch (pi.typeInfo().type()) {
+                        switch (pi.type().getCanonicalName()) {
                             case "java.lang.String":
                                 fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(\"java.lang.String\"))%n" +
                                                 "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type String but was: '\" + %2$s.getClass().getName() + \"'\");%n",
@@ -122,7 +122,7 @@ class ClassPatcherTest {
                                         pi.name(), pi.param(), mi.name());
                                 break;
                             default:
-                                throw new IllegalStateException("unexpected type: " + pi.typeInfo().type() + " [" + methodName + "]");
+                                throw new IllegalStateException("unexpected type: " + pi.type().getName() + " [" + methodName + "]");
                         }
                     }
                     String code = fmtCode.toString();
@@ -179,8 +179,8 @@ class ClassPatcherTest {
             "com.dua3.cabe.processor.test.instrument.NoAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotationsStaticMethods",
-            "com.dua3.cabe.processor.test.instrument.api.nonnull.NonNullPackage",
-            "com.dua3.cabe.processor.test.instrument.api.nullable.NullablePackage"
+            "com.dua3.cabe.processor.test.instrument.api.nullmarked.NullMarkedPackage",
+            "com.dua3.cabe.processor.test.instrument.api.nullunmarked.NullUnmarkedPackage"
     })
     void testInstrumentation(String className) {
         LOG.info("testing correct results of instrumentation: " + className);
