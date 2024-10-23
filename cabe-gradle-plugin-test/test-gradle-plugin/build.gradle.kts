@@ -1,5 +1,5 @@
 import com.dua3.cabe.gradle.CabeExtension
-import com.dua3.cabe.processor.Config
+import com.dua3.cabe.processor.Configuration
 
 buildscript {
     repositories {
@@ -8,7 +8,6 @@ buildscript {
     }
     dependencies {
         classpath("com.dua3.cabe", "com.dua3.cabe.gradle.plugin", rootProject.extra["plugin_version"] as String)
-        classpath("com.dua3.cabe", "cabe-annotations", rootProject.extra["annotations_version"] as String)
     }
 }
 
@@ -18,17 +17,17 @@ plugins {
 
 apply(plugin = "com.dua3.cabe")
 
+dependencies {
+    implementation("org.jspecify:jspecify:1.0.0")
+}
+
 configure<CabeExtension> {
-    config.set(Config.StandardConfig.STANDARD.config)
+    config.set(Configuration.StandardConfig.STANDARD.config())
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
-}
-
-dependencies {
-    compileOnly(project(":cabe-annotations"))
 }
 
 application {

@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":cabe-annotations"))
+    implementation("org.jspecify:jspecify:1.0.0")
     var processor_version = rootProject.extra["processor_version"] as String
     implementation("com.dua3.cabe:cabe-processor-all:${processor_version}")
 }
@@ -32,7 +32,7 @@ gradlePlugin {
             group = "com.dua3"
             displayName = "Plugin for adding assertions during compile time"
             description = "A plugin that adds assertions for annotated method parameters at compile time."
-            tags = listOf("java", "NotNull", "Nullable", "null check", "assertion")
+            tags = listOf("java", "NonNull", "Nullable", "null check", "assertion")
             implementationClass = "com.dua3.cabe.gradle.CabeGradlePlugin"
         }
     }

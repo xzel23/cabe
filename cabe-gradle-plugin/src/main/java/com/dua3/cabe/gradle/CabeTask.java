@@ -2,7 +2,7 @@ package com.dua3.cabe.gradle;
 
 
 import com.dua3.cabe.processor.ClassPatcher;
-import com.dua3.cabe.processor.Config;
+import com.dua3.cabe.processor.Configuration;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
@@ -34,7 +34,7 @@ public abstract class CabeTask extends DefaultTask {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
-    private final Property<Config> config;
+    private final Property<Configuration> config;
 
     /**
      * This task injects assertions for parameters marked as not allowing null values into the source code.
@@ -47,7 +47,7 @@ public abstract class CabeTask extends DefaultTask {
         inputDirectory = objectFactory.directoryProperty();
         outputDirectory = objectFactory.directoryProperty();
         classPath = objectFactory.property(FileCollection.class);
-        config = objectFactory.property(Config.class);
+        config = objectFactory.property(Configuration.class);
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class CabeTask extends DefaultTask {
      * @return The configuration property for the Cabe task.
      */
     @Input
-    public Property<Config> getConfig() {
+    public Property<Configuration> getConfig() {
         return config;
     }
 

@@ -1,0 +1,6 @@
+<FindBugsFilter>
+    <!-- do warn about doPrivileged, the SecurityManager is deprecated for removal -->
+    <Match>
+        <Bug pattern="DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"/>
+    </Match>
+</FindBugsFilter>

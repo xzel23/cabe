@@ -1,6 +1,6 @@
 package com.dua3.cabe.processor.test.config;
 
-import com.dua3.cabe.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Formatter;
 
@@ -15,9 +15,9 @@ public class TestClass {
             String format = "%-20s: %s%n";
             fmt.format(format, "assertions enabled", TestClass.class.desiredAssertionStatus());
             fmt.format(format, "privateNullable", check(() -> privateNullable(null)));
-            fmt.format(format, "privateNotNull", check(() -> privateNotNull(null)));
+            fmt.format(format, "privateNonNull", check(() -> privateNonNull(null)));
             fmt.format(format, "publicNullable", check(() -> publicNullable(null)));
-            fmt.format(format, "publicNotNull", check(() -> publicNotNull(null)));
+            fmt.format(format, "publicNonNull", check(() -> publicNonNull(null)));
             return fmt.toString();
         }
     }
@@ -35,15 +35,15 @@ public class TestClass {
         return "privateNullable(" + arg + ")";
     }
 
-    private String privateNotNull(@NotNull Object arg) {
-        return "privateNotNull(" + arg + ")";
+    private String privateNonNull(@NonNull Object arg) {
+        return "privateNonNull(" + arg + ")";
     }
 
     public String publicNullable(Object arg) {
         return "publicNullable(" + arg + ")";
     }
 
-    public String publicNotNull(@NotNull Object arg) {
-        return "publicNotNull(" + arg + ")";
+    public String publicNonNull(@NonNull Object arg) {
+        return "publicNonNull(" + arg + ")";
     }
 }

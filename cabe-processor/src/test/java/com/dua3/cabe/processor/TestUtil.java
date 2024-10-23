@@ -7,11 +7,15 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -22,6 +26,7 @@ import java.util.stream.Stream;
 public final class TestUtil {
     private static final Logger LOG = Logger.getLogger(TestUtil.class.getName());
 
+    static ClassLoader loader;
     static final ClassPool pool = new ClassPool(true);
     static final Path buildDir = Paths.get(System.getProperty("user.dir")).resolve("build");
     static final Path resourceDir = Paths.get(System.getProperty("user.dir")).resolve("src/test/resources");
@@ -107,7 +112,8 @@ public final class TestUtil {
                 "-d", classesDir.toString(),
                 "-p", libDir.toString(),
                 "-proc:full",
-                "-g"
+                "-g",
+                "-parameters"
         );
         JavaCompiler.CompilationTask task = compiler.getTask(
                 null,   // writer for additional output from the compiler; use System.err if null.
@@ -133,20 +139,24 @@ public final class TestUtil {
      */
     public static List<Path> loadClasses(Path dir) throws IOException {
         // Load classes into class pool
+        List<URL> urls = new ArrayList<>();
         Arrays.stream(System.getProperty("java.class.path").split(File.pathSeparator))
                 .forEach(cp -> {
                     try {
+                        urls.add(new File(cp).toURI().toURL());
                         pool.appendClassPath(cp);
-                    } catch (NotFoundException e) {
+                    } catch (NotFoundException | MalformedURLException e) {
                         LOG.warning("could not add to classpath: " + cp);
                     }
                 });
 
         try {
+            urls.add(dir.toUri().toURL());
             pool.appendClassPath(dir.toString());
         } catch (NotFoundException e) {
             throw new IllegalStateException("could not append classes folder to classpath: " + dir, e);
         }
+        loader = new URLClassLoader(urls.toArray(URL[]::new));
 
         try (Stream<Path> paths = Files.walk(dir)) {
             return paths
@@ -167,7 +177,7 @@ public final class TestUtil {
      * @throws IOException                            if an I/O error occurs during the processing or saving of classes
      * @throws ClassFileProcessingFailedException     if the processing of a class file fails
      */
-    public static void processClasses(Path unprocessedDir, Path processedDir, Config config) throws IOException, ClassFileProcessingFailedException {
+    public static void processClasses(Path unprocessedDir, Path processedDir, Configuration config) throws IOException, ClassFileProcessingFailedException {
         Collection<Path> classPath = List.of();
         ClassPatcher patcher = new ClassPatcher(classPath, config);
         patcher.processFolder(unprocessedDir, processedDir);

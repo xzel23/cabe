@@ -5,7 +5,7 @@ plugins {
     id("application")
     id("maven-publish")
     id("signing")
-    id("com.github.spotbugs") version "6.0.6"
+    id("com.github.spotbugs") version "6.0.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":cabe-annotations"))
+    implementation("org.jspecify:jspecify:1.0.0")
     implementation("org.javassist:javassist:3.30.2-GA")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -212,3 +212,7 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
+
+
+// === SPOTBUGS ===
+spotbugs.excludeFilter.set(rootProject.file("spotbugs-exclude.xml"))

@@ -3,9 +3,8 @@ plugins {
     id("com.dorongold.task-tree") version "2.1.1"
 }
 
-extra["plugin_version"] = "2.1.1"
-extra["processor_version"] = "2.1"
-extra["annotations_version"] = "2.0"
+extra["plugin_version"] = "3.0-SNAPSHOT"
+extra["processor_version"] = "3.0-SNAPSHOT"
 
 subprojects {
     apply(plugin = "java")
@@ -27,12 +26,6 @@ tasks.create("printProcessorVersion") {
 tasks.create("printPluginVersion") {
     doLast {
         println(rootProject.extra["plugin_version"])
-    }
-}
-
-tasks.create("printAnnotationsVersion") {
-    doLast {
-        println(rootProject.extra["annotations_version"])
     }
 }
 

@@ -4,28 +4,26 @@
 
 FLAGS=--stacktrace
 
-PROCESSOR_VERSION=$(./gradlew -Dnotest -q printProcessorVersion)
-PLUGIN_VERSION=$(./gradlew -Dnotest -q printPluginVersion)
-ANNOTATIONS_VERSION=$(./gradlew -Dnotest -q printAnnotationsVersion)
+PROCESSOR_VERSION=$(./gradlew -q printProcessorVersion)
+PLUGIN_VERSION=$(./gradlew -q printPluginVersion)
 
 echo
 echo "current versions"
-echo "annotations ..... " ${ANNOTATIONS_VERSION}
 echo "processor ....... " ${PROCESSOR_VERSION}
 echo "gradle plugin ... " ${PLUGIN_VERSION}
 echo
 
 # run a second build and then a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
-&& ./gradlew -Dnotest clean build test publishToMavenLocal \
+&& ./gradlew clean build test publishToMavenLocal \
   && echo "build successful" \
-&& ./gradlew --no-daemon \
+&& ./gradlew --no-daemon -Dtest \
   cabe-gradle-plugin-test:clean \
   cabe-gradle-plugin-test:test-gradle-plugin:run \
   cabe-gradle-plugin-test:test-gradle-plugin-modular:run \
   ${FLAGS} \
-  && ./gradlew --no-daemon cabe-gradle-plugin-test:build ${FLAGS} \
-  && ./gradlew --no-daemon cabe-gradle-plugin-test:clean ${FLAGS} \
+  && ./gradlew --no-daemon -Dtest cabe-gradle-plugin-test:build ${FLAGS} \
+  && ./gradlew --no-daemon -Dtest cabe-gradle-plugin-test:clean ${FLAGS} \
   && echo "plugin test successful" \
 && ./gradlew cabe-processor:shadowJar \
   && echo "shadow jar created" \

@@ -1,5 +1,8 @@
 package com.dua3.cabe.processor;
 
+import javassist.CtBehavior;
+import javassist.CtClass;
+import javassist.CtMethod;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -13,7 +16,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -87,66 +89,50 @@ class ClassPatcherTest {
         // Failure is signaled by a thrown exception
         assertDoesNotThrow(() -> {
             String className = TestUtil.getClassName(classFile);
-            ClassInfo ci = ClassInfo.forClass(TestUtil.pool, className);
+            ClassInfo ci = ClassInfo.forClass(TestUtil.loader, className);
+            CtClass ctClass = TestUtil.pool.getCtClass(ci.name());
             for (var mi : ci.methods()) {
+                if (mi.isAbstract()) {
+                    continue;
+                }
+
                 String methodName = mi.name();
                 try (Formatter fmtCode = new Formatter()) {
                     for (var pi : mi.parameters()) {
                         if (pi.isSynthetic() || ci.isAnonymousClass() && mi.isConstructor()) {
                             continue;
                         }
-                        if (mi.name().equals("com.dua3.cabe.processor.test.parameterinfo.Base$1(java.lang.String,java.lang.String)")) {
-                            // arguments for the inner class constructor are synthetic and names are not available
-                            switch (pi.type()) {
-                                case "java.lang.String":
-                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(\"java.lang.String\"))" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type String but was: '\" + %2$s.getClass().getName() + \"'\");%n",
-                                            pi.name(), pi.param(), mi.name());
-                                    fmtCode.format("if (!\"%1$s\".equals(%2$s))" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
-                                            pi.name().replace("arg", "param#"), pi.param(), mi.name());
-                                    break;
-                                case "java.lang.Object[]":
-                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(java.lang.Object[].class.getName()))%n" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type Object[] but was: '\" + %2$s.getClass().getName() + \"'\");%n",
-                                            pi.name(), pi.param(), mi.name());
-                                    fmtCode.format("if (!\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
-                                            pi.name().replace("arg", "param#"), pi.param(), mi.name());
-                                    break;
-                                default:
-                                    throw new IllegalStateException("unexpected type: " + pi.type());
-                            }
-                        } else {
-                            switch (pi.type()) {
-                                case "java.lang.String":
-                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(\"java.lang.String\"))%n" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type String but was: '\" + %2$s.getClass().getName() + \"'\");%n",
-                                            pi.name(), pi.param(), mi.name());
-                                    fmtCode.format("if (!\"%1$s\".equals(%2$s))%n" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
-                                            pi.name(), pi.param(), mi.name());
-                                    break;
-                                case "java.lang.Object[]":
-                                    fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(java.lang.Object[].class.getName()))%n" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type Object[] but was: '\" + %2$s.getClass().getName() + \"'\");%n",
-                                            pi.name(), pi.param(), mi.name());
-                                    fmtCode.format("if (!\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))%n" +
-                                                    "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
-                                            pi.name(), pi.param(), mi.name());
-                                    break;
-                                default:
-                                    throw new IllegalStateException("unexpected type: " + pi.type() + " [" + methodName + "]");
-                            }
+                        switch (pi.type().getCanonicalName()) {
+                            case "java.lang.String":
+                                fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(\"java.lang.String\"))%n" +
+                                                "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type String but was: '\" + %2$s.getClass().getName() + \"'\");%n",
+                                        pi.name(), pi.param(), mi.name());
+                                // if the parameter name contains a '#' then the actual name could not be extracted from the Jar
+                                fmtCode.format("if (!\"%1$s\".contains(\"#\") && !\"%1$s\".equals(%2$s))%n" +
+                                                "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+%2$s+\"'\");%n",
+                                        pi.name(), pi.param(), mi.name());
+                                break;
+                            case "java.lang.Object[]":
+                                fmtCode.format("if (%2$s != null && !%2$s.getClass().getName().equals(java.lang.Object[].class.getName()))%n" +
+                                                "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected type Object[] but was: '\" + %2$s.getClass().getName() + \"'\");%n",
+                                        pi.name(), pi.param(), mi.name());
+                                // if the parameter name contains a '#' then the actual name could not be extracted from the Jar
+                                fmtCode.format("if (!\"%1$s\".contains(\"#\") && !\"%1$s\".equals(java.lang.reflect.Array.get(%2$s, 0)))%n" +
+                                                "  throw new java.lang.IllegalArgumentException(\"[%3$s] expected: '%1$s', actual: '\"+java.lang.reflect.Array.get(%2$s, 0)+\"'\");%n",
+                                        pi.name(), pi.param(), mi.name());
+                                break;
+                            default:
+                                throw new IllegalStateException("unexpected type: " + pi.type().getName() + " [" + methodName + "]");
                         }
                     }
                     String code = fmtCode.toString();
                     if (!code.isEmpty()) {
-                        mi.ctMethod().insertBefore(code);
+                        CtBehavior ctBehavior = ClassPatcher.getCtMethod(ctClass, mi);
+                        ctBehavior.insertBefore(code);
                     }
                 }
             }
-            ci.ctClass().writeFile(testClassesProcessedParameterInfoDir.toString());
+            ctClass.writeFile(testClassesProcessedParameterInfoDir.toString());
         }, "failed: " + classFile);
     }
 
@@ -182,7 +168,7 @@ class ClassPatcherTest {
         // processFolder will report errors by throwing an exception
         assertDoesNotThrow(() -> {
             Collection<Path> classPath = List.of();
-            ClassPatcher patcher = new ClassPatcher(classPath, Config.StandardConfig.DEVELOPMENT.config);
+            ClassPatcher patcher = new ClassPatcher(classPath, Configuration.StandardConfig.DEVELOPMENT.config());
             patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
         });
     }
@@ -193,14 +179,14 @@ class ClassPatcherTest {
             "com.dua3.cabe.processor.test.instrument.NoAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotationsStaticMethods",
-            "com.dua3.cabe.processor.test.instrument.api.notnull.NotNullPackage",
-            "com.dua3.cabe.processor.test.instrument.api.nullable.NullablePackage"
+            "com.dua3.cabe.processor.test.instrument.api.nullmarked.NullMarkedPackage",
+            "com.dua3.cabe.processor.test.instrument.api.nullunmarked.NullUnmarkedPackage"
     })
     void testInstrumentation(String className) {
         LOG.info("testing correct results of instrumentation: " + className);
         // Each of the classes contains a test method that will throw an exception when an incorrect result is detected.
         assertDoesNotThrow(() -> {
-            try (var cl = new URLClassLoader(new URL[]{testClassesProcessedInstrumentedDir.toUri().toURL()})) {
+            try (var cl = new URLClassLoader(new URL[]{testClassesProcessedInstrumentedDir.toUri().toURL()}, null)) {
                 Class<?> cls = cl.loadClass(className);
                 var test = cls.getDeclaredMethod("test");
                 test.invoke(null);
@@ -216,10 +202,10 @@ class ClassPatcherTest {
 
     /**
      * Test generating null checks for different configurations. This test also makes sure that null checks for
-     * {@link Config.Check#ASSERT} are work the same as standard assertions i.e., can be en-/disabled using the
+     * {@link Configuration.Check#ASSERT} are work the same as standard assertions i.e., can be en-/disabled using the
      * standard JVM flags ('-ea and '-da').
      *
-     * @param configName the name of the configuration as defined in {@link Config.StandardConfig}
+     * @param configName the name of the configuration as defined in {@link Configuration.StandardConfig}
      * @throws IOException                           if an I/O error occurs
      * @throws ClassFileProcessingFailedException    if processing of a class file fails
      */
@@ -231,7 +217,7 @@ class ClassPatcherTest {
     })
     @Order(6)
     public void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
-        Config.StandardConfig config = Config.StandardConfig.valueOf(configName);
+        Configuration.StandardConfig config = Configuration.StandardConfig.valueOf(configName);
 
         // create directories
         Path unprocessedDir = testDir.resolve("classes-unprocessed-" + configName);
@@ -244,7 +230,7 @@ class ClassPatcherTest {
         );
 
         // process classes
-        TestUtil.processClasses(unprocessedDir, processedDir, config.config);
+        TestUtil.processClasses(unprocessedDir, processedDir, config.config());
 
         // test processed classes
         try (Formatter fmt = new Formatter()) {
@@ -268,173 +254,173 @@ class ClassPatcherTest {
         }
     }
 
-    private static final Map<Config.StandardConfig, String> EXPECTED_FOR_CONFIG = Map.of(
-            Config.StandardConfig.NO_CHECKS, """
+    private static final Map<Configuration.StandardConfig, String> EXPECTED_FOR_CONFIG = Map.of(
+            Configuration.StandardConfig.NO_CHECKS, """
                     Config: NO_CHECKS
                     =================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : -
+                    publicNonNull       : -
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
                     --------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : -
+                    publicNonNull       : -
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
                     ------------------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
                     -----------------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
                     -------------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : -
+                    publicNonNull       : -
                     publicNullableDefault: -
-                    publicNotNullDefault: -
+                    publicNonNullDefault: -
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
                     ------------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : -
+                    publicNonNull       : -
                     publicNullableDefault: -
-                    publicNotNullDefault: -
+                    publicNonNullDefault: -
                                         
                     """,
-            Config.StandardConfig.DEVELOPMENT, """
+            Configuration.StandardConfig.DEVELOPMENT, """
                     Config: DEVELOPMENT
                     ===================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.AssertionError
+                    publicNonNull       : java.lang.AssertionError
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
                     --------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.AssertionError
+                    publicNonNull       : java.lang.AssertionError
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
                     ------------------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
                     -----------------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
                     -------------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.AssertionError
+                    publicNonNull       : java.lang.AssertionError
                     publicNullableDefault: -
-                    publicNotNullDefault: java.lang.AssertionError
+                    publicNonNullDefault: java.lang.AssertionError
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
                     ------------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.AssertionError
+                    publicNonNull       : java.lang.AssertionError
                     publicNullableDefault: -
-                    publicNotNullDefault: java.lang.AssertionError
+                    publicNonNullDefault: java.lang.AssertionError
                                         
                     """,
-            Config.StandardConfig.STANDARD, """
+            Configuration.StandardConfig.STANDARD, """
                     Config: STANDARD
                     ================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
                     --------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
                     ------------------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
                     -----------------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
                     -------------------------------------------------------------------------------------
                     assertions enabled  : false
                     privateNullable     : -
-                    privateNotNull      : -
+                    privateNonNull      : -
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                     publicNullableDefault: -
-                    publicNotNullDefault: java.lang.NullPointerException
+                    publicNonNullDefault: java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
                     ------------------------------------------------------------------------------------
                     assertions enabled  : true
                     privateNullable     : -
-                    privateNotNull      : java.lang.AssertionError
+                    privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNotNull       : java.lang.NullPointerException
+                    publicNonNull       : java.lang.NullPointerException
                     publicNullableDefault: -
-                    publicNotNullDefault: java.lang.NullPointerException
+                    publicNonNullDefault: java.lang.NullPointerException
                                         
                     """
     );
@@ -446,7 +432,6 @@ class ClassPatcherTest {
                 String header = String.format("Testing %s with assertions %s", path, assertionsEnabled);
                 fmt.format("%s%n", header);
                 fmt.format("%s%n", "-".repeat(header.length()));
-
 
                 String className = path.toString().replaceFirst(".class$", "");
                 fmt.format("%s", TestUtil.runClass(root, className, assertionsEnabled));

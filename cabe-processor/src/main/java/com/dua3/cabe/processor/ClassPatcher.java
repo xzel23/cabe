@@ -2,15 +2,21 @@ package com.dua3.cabe.processor;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
+import javassist.CtBehavior;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
+import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -66,7 +72,7 @@ public class ClassPatcher {
         Path in = null;
         Path out = null;
         List<Path> classPaths = null;
-        Config configuration = null;
+        Configuration configuration = null;
 
         BitSet usedArgs = new BitSet(args.length);
         try {
@@ -81,7 +87,7 @@ public class ClassPatcher {
             String configStr = getOptionString(cmdLine, "-c", usedArgs, "standard");
             String classpath = getOptionString(cmdLine, "-cp", usedArgs, "");
 
-            configuration = Config.parseConfigString(configStr);
+            configuration = Configuration.parseConfigString(configStr);
 
             in = Paths.get(inputFolder);
             out = Paths.get(outputFolder);
@@ -170,7 +176,8 @@ public class ClassPatcher {
     private static final Pattern GET_CLASS_NAME_PATTERN = Pattern.compile("\\.[^.]*$");
 
     private final List<Path> classpath;
-    private final Config configuration;
+    private final Configuration configuration;
+    private ClassLoader classLoader;
     private ClassPool classPool;
     private Path inputFolder;
     private Path outputFolder;
@@ -178,10 +185,10 @@ public class ClassPatcher {
     /**
      * This class represents a ClassPatcher object that manipulates class files in a given classpath.
      *
-     * @param classpath     the compile classpath
-     * @param configuration
+     * @param classpath     the compile-classpath
+     * @param configuration the {@link Configuration} to use
      */
-    public ClassPatcher(Collection<Path> classpath, Config configuration) {
+    public ClassPatcher(Collection<Path> classpath, Configuration configuration) {
         this.classpath = new ArrayList<>(Objects.requireNonNull(classpath, "classpath is null"));
         this.configuration = Objects.requireNonNull(configuration, "configuration is null");
     }
@@ -208,19 +215,24 @@ public class ClassPatcher {
                 return;
             }
 
+            List<URL> classpathEntries = new ArrayList<>();
             classpath.forEach(cp -> {
                 try {
+                    classpathEntries.add(cp.toUri().toURL());
                     classPool.appendClassPath(cp.toString());
-                } catch (NotFoundException e) {
+                } catch (NotFoundException | MalformedURLException e) {
                     LOG.warning("could not add to classpath: " + cp);
                 }
             });
 
             try {
+                classpathEntries.add(inputFolder.toUri().toURL());
                 classPool.appendClassPath(inputFolder.toString());
             } catch (NotFoundException e) {
                 throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + inputFolder, e);
             }
+
+            this.classLoader = new URLClassLoader(classpathEntries.toArray(URL[]::new));
 
             List<Path> classFiles;
             try (Stream<Path> paths = Files.walk(inputFolder)) {
@@ -282,24 +294,25 @@ public class ClassPatcher {
         }
 
         try {
-            ClassInfo classInfo = ClassInfo.forClass(classPool, className);
+            ClassInfo classInfo = ClassInfo.forClass(classLoader, className);
+            CtClass ctClass = classPool.getCtClass(className);
             try {
                 for (var methodInfo : classInfo.methods()) {
                     try {
                         instrumentMethod(classInfo, methodInfo);
                     } finally {
-                        classInfo.ctClass().defrost();
+                        ctClass.defrost();
                     }
                 }
 
                 // Write the class file
                 LOG.fine("writing class file: " + classFile);
                 Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
-                classInfo.ctClass().writeFile(outputFolder.toString());
+                ctClass.writeFile(outputFolder.toString());
 
                 LOG.fine("instrumenting class file successful: " + classFile);
             } finally {
-                classInfo.ctClass().detach();
+                ctClass.detach();
             }
         } catch (IOException e) {
             throw new IOException("IOException while instrumenting class file " + classFile, e);
@@ -319,10 +332,13 @@ public class ClassPatcher {
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
-            // flag is not present in unprocessed class file
-            CtClass ctClass = ci.ctClass();
-            String flagName = ClassInfo.getAssertionsDisabledFlagName(ctClass);
-            if (flagName == null) { // if flagName != null, the flag has already been injected
+            // flag is not present in the unprocessed class file
+            CtClass ctClass = classPool.getCtClass(ci.name());
+            String flagName;
+            if (Arrays.stream(ctClass.getDeclaredFields()).anyMatch(f -> f.getName().equals("$assertionsDisabled"))) {
+                // the field has already been injected
+                flagName = ctClass.getName() + ".$assertionsDisabled";
+            } else {
                 // inject directly into the current class
                 LOG.fine(() -> "injecting field $assertionsDisabled in class: " + ci.name());
                 CtField field = new CtField(CtClass.booleanType, "$assertionsDisabled", ctClass);
@@ -365,9 +381,9 @@ public class ClassPatcher {
             return false;
         }
 
-        // special case: for record equals ignore NotNull annotations except directly on the method parameter
+        // special case: for record equals ignore NonNull annotations except directly on the method parameter
         // see https://github.com/xzel23/cabe/issues/2
-        boolean ignoreNonMethodNotNullAnnotation = ci.isRecord()
+        boolean ignoreNonMethodNonNullAnnotation = ci.isRecord()
                 && mi.methodName().equals("equals") && mi.parameters().size() == 2;
 
         LOG.fine(() -> "instrumenting method " + methodName);
@@ -377,20 +393,20 @@ public class ClassPatcher {
             // create assertion code
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
-                if (pi.isSynthetic() || ParameterInfo.isPrimitive(pi.type()) || (mi.isConstructor() && ci.isAnonymousClass())) {
+                if (!mi.isCanonicalRecordConstructor() && pi.isSynthetic() || pi.type().isPrimitive() || (mi.isConstructor() && ci.isAnonymousClass())) {
                     continue;
                 }
 
                 // create assertion code
-                boolean isNotNull = pi.isNotNullAnnotated()
-                        || (!ignoreNonMethodNotNullAnnotation && ci.isNotNullApi() && !pi.isNullableAnnotated()
-                );
-                if (isNotNull) {
-                    Config.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
-                    if (ci.isRecord() && check== Config.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
+                NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
+                boolean isNonNull = (nullnessOperatorParameter == NullnessOperator.MINUS_NULL)
+                        || (!ignoreNonMethodNonNullAnnotation && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
+                if (isNonNull) {
+                    Configuration.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
+                    if (ci.isRecord() && check== Configuration.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
                         LOG.warning("cannot use assert in record " + ci.name() + " / https://github.com/xzel23/cabe/issues/1");
                         LOG.info("using THROW_NPE instead of ASSERT for " + methodName);
-                        check = Config.Check.THROW_NPE;
+                        check = Configuration.Check.THROW_NPE;
                     }
                     switch (check) {
                         case NO_CHECK -> {
@@ -431,7 +447,9 @@ public class ClassPatcher {
 
             if (!code.isEmpty()) {
                 LOG.fine(() -> "injecting code into: " + methodName + "\n" + code.indent(2).stripTrailing());
-                mi.ctMethod().insertBefore(code);
+                CtClass ctClass = classPool.getCtClass(ci.name());
+                CtBehavior ctBehavior = getCtMethod(ctClass, mi);
+                ctBehavior.insertBefore(code);
                 return true;
             } else {
                 return false;
@@ -443,6 +461,27 @@ public class ClassPatcher {
         } catch (RuntimeException e) {
             throw new ClassFileProcessingFailedException("exception while instrumenting method '" + methodName + "'", e);
         }
+    }
+
+    static CtBehavior getCtMethod(CtClass ctClass, MethodInfo mi) throws NotFoundException {
+        List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(Class::getCanonicalName).toList();
+        if (mi.isConstructor()) {
+            for (CtConstructor ctConstructor: ctClass.getDeclaredConstructors()) {
+                List<String> ctParams = Arrays.stream(ctConstructor.getParameterTypes()).map(CtClass::getName).toList();
+                if (ctParams.equals(params)) {
+                    return ctConstructor;
+                }
+            }
+        } else {
+            for (CtMethod ctMethod : ctClass.getDeclaredMethods(mi.name())) {
+                List<String> ctParams = Arrays.stream(ctMethod.getParameterTypes()).map(CtClass::getName).toList();
+                if (ctParams.equals(params)) {
+                    return ctMethod;
+                }
+            }
+        }
+
+        throw new IllegalStateException("method not found: " + mi);
     }
 
     /**

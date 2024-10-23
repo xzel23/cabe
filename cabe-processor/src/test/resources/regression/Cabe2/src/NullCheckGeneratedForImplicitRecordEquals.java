@@ -1,4 +1,4 @@
-import com.dua3.cabe.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
-public record NullCheckGeneratedForImplicitRecordEquals(@NotNull Object arg) {
+public record NullCheckGeneratedForImplicitRecordEquals(@NonNull Object arg) {
 }

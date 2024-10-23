@@ -43,7 +43,7 @@ public class RegressionTest {
 
         // instrument classes
         LOG.info("instrumenting classes ...");
-        TestUtil.processClasses(unprocessedDir, processedDir, Config.StandardConfig.STANDARD.config);
+        TestUtil.processClasses(unprocessedDir, processedDir, Configuration.StandardConfig.STANDARD.config());
 
         // run test
         LOG.info("running test ...");

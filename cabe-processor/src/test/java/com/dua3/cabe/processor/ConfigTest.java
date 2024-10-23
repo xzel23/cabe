@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 public class ConfigTest {
 
     @ParameterizedTest
-    @EnumSource(Config.StandardConfig.class)
-    public void testConfigString(Config.StandardConfig sc) {
-        Config c = sc.config;
+    @EnumSource(Configuration.StandardConfig.class)
+    public void testConfigString(Configuration.StandardConfig sc) {
+        Configuration c = sc.config();
 
         String expected = switch (sc) {
             case STANDARD -> "publicApi=THROW_NPE:privateApi=ASSERT";
@@ -46,20 +46,20 @@ public class ConfigTest {
             "THROW_NPE, THROW_NPE"
     })
     public void testParseConfigString(String s1, String s2) {
-        Config.Check c1 = Config.Check.valueOf(s1);
-        Config.Check c2 = Config.Check.valueOf(s2);
-        Config expected = new Config(c1, c2);
+        Configuration.Check c1 = Configuration.Check.valueOf(s1);
+        Configuration.Check c2 = Configuration.Check.valueOf(s2);
+        Configuration expected = new Configuration(c1, c2);
 
-        Config actual = Config.parseConfigString("publicApi=%s:privateApi=%s".formatted(s1, s2));
+        Configuration actual = Configuration.parseConfigString("publicApi=%s:privateApi=%s".formatted(s1, s2));
 
         assertEquals(expected, actual);
     }
 
     @Test
     public void testEqualsAndHashCode() {
-        Config config1 = new Config(Config.Check.ASSERT, Config.Check.THROW_NPE);
-        Config config2 = new Config(Config.Check.ASSERT, Config.Check.THROW_NPE);
-        Config config3 = new Config(Config.Check.NO_CHECK, Config.Check.NO_CHECK);
+        Configuration config1 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE);
+        Configuration config2 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE);
+        Configuration config3 = new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK);
 
         assertEquals(config1, config2);
         assertNotEquals(config1, config3);
@@ -67,7 +67,7 @@ public class ConfigTest {
         assertEquals(config1.hashCode(), config2.hashCode());
         assertNotEquals(config1.hashCode(), config3.hashCode());
 
-        assertNotEquals(config1, Config.StandardConfig.STANDARD.config);
-        assertEquals(config3, Config.StandardConfig.NO_CHECKS.config);
+        assertNotEquals(config1, Configuration.StandardConfig.STANDARD.config());
+        assertEquals(config3, Configuration.StandardConfig.NO_CHECKS.config());
     }
 }
