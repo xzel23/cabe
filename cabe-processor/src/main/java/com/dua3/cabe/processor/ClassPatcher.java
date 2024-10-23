@@ -332,10 +332,13 @@ public class ClassPatcher {
         if (assertionsDisabledFlagName != null) {
             return "!" + assertionsDisabledFlagName;
         } else {
-            // flag is not present in unprocessed class file
+            // flag is not present in the unprocessed class file
             CtClass ctClass = classPool.getCtClass(ci.name());
-            String flagName = Util.getAssertionsDisabledFlagName(ci.cls());
-            if (flagName == null) { // if flagName != null, the flag has already been injected.
+            String flagName;
+            if (Arrays.stream(ctClass.getDeclaredFields()).anyMatch(f -> f.getName().equals("$assertionsDisabled"))) {
+                // the field has already been injected
+                flagName = ctClass.getName() + ".$assertionsDisabled";
+            } else {
                 // inject directly into the current class
                 LOG.fine(() -> "injecting field $assertionsDisabled in class: " + ci.name());
                 CtField field = new CtField(CtClass.booleanType, "$assertionsDisabled", ctClass);
