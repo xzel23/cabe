@@ -12,7 +12,7 @@ public class NoAnnotations {
 
     public void doTest() {
         check(() -> oneNonNullArgument("hello world!"), "hello world!", null);
-        check(() -> oneNonNullArgument(null), null, "assertion failed: arg is null");
+        check(() -> oneNonNullArgument(null), null, "assertion failed: (arg|arg#1) is null");
     }
 
     private String oneNonNullArgument(String arg) {
@@ -30,7 +30,7 @@ public class NoAnnotations {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
+        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
             String msg = String.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);

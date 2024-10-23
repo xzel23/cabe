@@ -112,7 +112,8 @@ public final class TestUtil {
                 "-d", classesDir.toString(),
                 "-p", libDir.toString(),
                 "-proc:full",
-                "-g"
+                "-g",
+                "-parameters"
         );
         JavaCompiler.CompilationTask task = compiler.getTask(
                 null,   // writer for additional output from the compiler; use System.err if null.

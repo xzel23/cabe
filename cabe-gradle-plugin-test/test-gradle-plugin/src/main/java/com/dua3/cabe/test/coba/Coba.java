@@ -1,7 +1,7 @@
 package com.dua3.cabe.test.coba;
 
-import com.dua3.cabe.test.coba.api.nonnull.NonNullPackage;
-import com.dua3.cabe.test.coba.api.nullable.NullablePackage;
+import com.dua3.cabe.test.coba.api.nullmarked.NullMarkedPackage;
+import com.dua3.cabe.test.coba.api.nullunmarked.NullUnmarkedPackage;
 
 public class Coba {
 

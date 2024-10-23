@@ -60,6 +60,9 @@ Usage
       ...
   }
   ```
+- in order to see the original parameter names as present in the source code, compile with the `-parameters` flag.
+  If parameters are not present, error messages will use `arg<n>` where `n` is the position in the argument list, 
+  starting with 1.
 
 Plugin configuration
 --------------------
@@ -158,6 +161,10 @@ and inject null-checks for method parameters.
 
 Changes
 -------
+
+## Version 3.0
+
+- Switch to [JSpecify](https://jspecify.dev) annotations.
 
 ## Version 2.1.1
 

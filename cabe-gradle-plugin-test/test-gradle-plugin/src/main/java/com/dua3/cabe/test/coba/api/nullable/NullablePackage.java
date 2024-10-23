@@ -15,22 +15,22 @@ public class NullablePackage {
 
         // NotNull
         check(() -> oneNotNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNotNullAnnotatedArgument(null), null, "assertion failed: arg is null");
+        check(() -> oneNotNullAnnotatedArgument(null), null, "assertion failed: (arg|arg#1) is null");
 
         check(() -> twoNotNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "assertion failed: arg1 is null");
-        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "assertion failed: arg2 is null");
-        check(() -> twoNotNullAnnotatedArguments(null, null), null, "assertion failed: arg1 is null");
+        check(() -> twoNotNullAnnotatedArguments(null, "world!"), null, "assertion failed: (arg1|arg#1) is null");
+        check(() -> twoNotNullAnnotatedArguments("hello", null), null, "assertion failed: (arg2|arg#2) is null");
+        check(() -> twoNotNullAnnotatedArguments(null, null), null, "assertion failed: (arg1|arg#1) is null");
 
         check(() -> firstArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNotNullAnnotated(null, "world!"), null, "assertion failed: (arg1|arg#1) is null");
         check(() -> firstArgumentNotNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNotNullAnnotated(null, null), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNotNullAnnotated(null, null), null, "assertion failed: (arg1|arg#1) is null");
 
         check(() -> secondArgumentNotNullAnnotated("hello", "world!"), "hello world!", null);
         check(() -> secondArgumentNotNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
-        check(() -> secondArgumentNotNullAnnotated(null, null), null, "assertion failed: arg2 is null");
+        check(() -> secondArgumentNotNullAnnotated("hello", null), null, "assertion failed: (arg2|arg#2) is null");
+        check(() -> secondArgumentNotNullAnnotated(null, null), null, "assertion failed: (arg2|arg#2) is null");
 
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
@@ -122,7 +122,7 @@ public class NullablePackage {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
+        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
             String msg = String.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);

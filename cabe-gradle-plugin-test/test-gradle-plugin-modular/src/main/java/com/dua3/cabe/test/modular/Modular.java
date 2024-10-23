@@ -8,17 +8,17 @@ public class Modular {
 
     public static void main(String[] args) {
         check(() -> oneNonNullAnnotatedArgument("hello world!"), null);
-        check(() -> oneNonNullAnnotatedArgument(null), "assertion failed: arg is null");
+        check(() -> oneNonNullAnnotatedArgument(null), "assertion failed: (arg|arg#1) is null");
 
         check(() -> nonNullAnnotatedSecondArgument("hello", "world"), null);
         check(() -> nonNullAnnotatedSecondArgument(null, "world"), null);
-        check(() -> nonNullAnnotatedSecondArgument("hello", null), "assertion failed: arg2 is null");
-        check(() -> nonNullAnnotatedSecondArgument(null, null), "assertion failed: arg2 is null");
+        check(() -> nonNullAnnotatedSecondArgument("hello", null), "assertion failed: (arg2|arg#2) is null");
+        check(() -> nonNullAnnotatedSecondArgument(null, null), "assertion failed: (arg2|arg#2) is null");
 
         check(() -> twoNonNullAnnotatedArgument("hello", "world"), null);
-        check(() -> twoNonNullAnnotatedArgument(null, "world"), "assertion failed: arg1 is null");
-        check(() -> twoNonNullAnnotatedArgument("hello", null), "assertion failed: arg2 is null");
-        check(() -> twoNonNullAnnotatedArgument(null, null), "assertion failed: arg1 is null");
+        check(() -> twoNonNullAnnotatedArgument(null, "world"), "assertion failed: (arg1|arg#1) is null");
+        check(() -> twoNonNullAnnotatedArgument("hello", null), "assertion failed: (arg2|arg#2) is null");
+        check(() -> twoNonNullAnnotatedArgument(null, null), "assertion failed: (arg1|arg#1) is null");
     }
 
     private static void oneNonNullAnnotatedArgument(@NotNull String arg) {
@@ -40,8 +40,7 @@ public class Modular {
         } catch (AssertionError ae) {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
-        if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
-            String msg = String.format("expected: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            String msg = String.format("expected: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);
         }

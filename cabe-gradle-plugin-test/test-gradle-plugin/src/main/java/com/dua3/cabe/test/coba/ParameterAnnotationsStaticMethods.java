@@ -15,22 +15,22 @@ public class ParameterAnnotationsStaticMethods {
 
         // NonNull
         check(() -> oneNonNullAnnotatedArgument("hello world!"), "hello world!", null);
-        check(() -> oneNonNullAnnotatedArgument(null), null, "assertion failed: arg is null");
+        check(() -> oneNonNullAnnotatedArgument(null), null, "assertion failed: (arg|arg#1) is null");
 
         check(() -> twoNonNullAnnotatedArguments("hello", "world!"), "hello world!", null);
-        check(() -> twoNonNullAnnotatedArguments(null, "world!"), null, "assertion failed: arg1 is null");
-        check(() -> twoNonNullAnnotatedArguments("hello", null), null, "assertion failed: arg2 is null");
-        check(() -> twoNonNullAnnotatedArguments(null, null), null, "assertion failed: arg1 is null");
+        check(() -> twoNonNullAnnotatedArguments(null, "world!"), null, "assertion failed: (arg1|arg#1) is null");
+        check(() -> twoNonNullAnnotatedArguments("hello", null), null, "assertion failed: (arg2|arg#2) is null");
+        check(() -> twoNonNullAnnotatedArguments(null, null), null, "assertion failed: (arg1|arg#1) is null");
 
         check(() -> firstArgumentNonNullAnnotated("hello", "world!"), "hello world!", null);
-        check(() -> firstArgumentNonNullAnnotated(null, "world!"), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNonNullAnnotated(null, "world!"), null, "assertion failed: (arg1|arg#1) is null");
         check(() -> firstArgumentNonNullAnnotated("hello", null), "hello null", null);
-        check(() -> firstArgumentNonNullAnnotated(null, null), null, "assertion failed: arg1 is null");
+        check(() -> firstArgumentNonNullAnnotated(null, null), null, "assertion failed: (arg1|arg#1) is null");
 
         check(() -> secondArgumentNonNullAnnotated("hello", "world!"), "hello world!", null);
         check(() -> secondArgumentNonNullAnnotated(null, "world!"), "null world!", null);
-        check(() -> secondArgumentNonNullAnnotated("hello", null), null, "assertion failed: arg2 is null");
-        check(() -> secondArgumentNonNullAnnotated(null, null), null, "assertion failed: arg2 is null");
+        check(() -> secondArgumentNonNullAnnotated("hello", null), null, "assertion failed: (arg2|arg#2) is null");
+        check(() -> secondArgumentNonNullAnnotated(null, null), null, "assertion failed: (arg2|arg#2) is null");
 
         // Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
@@ -125,14 +125,16 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        if (!Objects.equals(assertionMessage, expectedExceptionMesssage)) {
-            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
-            throw new IllegalStateException();
+        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+            String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
         }
 
         if (!Objects.equals(result, expectedResult)) {
-            System.err.format("expected result:    %s%nactual:   %s%n", expectedResult, result);
-            throw new IllegalStateException();
+            String msg = String.format("expected result: %s%nactual: %s%n", expectedResult, result);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
         }
     }
 
