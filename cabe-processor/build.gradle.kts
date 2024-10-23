@@ -212,3 +212,7 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
+
+
+// === SPOTBUGS ===
+spotbugs.excludeFilter.set(rootProject.file("spotbugs-exclude.xml"))
