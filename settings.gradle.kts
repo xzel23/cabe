@@ -1,16 +1,11 @@
 rootProject.name = "doc"
-val projectVersion = "3.0-SNAPSHOT"
 
 include("cabe-processor", "cabe-gradle-plugin")
 
 dependencyResolutionManagement {
 
-    val isSnapshot = projectVersion.endsWith("SNAPSHOT")
-
     versionCatalogs {
         create("libs") {
-            version("projectVersion", "3.0-SNAPSHOT")
-
             plugin("foojay-resolver", "org.gradle.toolchains.foojay-resolver-convention").version("1.9.22")
             plugin("versions", "com.github.ben-manes.versions").version("0.51.0")
             plugin("test-logger", "com.adarshr.test-logger").version("4.0.0")
