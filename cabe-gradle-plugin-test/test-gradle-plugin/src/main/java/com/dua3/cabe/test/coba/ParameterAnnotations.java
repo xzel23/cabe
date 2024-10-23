@@ -16,13 +16,13 @@ public class ParameterAnnotations {
     public void doTest() {
         // test with generic parameters
         check(() -> new C<>("hello world!").toString(), "hello world!", null);
-        check(() -> new C<>(null).toString(), null, "assertion failed: (t|arg#1) is null", );
+        check(() -> new C<>(null).toString(), null, "assertion failed: (t|arg#1) is null");
 
         // generic arguments is public, so 
         check(() -> genericArguments("hello", "world", obj -> " " + obj + "!"), "hello world!", null);
-        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "npe: prefix is null");
-        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "npe: suffix is null");
-        check(() -> genericArguments("hello", "world", null), null, "npe: func is null");
+        check(() -> genericArguments(null, "world", obj -> " " + obj + " "), null, "npe: (prefix|arg#1) is null");
+        check(() -> genericArguments("hello", null, obj -> " " + obj + " "), null, "npe: (suffix|arg#2) is null");
+        check(() -> genericArguments("hello", "world", null), null, "npe: (func|arg#3) is null");
 
         // check processing of annotated arguments
         check(() -> unannotatedArgument("hello world!"), "hello world!", null);

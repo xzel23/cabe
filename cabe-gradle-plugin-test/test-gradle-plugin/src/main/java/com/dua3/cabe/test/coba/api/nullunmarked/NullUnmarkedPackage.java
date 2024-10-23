@@ -1,12 +1,12 @@
-package com.dua3.cabe.test.coba.api.nullable;
+package com.dua3.cabe.test.coba.api.nullunmarked;
 
-import com.dua3.cabe.annotations.NotNull;
-import com.dua3.cabe.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class NullablePackage {
+public class NullUnmarkedPackage {
 
     public static void test() {
         // check processing of annotated arguments
@@ -63,26 +63,26 @@ public class NullablePackage {
         return arg;
     }
 
-    private static String oneNotNullAnnotatedArgument(@NotNull String arg) {
+    private static String oneNotNullAnnotatedArgument(@NonNull String arg) {
         System.out.println("oneNotNullAnnotatedArgument: " + arg);
         return arg;
     }
 
-    // @NotNull
+    // @NonNull
 
-    private static String twoNotNullAnnotatedArguments(@NotNull String arg1, @NotNull String arg2) {
+    private static String twoNotNullAnnotatedArguments(@NonNull String arg1, @NonNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("twoNotNullAnnotatedArguments: " + s);
         return s;
     }
 
-    private static String firstArgumentNotNullAnnotated(@NotNull String arg1, String arg2) {
+    private static String firstArgumentNotNullAnnotated(@NonNull String arg1, String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("firstArgumentNotNullAnnotated: " + s);
         return s;
     }
 
-    private static String secondArgumentNotNullAnnotated(String arg1, @NotNull String arg2) {
+    private static String secondArgumentNotNullAnnotated(String arg1, @NonNull String arg2) {
         String s = String.format("%s %s", arg1, arg2);
         System.out.println("secondArgumentNotNullAnnotated: " + s);
         return s;
@@ -156,7 +156,7 @@ public class NullablePackage {
     static class B extends A {
         private String b;
 
-        B(@NotNull String a, @NotNull String b) {
+        B(@NonNull String a, @NonNull String b) {
             super(a);
             this.b = b;
         }

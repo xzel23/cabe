@@ -8,8 +8,8 @@ public class Coba {
     public static void main(String[] args) {
         ParameterAnnotationsStaticMethods.test();
         ParameterAnnotations.test();
-        NonNullPackage.test();
-        NullablePackage.test();
+        NullMarkedPackage.test();
+        NullUnmarkedPackage.test();
     }
 
 }

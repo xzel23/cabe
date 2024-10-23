@@ -1,4 +1,4 @@
-package com.dua3.cabe.test.coba.api.nonnull;
+package com.dua3.cabe.test.coba.api.nullmarked;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class NonNullPackage {
+public class NullMarkedPackage {
 
     public static void test() {
         // check processing of unannotated arguments

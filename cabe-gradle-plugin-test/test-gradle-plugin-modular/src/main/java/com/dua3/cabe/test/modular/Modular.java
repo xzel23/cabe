@@ -21,15 +21,15 @@ public class Modular {
         check(() -> twoNonNullAnnotatedArgument(null, null), "assertion failed: (arg1|arg#1) is null");
     }
 
-    private static void oneNonNullAnnotatedArgument(@NotNull String arg) {
+    private static void oneNonNullAnnotatedArgument(@NonNull String arg) {
         System.out.println(arg);
     }
 
-    private static void nonNullAnnotatedSecondArgument(String arg1, @NotNull String arg2) {
+    private static void nonNullAnnotatedSecondArgument(String arg1, @NonNull String arg2) {
         System.out.format("%s %s%n", arg1, arg2);
     }
 
-    private static void twoNonNullAnnotatedArgument(@NotNull String arg1, @NotNull String arg2) {
+    private static void twoNonNullAnnotatedArgument(@NonNull String arg1, @NonNull String arg2) {
         System.out.format("%s %s%n", arg1, arg2);
     }
 

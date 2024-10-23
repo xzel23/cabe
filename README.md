@@ -9,9 +9,9 @@ ___Lombok adalah nama lain dari cabai___ -- _Lombok is another name for cabai_.
 This started out when I annotated one of my library projects
 with [JetBrains annotations](https://github.com/JetBrains/java-annotations) and found out that while very helpful, this
 doesn't help me at all in projects that use the library. I know that project Lombok provides similar annotations
-to `@NotNull` that also add runtime checks, but I did not want to add runtime dependencies to my project.
+to `@NonNull` that also add runtime checks, but I did not want to add runtime dependencies to my project.
 
-When using `@NotNull` in IntelliJ IDEA, a runtime assertion is injected into the resulting bytecode, and I think that's
+When using `@NonNull` in IntelliJ IDEA, a runtime assertion is injected into the resulting bytecode, and I think that's
 a cool thing to have:
 
 - you can run your code with assertions enabled
@@ -47,7 +47,7 @@ Usage
 
 - Use annotations in your code:
   ```
-  public void foo(@NotNull Bar bar) {
+  public void foo(@NonNull Bar bar) {
       ...
   }
   ```
@@ -223,6 +223,6 @@ Next on my list are these features (in no specific order) that might or might no
 
 - Add support for annotations on return values.
 - Support different annotations like JetBrains or JSpecify. The reason I currently use my own annotations library is
-  that I wanted a package wide annotation, @NotNullAPI. While, for example, JSpecify has something comparable, it also
+  that I wanted a package wide annotation, @NonNullAPI. While, for example, JSpecify has something comparable, it also
   has annotations on modules and return values, and that is not yet supported.
 - Add support for annotation modules (`module-info.java`).

@@ -5,7 +5,6 @@ buildscript {
     }
     dependencies {
         classpath("com.dua3.cabe", "com.dua3.cabe.gradle.plugin", rootProject.extra["plugin_version"] as String)
-        // FIXME classpath("com.dua3.cabe", "cabe-annotations", rootProject.extra["annotations_version"] as String)
     }
 }
 
@@ -14,6 +13,10 @@ plugins {
 }
 
 apply(plugin = "com.dua3.cabe")
+
+dependencies {
+    implementation("org.jspecify:jspecify:1.0.0")
+}
 
 repositories {
     mavenLocal()
