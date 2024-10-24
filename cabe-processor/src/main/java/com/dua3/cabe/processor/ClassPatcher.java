@@ -13,7 +13,6 @@ import javassist.bytecode.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -215,24 +214,23 @@ public class ClassPatcher {
                 return;
             }
 
-            List<URL> classpathEntries = new ArrayList<>();
-            classpath.forEach(cp -> {
+            List<Path> currentClasspath = new ArrayList<>(classpath);
+            List<URL> classpathUrls = new ArrayList<>();
+            currentClasspath.add(inputFolder);
+
+            currentClasspath.forEach(cp -> {
                 try {
-                    classpathEntries.add(cp.toUri().toURL());
                     classPool.appendClassPath(cp.toString());
-                } catch (NotFoundException | MalformedURLException e) {
-                    LOG.warning("could not add to classpath: " + cp);
+                    classpathUrls.add(cp.toUri().toURL());
+                } catch (NotFoundException e) {
+                    LOG.warning("could not add to class pool: " + cp);
+                } catch (MalformedURLException e) {
+                    LOG.warning("could not convert to URL: " + cp);
                 }
             });
 
-            try {
-                classpathEntries.add(inputFolder.toUri().toURL());
-                classPool.appendClassPath(inputFolder.toString());
-            } catch (NotFoundException e) {
-                throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + inputFolder, e);
-            }
-
-            this.classLoader = new URLClassLoader(classpathEntries.toArray(URL[]::new));
+            ModuleClassLoader moduleClassLoader = new ModuleClassLoader(ClassLoader.getSystemClassLoader(), currentClasspath.toArray(Path[]::new));
+            this.classLoader = new URLClassLoader(classpathUrls.toArray(URL[]::new), moduleClassLoader);
 
             List<Path> classFiles;
             try (Stream<Path> paths = Files.walk(inputFolder)) {
@@ -294,7 +292,7 @@ public class ClassPatcher {
         }
 
         try {
-            ClassInfo classInfo = ClassInfo.forClass(classLoader, className);
+            ClassInfo classInfo = ClassInfo.forClass(classLoader.loadClass(className));
             CtClass ctClass = classPool.getCtClass(className);
             try {
                 for (var methodInfo : classInfo.methods()) {

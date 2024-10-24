@@ -1,17 +1,13 @@
 package com.dua3.cabe.processor;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.module.*;
 import java.lang.module.Configuration;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A custom {@link ClassLoader} that loads classes from specified module paths.
@@ -20,7 +16,9 @@ import java.util.stream.Stream;
  * associated modules to facilitate class loading.
  */
 public class ModuleClassLoader extends ClassLoader {
-    private final Map<String, Module> classModuleRegistry;
+    private final Map<String, String> packageToModuleName;
+    private final Map<String, Path> moduleToPath;
+    private final ModuleLayer moduleLayer;
 
     /**
      * Constructs a new ModuleClassLoader instance. This class loader is capable of
@@ -30,58 +28,56 @@ public class ModuleClassLoader extends ClassLoader {
      *
      * @param parent the parent class loader for delegation
      * @param paths the paths to the modules to be loaded
-     * @throws IOException if an I/O error occurs when accessing the module paths
      */
-    public ModuleClassLoader(ClassLoader parent, Path... paths) throws IOException {
+    public ModuleClassLoader(ClassLoader parent, Path... paths) {
         super(parent);
-        this.classModuleRegistry = new HashMap<>();
 
         ModuleFinder finder = ModuleFinder.of(paths);
         Set<ModuleReference> moduleReferences = finder.findAll();
+        packageToModuleName = new HashMap<>();
+        moduleToPath = new HashMap<>();
+        moduleReferences.forEach(mr -> {
+            final String moduleName = mr.descriptor().name();
+            Path path = mr.location().map(Paths::get).orElse(null);
+            Path oldPath = moduleToPath.put(moduleName, path);
 
-        Set<String> moduleNames = moduleReferences.stream()
-                .map(ModuleReference::descriptor)
-                .map(ModuleDescriptor::name)
-                .collect(Collectors.toSet());
+            if (oldPath != null) {
+                throw new IllegalStateException("module " + moduleName + " is defined in paths " + oldPath + " and " + path);
+            }
+
+            mr.descriptor().packages().forEach(packageName -> {
+                String oldModule = packageToModuleName.put(packageName, moduleName);
+                if (oldModule != null) {
+                    throw new IllegalStateException("package " + packageName + " is defined in modules " + oldModule + " and " + moduleName);
+                }
+            });
+        });
 
         ModuleLayer parentLayer = ModuleLayer.boot();
 
         Configuration configuration = parentLayer.configuration()
-                .resolveAndBind(finder, ModuleFinder.of(), moduleNames);
+                .resolveAndBind(finder, ModuleFinder.of(), moduleToPath.keySet());
 
         ModuleLayer.Controller controller = ModuleLayer.defineModulesWithOneLoader(configuration, List.of(parentLayer), parent);
-
-        populateClassModuleRegistry(controller.layer());
-    }
-
-    private void populateClassModuleRegistry(ModuleLayer moduleLayer) throws IOException {
-        try {
-            moduleLayer.modules().forEach(module -> {
-                module.getPackages().forEach(pkg -> {
-                    String packageName = pkg.replace('.', '/');
-                    Path packagePath = Path.of(packageName);
-                    try (Stream<Path> paths = Files.walk(packagePath)) {
-                        paths.filter(Files::isRegularFile)
-                                .map(Path::toString)
-                                .filter(name -> name.endsWith(".class"))
-                                .map(name -> name.replaceFirst("\\.class$", "").replace('/', '.'))
-                                .forEach(className -> classModuleRegistry.put(className, module));
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
-            });
-        } catch (UncheckedIOException e) {
-            throw e.getCause();
-        }
+        moduleLayer = controller.layer();
     }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        Module module = classModuleRegistry.get(name);
-        if (module == null) {
-            throw new ClassNotFoundException("Class " + name + " not found in any module");
+        int lastDot = name.lastIndexOf('.');
+        if (lastDot == -1) {
+            throw new ClassNotFoundException("class " + name + " not found (no package specified)");
         }
+
+        String pkg = name.substring(0, lastDot);
+        String moduleName = packageToModuleName.get(pkg);
+
+        if (moduleName == null) {
+            throw new ClassNotFoundException("class " + name + " not found");
+        }
+        Module module =
+                moduleLayer.findModule(moduleName)
+                .orElseThrow(() -> new ClassNotFoundException("class " + name + " not found (module " + moduleName + ")"));
         return module.getClassLoader().loadClass(name);
     }
 }

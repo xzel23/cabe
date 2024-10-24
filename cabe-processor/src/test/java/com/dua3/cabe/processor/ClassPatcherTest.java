@@ -2,7 +2,6 @@ package com.dua3.cabe.processor;
 
 import javassist.CtBehavior;
 import javassist.CtClass;
-import javassist.CtMethod;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -37,6 +36,7 @@ class ClassPatcherTest {
 
     static Path testDir = TestUtil.buildDir.resolve(ClassPatcherTest.class.getSimpleName());
     static Path testSrcDir = testDir.resolve("src");
+    static Path testLibDir = TestUtil.resourceDir.resolve("testLib");
     static Path testClassesUnprocessedDir = testDir.resolve("classes-unprocessed");
     static Path testClassesProcessedParameterInfoDir = testDir.resolve("classes-processed-parameterinfo");
     static Path testClassesProcessedInstrumentedDir = testDir.resolve("classes-processed-instrumented");
@@ -67,7 +67,7 @@ class ClassPatcherTest {
 
         // compile source files to classes-unprocessed folder
         LOG.info("compiling test sources ...");
-        TestUtil.compileSources(testSrcDir, testClassesUnprocessedDir, TestUtil.resourceDir.resolve("testLib"));
+        TestUtil.compileSources(testSrcDir, testClassesUnprocessedDir, testLibDir);
 
         // Load classes into class pool
         LOG.info("loading class files ...");
@@ -89,7 +89,7 @@ class ClassPatcherTest {
         // Failure is signaled by a thrown exception
         assertDoesNotThrow(() -> {
             String className = TestUtil.getClassName(classFile);
-            ClassInfo ci = ClassInfo.forClass(TestUtil.loader, className);
+            ClassInfo ci = ClassInfo.forClass(TestUtil.loader.loadClass(className));
             CtClass ctClass = TestUtil.pool.getCtClass(ci.name());
             for (var mi : ci.methods()) {
                 if (mi.isAbstract()) {
@@ -167,7 +167,7 @@ class ClassPatcherTest {
         LOG.info("testing processFolder()");
         // processFolder will report errors by throwing an exception
         assertDoesNotThrow(() -> {
-            Collection<Path> classPath = List.of();
+            Collection<Path> classPath = List.of(testLibDir);
             ClassPatcher patcher = new ClassPatcher(classPath, Configuration.StandardConfig.DEVELOPMENT.config());
             patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
         });

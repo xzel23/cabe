@@ -178,7 +178,7 @@ public final class TestUtil {
      * @throws ClassFileProcessingFailedException     if the processing of a class file fails
      */
     public static void processClasses(Path unprocessedDir, Path processedDir, Configuration config) throws IOException, ClassFileProcessingFailedException {
-        Collection<Path> classPath = List.of();
+        Collection<Path> classPath = List.of(resourceDir.resolve("testLib"));
         ClassPatcher patcher = new ClassPatcher(classPath, config);
         patcher.processFolder(unprocessedDir, processedDir);
     }

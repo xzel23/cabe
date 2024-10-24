@@ -33,7 +33,7 @@ public record Configuration(Check publicApi, Check privateApi) implements Serial
             case "standard" -> {return StandardConfig.STANDARD.config;}
             case "development" -> {return StandardConfig.DEVELOPMENT.config;}
             case "no-checks" -> {return StandardConfig.NO_CHECKS.config;}
-        };
+        }
 
         LOG.fine(() -> "parsing custom configuration: " + configStr);
         Pattern pattern = Pattern.compile("(?<singleParam>\\w+)|(publicApi=(?<publicParam>\\w+):privateApi=(?<privateParam>\\w+))");

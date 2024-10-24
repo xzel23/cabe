@@ -113,7 +113,7 @@ public abstract class CabeTask extends DefaultTask {
             boolean verbose = logger.isDebugEnabled();
 
             if (verbose) {
-                logger.debug("Instrumenting class files: " + String.join(" ", args));
+                logger.debug("Instrumenting class files: {}", String.join(" ", args));
             }
 
             logger.info(String.join(" ", args));

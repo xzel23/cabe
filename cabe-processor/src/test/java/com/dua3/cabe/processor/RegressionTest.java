@@ -17,8 +17,8 @@ public class RegressionTest {
 
     private static Stream<Arguments> fetchTests() throws IOException {
         return Files.list(TestUtil.resourceDir.resolve("regression"))
-                .filter(Files::isDirectory)
-                .map(dir -> Arguments.of(dir.getFileName().toString(), dir));
+                    .filter(Files::isDirectory)
+                    .map(dir -> Arguments.of(dir.getFileName().toString(), dir));
     }
 
     @ParameterizedTest(name = "regression: {0}")
@@ -47,7 +47,12 @@ public class RegressionTest {
 
         // run test
         LOG.info("running test ...");
-        String result = TestUtil.runClass(processedDir, testName, true);
+        Path mainPath = Files.walk(processedDir)
+                .filter(Files::isRegularFile)
+                .filter(p -> p.getFileName().toString().equals(testName + ".class"))
+                .findFirst().orElseThrow(() -> new IllegalStateException("test class " + testName + " not found"));
+        String mainClass = processedDir.relativize(mainPath).toString().replace(".class", "").replace('/', '.');
+        String result = TestUtil.runClass(processedDir, mainClass, true);
 
         assertEquals("OK", result.strip());
     }
