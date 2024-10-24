@@ -63,7 +63,7 @@ class ClassPatcherTest {
 
         // copy test source files
         LOG.info("copying test sources ...");
-        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testsrc"), testSrcDir);
+        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testSrc"), testSrcDir);
 
         // compile source files to classes-unprocessed folder
         LOG.info("compiling test sources ...");
@@ -89,7 +89,7 @@ class ClassPatcherTest {
         // Failure is signaled by a thrown exception
         assertDoesNotThrow(() -> {
             String className = TestUtil.getClassName(classFile);
-            ClassInfo ci = ClassInfo.forClass(TestUtil.loader, className);
+            ClassInfo ci = ClassInfo.forClass(TestUtil.loader.loadClass(className));
             CtClass ctClass = TestUtil.pool.getCtClass(ci.name());
             for (var mi : ci.methods()) {
                 if (mi.isAbstract()) {
@@ -167,7 +167,7 @@ class ClassPatcherTest {
         LOG.info("testing processFolder()");
         // processFolder will report errors by throwing an exception
         assertDoesNotThrow(() -> {
-            Collection<Path> classPath = List.of();
+            Collection<Path> classPath = List.of(TestUtil.resourceDir.resolve("testLib"));
             ClassPatcher patcher = new ClassPatcher(classPath, Configuration.StandardConfig.DEVELOPMENT.config());
             patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
         });
