@@ -98,10 +98,11 @@ public final class Util {
     /**
      * Checks if the given class or any of its superclasses have a public API ancestor.
      *
+     * @param classLoader     the ClassLoader instance to use
      * @param cls the TypeDescription to check
      * @return true if the given class or any of its superclasses have a public API ancestor, false otherwise
      */
-    public static boolean hasPublicApiAncestor(Class<?> cls) {
+    public static boolean hasPublicApiAncestor(ClassLoader classLoader, Class<?> cls) {
         for (Class<?> superClass = cls.getSuperclass(); superClass != null; superClass = superClass.getSuperclass()) {
             if (superClass.getName().equals(Object.class.getName())) {
                 break;

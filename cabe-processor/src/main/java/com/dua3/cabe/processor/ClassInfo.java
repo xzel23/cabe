@@ -28,12 +28,14 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
     /**
      * Generates a {@link ClassInfo} object for the specified class.
      *
-     * @param cls the {@link Class}
+     * @param classLoader the {@link ClassLoader} instance to use
+     * @param className   the fully qualified name of the class
      * @return a {@link ClassInfo} object representing the specified class
      * @throws ClassNotFoundException if the class with the specified name cannot be found
      */
-    public static ClassInfo forClass(Class<?> cls) throws ClassNotFoundException {
-        String className = cls.getName();
+    public static ClassInfo forClass(ClassLoader classLoader, String className) throws ClassNotFoundException {
+        Class<?> cls = classLoader.loadClass(className);
+
         int modifiers = cls.getModifiers();
         boolean isInnerClass = PATTERN_INNER_CLASS_NAME.matcher(className).matches();
         boolean isStaticClass = Modifier.isStatic(modifiers);
@@ -43,7 +45,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isRecord = cls.isRecord();
         boolean isDerived = cls.getSuperclass() != null && !cls.getSuperclass().getName().equals(Object.class.getName()) && !isEnum && !isRecord;
         NullnessOperator nullnessOperator = Util.getClassNullnessOperator(cls);
-        boolean isPublicApi = Modifier.isPublic(modifiers) || Util.hasPublicApiAncestor(cls);
+        boolean isPublicApi = Modifier.isPublic(modifiers) || Util.hasPublicApiAncestor(classLoader, cls);
         String assertionsDisabledFlagName = Util.getAssertionsDisabledFlagName(cls);
 
         List<MethodInfo> methods = new ArrayList<>();

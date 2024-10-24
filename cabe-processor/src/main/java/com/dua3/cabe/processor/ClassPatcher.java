@@ -13,9 +13,7 @@ import javassist.bytecode.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -30,8 +28,6 @@ import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -181,9 +177,7 @@ public class ClassPatcher {
 
     private final List<Path> classpath;
     private final Configuration configuration;
-    private ModuleFinder moduleFinder;
-    private ModuleLayer moduleLayer;
-    private Collection<String> moduleNames;
+    private ClassLoader classLoader;
     private ClassPool classPool;
     private Path inputFolder;
     private Path outputFolder;
@@ -221,32 +215,24 @@ public class ClassPatcher {
                 return;
             }
 
-            List<Path> currentClasspath = new ArrayList<>(classpath);
-            currentClasspath.add(inputFolder);
+            List<URL> classpathEntries = new ArrayList<>();
+            classpath.forEach(cp -> {
+                try {
+                    classpathEntries.add(cp.toUri().toURL());
+                    classPool.appendClassPath(cp.toString());
+                } catch (NotFoundException | MalformedURLException e) {
+                    LOG.warning("could not add to classpath: " + cp);
+                }
+            });
 
-            // create the ModuleFinder and ModuleLayer
-            moduleFinder = ModuleFinder.of(currentClasspath.toArray(Path[]::new));
-            moduleNames = moduleFinder.findAll().stream()
-                    .map(ModuleReference::descriptor)
-                    .map(ModuleDescriptor::name)
-                    .collect(Collectors.toSet());
+            try {
+                classpathEntries.add(inputFolder.toUri().toURL());
+                classPool.appendClassPath(inputFolder.toString());
+            } catch (NotFoundException e) {
+                throw new ClassFileProcessingFailedException("could not append classes folder to classpath: " + inputFolder, e);
+            }
 
-            ModuleLayer parentLayer = ModuleLayer.boot();
-            java.lang.module.Configuration configuration = parentLayer.configuration()
-                    .resolveAndBind(moduleFinder, ModuleFinder.of(), moduleNames);
-
-            ClassLoader parentClassLoader = ClassLoader.getSystemClassLoader();
-            ModuleLayer.Controller controller = ModuleLayer.defineModulesWithOneLoader(configuration, List.of(parentLayer), parentClassLoader);
-            moduleLayer = controller.layer();
-
-            // set up the JavAssist ClassPool
-            currentClasspath.forEach(path -> {
-                        try {
-                            classPool.appendClassPath(path.toString());
-                        } catch (NotFoundException e) {
-                            throw new IllegalStateException(e);
-                        }
-                    });
+            this.classLoader = new URLClassLoader(classpathEntries.toArray(URL[]::new));
 
             List<Path> classFiles;
             try (Stream<Path> paths = Files.walk(inputFolder)) {
@@ -308,7 +294,7 @@ public class ClassPatcher {
         }
 
         try {
-            ClassInfo classInfo = ClassInfo.forClass(loadClass(className));
+            ClassInfo classInfo = ClassInfo.forClass(classLoader, className);
             CtClass ctClass = classPool.getCtClass(className);
             try {
                 for (var methodInfo : classInfo.methods()) {
@@ -333,23 +319,6 @@ public class ClassPatcher {
         } catch (Exception e) {
             throw new ClassFileProcessingFailedException("instrumenting failed for class file " + classFile, e);
         }
-    }
-
-    private Class<?> loadClass(String className) throws ClassNotFoundException {
-        // Iterate over all class loaders in the module layer
-        return moduleLayer.modules().stream()
-                .map(module -> {
-                    try {
-                        Class<?> cls = module.getClassLoader().loadClass(className);
-                        LOG.info(() -> "loaded class '%s' from module '%s'".formatted(className, module.getName()));
-                        return cls;
-                    } catch (ClassNotFoundException e) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElseThrow(() -> new ClassNotFoundException("Class " + className + " not found in any module"));
     }
 
     /**
