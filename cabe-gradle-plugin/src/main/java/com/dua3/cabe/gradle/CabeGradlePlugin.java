@@ -17,6 +17,10 @@ import java.util.Objects;
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
 
+    public CabeGradlePlugin() {
+        // nothing to do
+    }
+
     @Override
     public void apply(Project project) {
         Logger log = project.getLogger();

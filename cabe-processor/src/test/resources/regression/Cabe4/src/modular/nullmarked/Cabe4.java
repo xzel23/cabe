@@ -7,7 +7,10 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class Cabe3 {
+/*
+ * Testing Cabe#4: @NullMarked annotation on module has no effect
+ */
+public class Cabe4 {
 
     public static void main(String[] args) {
         // check processing of unannotated arguments

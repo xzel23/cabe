@@ -368,15 +368,14 @@ public class ClassPatcher {
      *
      * @param ci the ClassInfo object representing the class
      * @param mi the MethodInfo object representing the method
-     * @return true if the method was changed and instrumented, false otherwise
      * @throws ClassFileProcessingFailedException if processing of the class file fails
      */
-    private boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
+    private void instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
         if (mi.isSynthetic() || mi.isAbstract()) {
             LOG.fine(() -> "skipping synthetic method " + methodName);
-            return false;
+            return ;
         }
 
         // special case: for record equals ignore NonNull annotations except directly on the method parameter
@@ -448,9 +447,6 @@ public class ClassPatcher {
                 CtClass ctClass = classPool.getCtClass(ci.name());
                 CtBehavior ctBehavior = getCtMethod(ctClass, mi);
                 ctBehavior.insertBefore(code);
-                return true;
-            } else {
-                return false;
             }
         } catch (CannotCompileException e) {
             throw new ClassFileProcessingFailedException("compilation failed for instrumented method '" + methodName + "'", e);
@@ -472,7 +468,7 @@ public class ClassPatcher {
             }
         } else {
             for (CtMethod ctMethod : ctClass.getDeclaredMethods(mi.name())) {
-                List<String> ctParams = Arrays.stream(ctMethod.getParameterTypes()).map(CtClass::getName).toList();
+                List<String> ctParams = Arrays.stream(ctMethod.getParameterTypes()).map(c -> c.getName().replace('$', '.')).toList();
                 if (ctParams.equals(params)) {
                     return ctMethod;
                 }

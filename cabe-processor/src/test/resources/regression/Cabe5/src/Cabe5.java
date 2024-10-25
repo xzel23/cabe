@@ -1,7 +1,5 @@
 /*
- * Testing Cabe#1: Adding assertions to records results in invalid class files
- *
- * Test succeeds if no exception is thrown when class is loaded and method called successfully.
+ * Testing Cabe#5: instrumentation fails on abstract methods
  */
 public class Cabe5 {
     public static void main(String[] args) {

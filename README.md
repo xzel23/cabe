@@ -162,7 +162,7 @@ and inject null-checks for method parameters.
 Changes
 -------
 
-## Version 3.0
+## Version 3.0 (in progress)
 
 - Switch to [JSpecify](https://jspecify.dev) annotations.
 
