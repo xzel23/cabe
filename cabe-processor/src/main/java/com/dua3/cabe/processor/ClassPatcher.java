@@ -374,7 +374,7 @@ public class ClassPatcher {
     private boolean instrumentMethod(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
         String methodName = mi.name();
 
-        if (mi.isSynthetic()) {
+        if (mi.isSynthetic() || mi.isAbstract()) {
             LOG.fine(() -> "skipping synthetic method " + methodName);
             return false;
         }
