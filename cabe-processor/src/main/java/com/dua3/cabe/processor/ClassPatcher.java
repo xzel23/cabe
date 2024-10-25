@@ -457,25 +457,51 @@ public class ClassPatcher {
         }
     }
 
+    /**
+     * Retrieves a CtBehavior object representing a method or constructor from the given CtClass that matches the provided MethodInfo.
+     *
+     * @param ctClass the CtClass object representing the class containing the method or constructor
+     * @param mi the MethodInfo object containing information about the method or constructor to retrieve
+     * @return the CtBehavior object representing the method or constructor
+     * @throws NotFoundException if the method or constructor is not found
+     */
     static CtBehavior getCtMethod(CtClass ctClass, MethodInfo mi) throws NotFoundException {
+        CtBehavior[] ctBehaviors = mi.isConstructor()
+                ? ctClass.getDeclaredConstructors()
+                : ctClass.getDeclaredMethods(mi.name());
+        return getCtBehavior(mi, ctBehaviors);
+    }
+
+    /**
+     * Retrieves a {@link CtBehavior} object that matches the parameter types of the given {@link MethodInfo} object.
+     *
+     * @param mi               the {@link MethodInfo} object representing the method to match
+     * @param declaredBehaviors  an array of {@link CtBehavior} objects representing the declared methods/constructors
+     * @return the {@link CtBehavior} object that matches the parameter types of the given {@link MethodInfo} object
+     * @throws NotFoundException if the method is not found
+     */
+    static CtBehavior getCtBehavior(MethodInfo mi, CtBehavior[] declaredBehaviors) throws NotFoundException {
         List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(Class::getCanonicalName).toList();
-        if (mi.isConstructor()) {
-            for (CtConstructor ctConstructor: ctClass.getDeclaredConstructors()) {
-                List<String> ctParams = Arrays.stream(ctConstructor.getParameterTypes()).map(CtClass::getName).toList();
-                if (ctParams.equals(params)) {
-                    return ctConstructor;
-                }
-            }
-        } else {
-            for (CtMethod ctMethod : ctClass.getDeclaredMethods(mi.name())) {
-                List<String> ctParams = Arrays.stream(ctMethod.getParameterTypes()).map(c -> c.getName().replace('$', '.')).toList();
-                if (ctParams.equals(params)) {
-                    return ctMethod;
-                }
+        for (CtBehavior ctBehavior : declaredBehaviors) {
+            List<String> ctParams = Arrays.stream(ctBehavior.getParameterTypes()).map(ClassPatcher::getCanonicalClassName).toList();
+            if (ctParams.equals(params)) {
+                return ctBehavior;
             }
         }
-
         throw new IllegalStateException("method not found: " + mi);
+    }
+
+    /**
+     * Retrieves the canonical class name from a given CtClass instance.
+     *
+     * <p>The method replaces the '$' character in the class name returned for inner classes by Javassist with '.'
+     * to be compatible with {@link Class#getCanonicalName()}.
+     *
+     * @param ctClass the CtClass instance from which to retrieve the canonical class name
+     * @return the canonical class name as a String
+     */
+    private static String getCanonicalClassName(CtClass ctClass) {
+        return ctClass.getName().replace('$', '.');
     }
 
     /**

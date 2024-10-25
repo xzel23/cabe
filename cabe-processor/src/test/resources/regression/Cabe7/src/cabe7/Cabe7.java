@@ -1,7 +1,7 @@
 package cabe7;
 
 /*
- * Testing Cabe#7: Instrumentation error / method not found
+ * Testing Cabe#7: Instrumentation error / constructor not found
  */
 public class Cabe7 {
     public static void main(String[] args) {
