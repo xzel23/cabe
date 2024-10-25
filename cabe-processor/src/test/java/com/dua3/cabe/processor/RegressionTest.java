@@ -18,6 +18,7 @@ public class RegressionTest {
     private static Stream<Arguments> fetchTests() throws IOException {
         return Files.list(TestUtil.resourceDir.resolve("regression"))
                     .filter(Files::isDirectory)
+                    .sorted()
                     .map(dir -> Arguments.of(dir.getFileName().toString(), dir));
     }
 
