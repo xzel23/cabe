@@ -378,10 +378,10 @@ public class ClassPatcher {
             return ;
         }
 
-        // special case: for record equals ignore NonNull annotations except directly on the method parameter
+        // special case: for record equals, ignore @NonNull annotations except directly on the method parameter
         // see https://github.com/xzel23/cabe/issues/2
         boolean ignoreNonMethodNonNullAnnotation = ci.isRecord()
-                && mi.methodName().equals("equals") && mi.parameters().size() == 2;
+                && mi.methodName().equals("equals") && mi.parameters().size() == 1;
 
         LOG.fine(() -> "instrumenting method " + methodName);
         boolean hasStandardAssertions = false;

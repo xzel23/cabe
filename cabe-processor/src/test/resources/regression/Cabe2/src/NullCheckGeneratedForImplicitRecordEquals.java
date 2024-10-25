@@ -1,4 +1,5 @@
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
-public record NullCheckGeneratedForImplicitRecordEquals(@NonNull Object arg) {
+@NullMarked
+public record NullCheckGeneratedForImplicitRecordEquals(Object arg) {
 }

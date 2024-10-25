@@ -20,11 +20,33 @@ public class Cabe2 {
                 System.err.println("FAIL - A.equals(null) should return false");
                 System.exit(1);
             }
-            System.out.println("OK");
         } catch (Throwable t) {
             t.printStackTrace();
             System.err.println("FAIL");
             System.exit(1);
         }
+
+        try {
+            NullCheckGeneratedForImplicitNullMarkedRecordEquals A = new NullCheckGeneratedForImplicitNullMarkedRecordEquals("A");
+            NullCheckGeneratedForImplicitNullMarkedRecordEquals B = new NullCheckGeneratedForImplicitNullMarkedRecordEquals("B");
+            if (!A.equals(A)) {
+                System.err.println("FAIL - A.equals(A) should return true");
+                System.exit(1);
+            }
+            if (A.equals(B)) {
+                System.err.println("FAIL - A.equals(B) should return false");
+                System.exit(1);
+            }
+            if (A.equals(null)) {
+                System.err.println("FAIL - A.equals(null) should return false");
+                System.exit(1);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            System.err.println("FAIL");
+            System.exit(1);
+        }
+
+        System.out.println("OK");
     }
 }
