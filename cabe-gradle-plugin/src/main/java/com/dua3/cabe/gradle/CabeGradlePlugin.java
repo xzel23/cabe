@@ -41,13 +41,17 @@ public class CabeGradlePlugin implements Plugin<Project> {
             project.getTasks().create("cabe", CabeTask.class, t -> {
                 log.debug("initialising cabe task");
 
+                org.gradle.api.artifacts.Configuration compileClasspath = p.getConfigurations().getByName("compileClasspath");
+                org.gradle.api.artifacts.Configuration runtimeClasspath = p.getConfigurations().getByName("runtimeClasspath");
+
                 // set the configuration
                 t.getConfig().set(extension.getConfig().getOrElse(Configuration.StandardConfig.STANDARD.config()));
 
                 // set directories
                 t.getInputDirectory().set(extension.getInputDirectory());
                 t.getOutputDirectory().set(extension.getOutputDirectory());
-                t.getClassPath().set(extension.getClassPath());
+                t.getClassPath().set(compileClasspath);
+                t.getRuntimeClassPath().set(runtimeClasspath);
 
                 // run after the compileJava task
                 JavaCompile compileJavaTask = Objects.requireNonNull(
@@ -59,7 +63,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 // change the compileJava class output directory to the cabe class input directory
                 compileJavaTask.getDestinationDirectory().set(project.file(t.getInputDirectory().get()));
 
-                // make the classes taks depend on the cabe task
+                // make the classes task depend on the cabe task
                 Task classesTask = Objects.requireNonNull(
                         project.getTasks().getByName("classes"),
                         "task 'classes' not found"

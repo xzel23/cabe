@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This tasks injects assertions for parameters marked as not allowing null values into the source code.
@@ -34,6 +35,7 @@ public abstract class CabeTask extends DefaultTask {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
+    private final Provider<FileCollection> runtimeClassPath;
     private final Property<Configuration> config;
 
     /**
@@ -47,6 +49,7 @@ public abstract class CabeTask extends DefaultTask {
         inputDirectory = objectFactory.directoryProperty();
         outputDirectory = objectFactory.directoryProperty();
         classPath = objectFactory.property(FileCollection.class);
+        runtimeClassPath = objectFactory.property(FileCollection.class);
         config = objectFactory.property(Configuration.class);
     }
 
@@ -81,6 +84,16 @@ public abstract class CabeTask extends DefaultTask {
     }
 
     /**
+     * Retrieves the class path for the Cabe task.
+     *
+     * @return The class path for the Cabe task.
+     */
+    @Classpath
+    public Property<FileCollection> getRuntimeClassPath() {
+        return (Property<FileCollection>) runtimeClassPath;
+    }
+
+    /**
      * Retrieves the configuration property for the Cabe task.
      *
      * @return The configuration property for the Cabe task.
@@ -95,7 +108,10 @@ public abstract class CabeTask extends DefaultTask {
         try {
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
             String systemClassPath = System.getProperty("java.class.path");
-            String projectClasspath = getClassPath().get().getFiles().stream()
+            String classpath = Stream.concat(
+                        getClassPath().get().getFiles().stream(),
+                        getRuntimeClassPath().get().getFiles().stream()
+                    )
                     .map(File::toString)
                     .collect(Collectors.joining(File.pathSeparator));
 
@@ -106,7 +122,7 @@ public abstract class CabeTask extends DefaultTask {
                     "-i", getInputDirectory().get().getAsFile().toString(),
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
-                    "-cp", projectClasspath
+                    "-cp", classpath
             };
 
             Logger logger = getLogger();

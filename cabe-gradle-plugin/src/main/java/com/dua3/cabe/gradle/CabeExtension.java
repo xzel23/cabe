@@ -20,7 +20,6 @@ public class CabeExtension {
 
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
-    private final Provider<FileCollection> classPath;
     private final Property<Configuration> config;
 
     /**
@@ -45,11 +44,6 @@ public class CabeExtension {
         // input from classes-cabe-input
         inputDirectory = objectFactory.directoryProperty();
         inputDirectory.set(project.getLayout().getBuildDirectory().dir("classes-cabe-input"));
-        // compile classpath
-        classPath = objectFactory.property(FileCollection.class)
-                .value(project.provider(
-                        () -> ((SourceSetContainer) project.getExtensions().getByName("sourceSets"))
-                                .getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath()));
 
         project.getLogger().info("{} instance creation success", CabeExtension.class.getSimpleName());
     }
@@ -70,15 +64,6 @@ public class CabeExtension {
      */
     public DirectoryProperty getOutputDirectory() {
         return outputDirectory;
-    }
-
-    /**
-     * Retrieves the classpath for the Cabe plugin.
-     *
-     * @return the classpath as a Provider object of type FileCollection
-     */
-    public Provider<FileCollection> getClassPath() {
-        return classPath;
     }
 
     /**
