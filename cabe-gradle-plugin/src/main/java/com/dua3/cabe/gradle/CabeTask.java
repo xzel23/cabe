@@ -122,7 +122,7 @@ public abstract class CabeTask extends DefaultTask {
             Process process = pb.start();
 
             try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
-                 CopyOutput copyStdOut = new CopyOutput(process.inputReader(), verbose ? System.out::println : s -> {})) {
+                 CopyOutput ignored = new CopyOutput(process.inputReader(), verbose ? System.out::println : s -> {})) {
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
