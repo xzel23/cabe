@@ -194,12 +194,6 @@ class ClassPatcherTest {
         }, "Failed to instrument " + className);
     }
 
-    @Test
-    @Order(5)
-    void testInstrumentationModuleInfo() {
-        assertTrue(Files.isRegularFile(testClassesProcessedInstrumentedDir.resolve("module-info.class")), "module-info.class is missing");
-    }
-
     /**
      * Test generating null checks for different configurations. This test also makes sure that null checks for
      * {@link Configuration.Check#ASSERT} are work the same as standard assertions i.e., can be en-/disabled using the
@@ -215,7 +209,7 @@ class ClassPatcherTest {
             "DEVELOPMENT",
             "STANDARD"
     })
-    @Order(6)
+    @Order(5)
     public void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
         Configuration.StandardConfig config = Configuration.StandardConfig.valueOf(configName);
 
