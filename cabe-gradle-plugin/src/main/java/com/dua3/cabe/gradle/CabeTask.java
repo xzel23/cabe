@@ -36,6 +36,7 @@ public abstract class CabeTask extends DefaultTask {
     private final DirectoryProperty outputDirectory;
     private final Provider<FileCollection> classPath;
     private final Provider<FileCollection> runtimeClassPath;
+    private final Provider<String> javaExecutable;
     private final Property<Configuration> config;
 
     /**
@@ -50,6 +51,7 @@ public abstract class CabeTask extends DefaultTask {
         outputDirectory = objectFactory.directoryProperty();
         classPath = objectFactory.property(FileCollection.class);
         runtimeClassPath = objectFactory.property(FileCollection.class);
+        javaExecutable = objectFactory.property(String.class);
         config = objectFactory.property(Configuration.class);
     }
 
@@ -94,6 +96,16 @@ public abstract class CabeTask extends DefaultTask {
     }
 
     /**
+     * Retrieves the path to the java command.
+     *
+     * @return The path to the java command.
+     */
+    @Input
+    public Property<String> getJavaExecutable() {
+        return (Property<String>) javaExecutable;
+    }
+
+    /**
      * Retrieves the configuration property for the Cabe task.
      *
      * @return The configuration property for the Cabe task.
@@ -115,8 +127,11 @@ public abstract class CabeTask extends DefaultTask {
                     .map(File::toString)
                     .collect(Collectors.joining(File.pathSeparator));
 
+            String javaExec = javaExecutable.get();
+            getLogger().info("Java executable: {}", javaExec);
+
             String[] args = {
-                    "java",
+                    javaExec,
                     "-classpath", systemClassPath,
                     "-jar", jarLocation,
                     "-i", getInputDirectory().get().getAsFile().toString(),
