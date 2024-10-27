@@ -193,7 +193,7 @@ public abstract class CabeTask extends DefaultTask {
 
         @Override
         public String toString() {
-            return firstLines.stream().collect(Collectors.joining("\n"));
+            return String.join("\n", firstLines);
         }
     }
 }
