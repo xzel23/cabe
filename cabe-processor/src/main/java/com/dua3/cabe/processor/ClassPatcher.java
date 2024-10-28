@@ -537,7 +537,7 @@ public class ClassPatcher {
         var methodInfo = ctBehaviour.getMethodInfo();
         var ca = methodInfo.getCodeAttribute();
         if (ca == null) {
-            return mi.parameters().stream().collect(Collectors.toMap(ParameterInfo::param, ParameterInfo::name));
+            return Collections.emptyMap();
         }
         var lva = (LocalVariableAttribute) ca.getAttribute(LocalVariableAttribute.tag);
 
@@ -549,7 +549,7 @@ public class ClassPatcher {
 
             boolean isSynthetic = i < syntheticParameterCount + extraSyntheticParameters;
 
-            if (!isSynthetic && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(name).matches()) {
+            if (name != null && !isSynthetic && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(name).matches()) {
                 syntheticParameterCount++;
             } else if (extraSyntheticParameters > 0) {
                 syntheticParameterCount++;
@@ -560,7 +560,9 @@ public class ClassPatcher {
                 k++;
             }
 
-            parameterNames.put(param, name);
+            if (name != null) {
+                parameterNames.put(param, name);
+            }
         }
         return parameterNames;
     }
@@ -574,13 +576,13 @@ public class ClassPatcher {
      */
     private static String getParameterName(LocalVariableAttribute lva, int syntheticParameterCount, int i, int offset) {
         if (i < syntheticParameterCount) {
-            return "_" + (i + 1);
+            return null;
         }
         for (int j = 0; j < lva.tableLength(); j++) {
             if (lva.index(j) == i + offset) {
                 return lva.variableName(j);
             }
         }
-        return "param#" + (i + 1 - syntheticParameterCount);
+        return null;
     }
 }
