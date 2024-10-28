@@ -138,7 +138,8 @@ public abstract class CabeTask extends DefaultTask {
                     "-i", getInputDirectory().get().getAsFile().toString(),
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
-                    "-cp", classpath
+                    "-cp", classpath,
+                    "-v", getLogger().isDebugEnabled() ? "3" : "0"
             };
 
             Logger logger = getLogger();

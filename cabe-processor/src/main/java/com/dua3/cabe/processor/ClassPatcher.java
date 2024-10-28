@@ -68,11 +68,6 @@ public class ClassPatcher {
             rootLogger.addHandler(consoleHandler);
         }
 
-        consoleHandler.setLevel(Level.FINEST);
-        LOG.setLevel(Level.ALL);
-
-        LOG.fine(() -> "args: %s".formatted(String.join(" ", args)));
-
         Path in = null;
         Path out = null;
         List<Path> classPaths = null;
@@ -85,6 +80,21 @@ public class ClassPatcher {
                 help();
                 return;
             }
+
+            String verbosity = getOptionString(cmdLine, "-v", usedArgs, "0");
+
+            Level level = switch (verbosity) {
+                case "3" -> Level.ALL;
+                case "2" -> Level.FINE;
+                case "1" -> Level.INFO;
+                default ->  Level.WARNING;
+            };
+
+            rootLogger.setLevel(level);
+            consoleHandler.setLevel(level);
+            LOG.setLevel(level);
+
+            LOG.fine(() -> "args: %s".formatted(String.join(" ", args)));
 
             String inputFolder = getOptionString(cmdLine, "-i", usedArgs);
             String outputFolder = getOptionString(cmdLine, "-o", usedArgs);
@@ -154,17 +164,22 @@ public class ClassPatcher {
         String msg = """
                 ClassPatcher
                 ============
-                                
+                
                 Add null checks in Java class file byte code.
-                                
-                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>]
-                                
+                
+                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>] [-v <verbosity>]
+                
                     <configurations> : standard|development|no-checks (default: standard)
-                    
+                
                                        'standard'    - use standard assertions for private API methods,
                                                        throw NullPointerException for public API methods 
                                        'development' - failed checks will always throw an AssertionError 
                                        'no-check'    - do not add any null checks
+                    
+                    <verbosity>      : 0 - show warnings and errors only (default)
+                                     : 1 - show basic processing information
+                                     : 2 - show detailed information
+                                     : 1 - show all information
                 """;
         System.out.println(msg);
     }
