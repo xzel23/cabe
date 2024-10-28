@@ -388,6 +388,9 @@ public class ClassPatcher {
         boolean hasStandardAssertions = false;
         boolean hasOtherChecks = false;
         try (Formatter standardAssertions = new Formatter(); Formatter otherChecks = new Formatter()) {
+            CtClass ctClass = classPool.getCtClass(ci.name());
+            CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
+
             // create assertion code
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
@@ -445,8 +448,6 @@ public class ClassPatcher {
 
             if (!code.isEmpty()) {
                 LOG.fine(() -> "injecting code into: " + methodName + "\n" + code.indent(2).stripTrailing());
-                CtClass ctClass = classPool.getCtClass(ci.name());
-                CtBehavior ctBehavior = getCtMethod(ctClass, mi);
                 ctBehavior.insertBefore(code);
             }
         } catch (CannotCompileException e) {
@@ -466,29 +467,19 @@ public class ClassPatcher {
      * @return the CtBehavior object representing the method or constructor
      * @throws NotFoundException if the method or constructor is not found
      */
-    static CtBehavior getCtMethod(CtClass ctClass, MethodInfo mi) throws NotFoundException {
+    static CtBehavior getCtBehaviour(CtClass ctClass, MethodInfo mi) throws NotFoundException {
         CtBehavior[] ctBehaviors = mi.isConstructor()
                 ? ctClass.getDeclaredConstructors()
                 : ctClass.getDeclaredMethods(mi.name());
-        return getCtBehavior(mi, ctBehaviors);
-    }
 
-    /**
-     * Retrieves a {@link CtBehavior} object that matches the parameter types of the given {@link MethodInfo} object.
-     *
-     * @param mi               the {@link MethodInfo} object representing the method to match
-     * @param declaredBehaviors  an array of {@link CtBehavior} objects representing the declared methods/constructors
-     * @return the {@link CtBehavior} object that matches the parameter types of the given {@link MethodInfo} object
-     * @throws NotFoundException if the method is not found
-     */
-    static CtBehavior getCtBehavior(MethodInfo mi, CtBehavior[] declaredBehaviors) throws NotFoundException {
         List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(Class::getCanonicalName).toList();
-        for (CtBehavior ctBehavior : declaredBehaviors) {
+        for (CtBehavior ctBehavior : ctBehaviors) {
             List<String> ctParams = Arrays.stream(ctBehavior.getParameterTypes()).map(ClassPatcher::getCanonicalClassName).toList();
             if (ctParams.equals(params)) {
                 return ctBehavior;
             }
         }
+
         throw new IllegalStateException("method not found: " + mi);
     }
 
