@@ -9,6 +9,7 @@ import javassist.CtField;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
+import javassist.bytecode.LocalVariableAttribute;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +24,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -390,6 +394,7 @@ public class ClassPatcher {
         try (Formatter standardAssertions = new Formatter(); Formatter otherChecks = new Formatter()) {
             CtClass ctClass = classPool.getCtClass(ci.name());
             CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
+            Map<String,String> parameterNames = getCtParameterNames(mi, ctBehavior);
 
             // create assertion code
             for (ParameterInfo pi : mi.parameters()) {
@@ -399,6 +404,8 @@ public class ClassPatcher {
                 }
 
                 // create assertion code
+                String parameterName = parameterNames.getOrDefault(pi.param(), pi.name());
+
                 NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
                 boolean isNonNull = (nullnessOperatorParameter == NullnessOperator.MINUS_NULL)
                         || (!ignoreNonMethodNonNullAnnotation && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
@@ -416,26 +423,26 @@ public class ClassPatcher {
                         case ASSERT -> {
                             standardAssertions.format(
                                     "  if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                                    pi.param(), pi.name()
+                                    pi.param(), parameterName
                             );
                             hasStandardAssertions = true;
                         }
                         case ASSERT_ALWAYS -> {
                             otherChecks.format(
                                     "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                                    pi.param(), pi.name()
+                                    pi.param(), parameterName
                             );
                             hasOtherChecks = true;
                         }
                         case THROW_NPE -> {
                             otherChecks.format(
                                     "if (%1$s==null) { throw new NullPointerException(\"%2$s is null\"); }%n",
-                                    pi.param(), pi.name()
+                                    pi.param(), parameterName
                             );
                             hasOtherChecks = true;
                         }
                     }
-                    LOG.fine(() -> "adding null check for parameter " + pi.name() + " in " + ci.name());
+                    LOG.fine(() -> "adding null check for parameter " + parameterName + " in " + ci.name());
                 }
             }
 
@@ -507,4 +514,73 @@ public class ClassPatcher {
                 .replace(File.separatorChar, '.');
     }
 
+    private static final Pattern PATTERN_SYNTHETIC_PARAMETER_NAMES = Pattern.compile("this(\\$\\d+)?");
+
+    private static Map<String, String> getCtParameterNames(MethodInfo mi, CtBehavior ctBehaviour) {
+        ClassInfo ci = mi.classInfo();
+
+        int n = mi.parameters().size();
+        int syntheticParameterCount = 0;
+        int extraSyntheticParameters = 0;
+        int parameterOffset = 0;
+        boolean isEnumConstructor = ci.isEnum() && mi.isConstructor();
+        if (isEnumConstructor) {
+            extraSyntheticParameters += 2;
+            parameterOffset += 1;
+            n -= 2;
+        }
+        if (mi.isConstructor() && ci.isInnerClass() && !ci.isStaticClass()) {
+            extraSyntheticParameters += 1;
+            n--;
+        }
+
+        var methodInfo = ctBehaviour.getMethodInfo();
+        var ca = methodInfo.getCodeAttribute();
+        if (ca == null) {
+            return mi.parameters().stream().collect(Collectors.toMap(ParameterInfo::param, ParameterInfo::name));
+        }
+        var lva = (LocalVariableAttribute) ca.getAttribute(LocalVariableAttribute.tag);
+
+        Map<String, String> parameterNames = new HashMap<>();
+        // i is the global index, k is the number of non-synthetic parameters that have been added
+        for (int i = 0, j = 0, k = 0; i < syntheticParameterCount || extraSyntheticParameters > 0 || k < n; i++) {
+            String param = "_";
+            String name = getParameterName(lva, syntheticParameterCount + extraSyntheticParameters, i, parameterOffset);
+
+            boolean isSynthetic = i < syntheticParameterCount + extraSyntheticParameters;
+
+            if (!isSynthetic && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(name).matches()) {
+                syntheticParameterCount++;
+            } else if (extraSyntheticParameters > 0) {
+                syntheticParameterCount++;
+                extraSyntheticParameters--;
+                j++;
+            } else {
+                param = "$" + (k + j + 1);
+                k++;
+            }
+
+            parameterNames.put(param, name);
+        }
+        return parameterNames;
+    }
+
+    /**
+     * Retrieves the name of a parameter in a method.
+     *
+     * @param lva the LocalVariableAttribute representing the method's local variables
+     * @param i   the index of the parameter to retrieve the name for
+     * @return the name of the parameter at the specified index
+     */
+    private static String getParameterName(LocalVariableAttribute lva, int syntheticParameterCount, int i, int offset) {
+        if (i < syntheticParameterCount) {
+            return "_" + (i + 1);
+        }
+        for (int j = 0; j < lva.tableLength(); j++) {
+            if (lva.index(j) == i + offset) {
+                return lva.variableName(j);
+            }
+        }
+        return "param#" + (i + 1 - syntheticParameterCount);
+    }
 }
