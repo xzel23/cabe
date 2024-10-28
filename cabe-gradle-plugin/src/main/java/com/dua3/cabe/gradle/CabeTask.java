@@ -1,6 +1,7 @@
 package com.dua3.cabe.gradle;
 
 
+import com.dua3.cabe.processor.ClassFileProcessingFailedException;
 import com.dua3.cabe.processor.ClassPatcher;
 import com.dua3.cabe.processor.Configuration;
 import org.gradle.api.DefaultTask;
@@ -121,8 +122,8 @@ public abstract class CabeTask extends DefaultTask {
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
             String systemClassPath = System.getProperty("java.class.path");
             String classpath = Stream.concat(
-                        getClassPath().get().getFiles().stream(),
-                        getRuntimeClassPath().get().getFiles().stream()
+                            getClassPath().get().getFiles().stream(),
+                            getRuntimeClassPath().get().getFiles().stream()
                     )
                     .map(File::toString)
                     .collect(Collectors.joining(File.pathSeparator));
@@ -160,7 +161,7 @@ public abstract class CabeTask extends DefaultTask {
                 }
             }
         } catch (Exception e) {
-            throw new GradleException("An error occurred while instrumenting classes", e);
+            throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
         }
     }
 

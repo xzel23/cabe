@@ -71,7 +71,7 @@ public class ClassPatcher {
         consoleHandler.setLevel(Level.FINEST);
         LOG.setLevel(Level.ALL);
 
-        LOG.fine(() -> "args: %s".formatted(String.join("\n    ", args)));
+        LOG.fine(() -> "args: %s".formatted(String.join(" ", args)));
 
         Path in = null;
         Path out = null;
