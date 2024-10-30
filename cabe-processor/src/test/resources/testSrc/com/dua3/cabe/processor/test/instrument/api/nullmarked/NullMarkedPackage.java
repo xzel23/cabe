@@ -72,6 +72,35 @@ public class NullMarkedPackage {
         // check that lambdas are not instrumented
         check(() -> apply(a -> String.valueOf(a), 1), "1", null);
         check(() -> apply(a -> String.valueOf(a), null), "null", null);
+
+        // check anonymous inner classes
+        check(() -> new Function<String, String>() {
+                    @Override public String apply(String s) {
+                        return "hello " + s + "!";
+                    }
+                }.apply("world"),
+                "hello world!",
+                null
+        );
+
+        check(() -> new Function<String, String>() {
+                    @Override public String apply(String s) {
+                        return "hello " + s + "!";
+                    }
+                }.apply(null),
+                null,
+                "assertion failed: s is null"
+        );
+
+        // Check anonymous class inside non-static inner class
+        check(() -> new NullMarkedPackage().outer().inner().foo("anonymous"),
+                "com.dua3.cabe.processor.test.instrument.api.nullmarked.NullMarkedPackage$Outer$Inner$1: anonymous",
+                null
+        );
+        check(() -> new NullMarkedPackage().outer().inner().foo(null),
+                null,
+                "assertion failed: s is null"
+        );
     }
 
     private static String unannotatedArgument(String arg) {
@@ -209,5 +238,26 @@ public class NullMarkedPackage {
 
     static String apply(Function<Object, String> f, @Nullable Object arg) {
         return f.apply(arg);
+    }
+
+    Outer outer() {
+        return new Outer();
+    }
+
+    class Outer {
+        Inner inner() {
+            return new Inner();
+        }
+
+        class Inner {
+            public String foo(String s) {
+                return new Function<String,String> () {
+                    @Override
+                    public String apply(String s) {
+                        return getClass().getName() + ": " + s;
+                    }
+                }.apply(s);
+            }
+        }
     }
 }
