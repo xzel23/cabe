@@ -1,7 +1,6 @@
 package com.dua3.cabe.gradle;
 
 
-import com.dua3.cabe.processor.ClassFileProcessingFailedException;
 import com.dua3.cabe.processor.ClassPatcher;
 import com.dua3.cabe.processor.Configuration;
 import org.gradle.api.DefaultTask;
@@ -25,6 +24,7 @@ import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +39,7 @@ public abstract class CabeTask extends DefaultTask {
     private final Provider<FileCollection> runtimeClassPath;
     private final Provider<String> javaExecutable;
     private final Property<Configuration> config;
+    private final Property<Integer> verbosiy;
 
     /**
      * This task injects assertions for parameters marked as not allowing null values into the source code.
@@ -54,6 +55,7 @@ public abstract class CabeTask extends DefaultTask {
         runtimeClassPath = objectFactory.property(FileCollection.class);
         javaExecutable = objectFactory.property(String.class);
         config = objectFactory.property(Configuration.class);
+        verbosiy = objectFactory.property(Integer.class);
     }
 
     /**
@@ -116,6 +118,16 @@ public abstract class CabeTask extends DefaultTask {
         return config;
     }
 
+    /**
+     * Retrieves the verbosity level property for the Cabe task.
+     *
+     * @return The verbosity level property for the Cabe task.
+     */
+    @Input
+    public Property<Integer> getVerbosity() {
+        return verbosiy;
+    }
+
     @TaskAction
     void run() {
         try {
@@ -131,6 +143,7 @@ public abstract class CabeTask extends DefaultTask {
             String javaExec = javaExecutable.get();
             getLogger().info("Java executable: {}", javaExec);
 
+            int v = Objects.requireNonNullElse(verbosiy.get(), 0);
             String[] args = {
                     javaExec,
                     "-classpath", systemClassPath,
@@ -139,13 +152,11 @@ public abstract class CabeTask extends DefaultTask {
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
                     "-cp", classpath,
-                    "-v", getLogger().isDebugEnabled() ? "3" : "0"
+                    "-v", Integer.toString(v)
             };
 
             Logger logger = getLogger();
-            boolean verbose = logger.isDebugEnabled();
-
-            if (verbose) {
+            if (v>0) {
                 logger.debug("Instrumenting class files: {}", String.join(" ", args));
             }
 
@@ -155,7 +166,7 @@ public abstract class CabeTask extends DefaultTask {
             Process process = pb.start();
 
             try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
-                 CopyOutput ignored = new CopyOutput(process.inputReader(), verbose ? System.out::println : s -> {})) {
+                 CopyOutput ignored = new CopyOutput(process.inputReader(), v > 1 ? System.out::println : s -> {})) {
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);

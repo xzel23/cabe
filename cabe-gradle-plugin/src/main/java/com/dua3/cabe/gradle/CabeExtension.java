@@ -19,6 +19,7 @@ public class CabeExtension {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
     private final Property<Configuration> config;
+    private final Property<Integer> verbosity;
 
     /**
      * Construct a new instance of the extension.
@@ -28,6 +29,9 @@ public class CabeExtension {
     @Inject
     public CabeExtension(Project project) {
         ObjectFactory objectFactory = project.getObjects();
+
+        // get value of verbosity
+        verbosity = objectFactory.property(Integer.class).value(0);
 
         // get value of config
         config = objectFactory.property(Configuration.class).value(Configuration.StandardConfig.STANDARD.config());
@@ -80,5 +84,23 @@ public class CabeExtension {
      */
     public void setConfig(Configuration config) {
         this.config.set(config);
+    }
+
+    /**
+     * Retrieves the configuration property for the Cabe plugin.
+     *
+     * @return the configuration property as a Property object of type Configuration
+     */
+    public Property<Integer> getVerbosity() {
+        return verbosity;
+    }
+
+    /**
+     * Sets the configuration property for the Cabe plugin.
+     *
+     * @param verbosity the verbosity level to set
+     */
+    public void setVerbosity(int verbosity) {
+        this.verbosity.set(verbosity);
     }
 }
