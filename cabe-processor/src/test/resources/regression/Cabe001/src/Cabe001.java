@@ -3,7 +3,7 @@
  *
  * Test succeeds if no exception is thrown when class is loaded and method called successfully.
  */
-public class Cabe1 {
+public class Cabe001 {
     public static void main(String[] args) {
         try {
             InvalidClassFile_Record instance = new InvalidClassFile_Record(InvalidClassFile_Record.class.getName());

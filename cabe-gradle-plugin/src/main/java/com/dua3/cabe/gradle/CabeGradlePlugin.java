@@ -17,6 +17,9 @@ import java.util.Objects;
 @NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
 
+    /**
+     * Constructs a new instance of the CabeGradlePlugin.
+     */
     public CabeGradlePlugin() {
         // nothing to do
     }
@@ -50,6 +53,9 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 // prepare the cabe task
                 org.gradle.api.artifacts.Configuration compileClasspath = p.getConfigurations().getByName("compileClasspath");
                 org.gradle.api.artifacts.Configuration runtimeClasspath = p.getConfigurations().getByName("runtimeClasspath");
+
+                // set verbosity level
+                t.getVerbosity().set(extension.getVerbosity());
 
                 // set the configuration
                 t.getConfig().set(extension.getConfig().getOrElse(Configuration.StandardConfig.STANDARD.config()));

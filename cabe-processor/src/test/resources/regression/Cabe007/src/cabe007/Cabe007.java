@@ -3,7 +3,7 @@ package cabe7;
 /*
  * Testing Cabe#7: Instrumentation error / constructor not found
  */
-public class Cabe7 {
+public class Cabe007 {
     public static void main(String[] args) {
         ObjectCache cache = new ObjectCache();
 

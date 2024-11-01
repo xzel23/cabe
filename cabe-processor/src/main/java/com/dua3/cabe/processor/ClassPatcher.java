@@ -9,6 +9,7 @@ import javassist.CtField;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
+import javassist.bytecode.LocalVariableAttribute;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,13 +24,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,11 +69,6 @@ public class ClassPatcher {
             rootLogger.addHandler(consoleHandler);
         }
 
-        consoleHandler.setLevel(Level.FINEST);
-        LOG.setLevel(Level.ALL);
-
-        LOG.fine(() -> "args: %s".formatted(String.join("\n    ", args)));
-
         Path in = null;
         Path out = null;
         List<Path> classPaths = null;
@@ -81,6 +81,21 @@ public class ClassPatcher {
                 help();
                 return;
             }
+
+            String verbosity = getOptionString(cmdLine, "-v", usedArgs, "0");
+
+            Level level = switch (verbosity) {
+                case "3" -> Level.ALL;
+                case "2" -> Level.FINE;
+                case "1" -> Level.INFO;
+                default ->  Level.WARNING;
+            };
+
+            rootLogger.setLevel(level);
+            consoleHandler.setLevel(level);
+            LOG.setLevel(level);
+
+            LOG.fine(() -> "args: %s".formatted(String.join(" ", args)));
 
             String inputFolder = getOptionString(cmdLine, "-i", usedArgs);
             String outputFolder = getOptionString(cmdLine, "-o", usedArgs);
@@ -150,17 +165,22 @@ public class ClassPatcher {
         String msg = """
                 ClassPatcher
                 ============
-                                
+                
                 Add null checks in Java class file byte code.
-                                
-                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>]
-                                
+                
+                Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>] [-v <verbosity>]
+                
                     <configurations> : standard|development|no-checks (default: standard)
-                    
+                
                                        'standard'    - use standard assertions for private API methods,
                                                        throw NullPointerException for public API methods 
                                        'development' - failed checks will always throw an AssertionError 
                                        'no-check'    - do not add any null checks
+                    
+                    <verbosity>      : 0 - show warnings and errors only (default)
+                                     : 1 - show basic processing information
+                                     : 2 - show detailed information
+                                     : 1 - show all information
                 """;
         System.out.println(msg);
     }
@@ -388,6 +408,10 @@ public class ClassPatcher {
         boolean hasStandardAssertions = false;
         boolean hasOtherChecks = false;
         try (Formatter standardAssertions = new Formatter(); Formatter otherChecks = new Formatter()) {
+            CtClass ctClass = classPool.getCtClass(ci.name());
+            CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
+            Map<String,String> parameterNames = getCtParameterNames(mi, ctBehavior);
+
             // create assertion code
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
@@ -396,14 +420,15 @@ public class ClassPatcher {
                 }
 
                 // create assertion code
+                String parameterName = parameterNames.getOrDefault(pi.param(), pi.name());
+
                 NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
                 boolean isNonNull = (nullnessOperatorParameter == NullnessOperator.MINUS_NULL)
                         || (!ignoreNonMethodNonNullAnnotation && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
                 if (isNonNull) {
                     Configuration.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
                     if (ci.isRecord() && check== Configuration.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
-                        LOG.warning("cannot use assert in record " + ci.name() + " / https://github.com/xzel23/cabe/issues/1");
-                        LOG.info("using THROW_NPE instead of ASSERT for " + methodName);
+                        LOG.info("cannot use assert in record " + ci.name() + " using THROW_NPE instead / https://github.com/xzel23/cabe/issues/1");
                         check = Configuration.Check.THROW_NPE;
                     }
                     switch (check) {
@@ -413,26 +438,26 @@ public class ClassPatcher {
                         case ASSERT -> {
                             standardAssertions.format(
                                     "  if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                                    pi.param(), pi.name()
+                                    pi.param(), parameterName
                             );
                             hasStandardAssertions = true;
                         }
                         case ASSERT_ALWAYS -> {
                             otherChecks.format(
                                     "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                                    pi.param(), pi.name()
+                                    pi.param(), parameterName
                             );
                             hasOtherChecks = true;
                         }
                         case THROW_NPE -> {
                             otherChecks.format(
                                     "if (%1$s==null) { throw new NullPointerException(\"%2$s is null\"); }%n",
-                                    pi.param(), pi.name()
+                                    pi.param(), parameterName
                             );
                             hasOtherChecks = true;
                         }
                     }
-                    LOG.fine(() -> "adding null check for parameter " + pi.name() + " in " + ci.name());
+                    LOG.fine(() -> "adding null check for parameter " + parameterName + " in " + ci.name());
                 }
             }
 
@@ -445,8 +470,6 @@ public class ClassPatcher {
 
             if (!code.isEmpty()) {
                 LOG.fine(() -> "injecting code into: " + methodName + "\n" + code.indent(2).stripTrailing());
-                CtClass ctClass = classPool.getCtClass(ci.name());
-                CtBehavior ctBehavior = getCtMethod(ctClass, mi);
                 ctBehavior.insertBefore(code);
             }
         } catch (CannotCompileException e) {
@@ -466,30 +489,37 @@ public class ClassPatcher {
      * @return the CtBehavior object representing the method or constructor
      * @throws NotFoundException if the method or constructor is not found
      */
-    static CtBehavior getCtMethod(CtClass ctClass, MethodInfo mi) throws NotFoundException {
+    static CtBehavior getCtBehaviour(CtClass ctClass, MethodInfo mi) throws NotFoundException {
         CtBehavior[] ctBehaviors = mi.isConstructor()
                 ? ctClass.getDeclaredConstructors()
                 : ctClass.getDeclaredMethods(mi.name());
-        return getCtBehavior(mi, ctBehaviors);
-    }
 
-    /**
-     * Retrieves a {@link CtBehavior} object that matches the parameter types of the given {@link MethodInfo} object.
-     *
-     * @param mi               the {@link MethodInfo} object representing the method to match
-     * @param declaredBehaviors  an array of {@link CtBehavior} objects representing the declared methods/constructors
-     * @return the {@link CtBehavior} object that matches the parameter types of the given {@link MethodInfo} object
-     * @throws NotFoundException if the method is not found
-     */
-    static CtBehavior getCtBehavior(MethodInfo mi, CtBehavior[] declaredBehaviors) throws NotFoundException {
-        List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(Class::getCanonicalName).toList();
-        for (CtBehavior ctBehavior : declaredBehaviors) {
+        List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(ClassPatcher::getCanonicalClassName).toList();
+        for (CtBehavior ctBehavior : ctBehaviors) {
             List<String> ctParams = Arrays.stream(ctBehavior.getParameterTypes()).map(ClassPatcher::getCanonicalClassName).toList();
             if (ctParams.equals(params)) {
                 return ctBehavior;
             }
         }
+
         throw new IllegalStateException("method not found: " + mi);
+    }
+
+    private static final Pattern PATTERN_ARRAY_BINARY_NAME = Pattern.compile("(?<brackets>\\[)+L(?<class>[^;]+);");
+
+    private static String getCanonicalClassName(Class<?> cls) {
+        String name = cls.getCanonicalName();
+        if (name == null) {
+            name = cls.getName();
+            Matcher m = PATTERN_ARRAY_BINARY_NAME.matcher(name);
+            if (m.matches()) {
+                String n = m.group("class");
+                String bracketsOpen = m.group("brackets");
+                String bracketsClose = "]".repeat(bracketsOpen.length());
+                name = n + bracketsOpen + bracketsClose;
+            }
+        }
+        return name;
     }
 
     /**
@@ -502,7 +532,7 @@ public class ClassPatcher {
      * @return the canonical class name as a String
      */
     private static String getCanonicalClassName(CtClass ctClass) {
-        return ctClass.getName().replace('$', '.');
+        return ctClass.getName().replaceAll("\\$([^0-9])", ".$1");
     }
 
     /**
@@ -516,4 +546,75 @@ public class ClassPatcher {
                 .replace(File.separatorChar, '.');
     }
 
+    private static final Pattern PATTERN_SYNTHETIC_PARAMETER_NAMES = Pattern.compile("this(\\$\\d+)?");
+
+    private static Map<String, String> getCtParameterNames(MethodInfo mi, CtBehavior ctBehaviour) {
+        ClassInfo ci = mi.classInfo();
+
+        int n = mi.parameters().size();
+        int syntheticParameterCount = 0;
+        int extraSyntheticParameters = 0;
+        int parameterOffset = 0;
+        boolean isEnumConstructor = ci.isEnum() && mi.isConstructor();
+        if (isEnumConstructor) {
+            extraSyntheticParameters += 2;
+            parameterOffset += 1;
+            n -= 2;
+        }
+        if (mi.isConstructor() && ci.isInnerClass() && !ci.isStaticClass()) {
+            extraSyntheticParameters += 1;
+            n--;
+        }
+
+        var methodInfo = ctBehaviour.getMethodInfo();
+        var ca = methodInfo.getCodeAttribute();
+        if (ca == null) {
+            return Collections.emptyMap();
+        }
+        var lva = (LocalVariableAttribute) ca.getAttribute(LocalVariableAttribute.tag);
+
+        Map<String, String> parameterNames = new HashMap<>();
+        // i is the global index, k is the number of non-synthetic parameters that have been added
+        for (int i = 0, j = 0, k = 0; i < syntheticParameterCount || extraSyntheticParameters > 0 || k < n; i++) {
+            String param = "_";
+            String name = getParameterName(lva, syntheticParameterCount + extraSyntheticParameters, i, parameterOffset);
+
+            boolean isSynthetic = i < syntheticParameterCount + extraSyntheticParameters;
+
+            if (name != null && !isSynthetic && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(name).matches()) {
+                syntheticParameterCount++;
+            } else if (extraSyntheticParameters > 0) {
+                syntheticParameterCount++;
+                extraSyntheticParameters--;
+                j++;
+            } else {
+                param = "$" + (k + j + 1);
+                k++;
+            }
+
+            if (name != null) {
+                parameterNames.put(param, name);
+            }
+        }
+        return parameterNames;
+    }
+
+    /**
+     * Retrieves the name of a parameter in a method.
+     *
+     * @param lva the LocalVariableAttribute representing the method's local variables
+     * @param i   the index of the parameter to retrieve the name for
+     * @return the name of the parameter at the specified index
+     */
+    private static String getParameterName(LocalVariableAttribute lva, int syntheticParameterCount, int i, int offset) {
+        if (i < syntheticParameterCount) {
+            return null;
+        }
+        for (int j = 0; j < lva.tableLength(); j++) {
+            if (lva.index(j) == i + offset) {
+                return lva.variableName(j);
+            }
+        }
+        return null;
+    }
 }

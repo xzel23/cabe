@@ -27,10 +27,6 @@ cd "`dirname $0`" \
   && echo "plugin test successful" \
 && ./gradlew cabe-processor:shadowJar \
   && echo "shadow jar created" \
-&& for D in regressiontest/* ; do \
-    echo "test regressions: ${D}" ;\
-    java -jar cabe-processor/build/libs/cabe-processor-all-${PROCESSOR_VERSION}.jar -i "${D}/classes" -o "${D}/classes-processed" ; \
-  done \
 && ./gradlew publishToMavenLocal \
   && echo "plugin published to local repository" \
 || { echo "ERROR" ; exit 1 ; }

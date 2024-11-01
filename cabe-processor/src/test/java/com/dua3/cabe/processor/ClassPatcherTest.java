@@ -126,7 +126,7 @@ class ClassPatcherTest {
                     }
                     String code = fmtCode.toString();
                     if (!code.isEmpty()) {
-                        CtBehavior ctBehavior = ClassPatcher.getCtMethod(ctClass, mi);
+                        CtBehavior ctBehavior = ClassPatcher.getCtBehaviour(ctClass, mi);
                         ctBehavior.insertBefore(code);
                     }
                 }

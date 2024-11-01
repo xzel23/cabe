@@ -24,6 +24,7 @@ import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +39,7 @@ public abstract class CabeTask extends DefaultTask {
     private final Provider<FileCollection> runtimeClassPath;
     private final Provider<String> javaExecutable;
     private final Property<Configuration> config;
+    private final Property<Integer> verbosiy;
 
     /**
      * This task injects assertions for parameters marked as not allowing null values into the source code.
@@ -53,6 +55,7 @@ public abstract class CabeTask extends DefaultTask {
         runtimeClassPath = objectFactory.property(FileCollection.class);
         javaExecutable = objectFactory.property(String.class);
         config = objectFactory.property(Configuration.class);
+        verbosiy = objectFactory.property(Integer.class);
     }
 
     /**
@@ -115,14 +118,24 @@ public abstract class CabeTask extends DefaultTask {
         return config;
     }
 
+    /**
+     * Retrieves the verbosity level property for the Cabe task.
+     *
+     * @return The verbosity level property for the Cabe task.
+     */
+    @Input
+    public Property<Integer> getVerbosity() {
+        return verbosiy;
+    }
+
     @TaskAction
     void run() {
         try {
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
             String systemClassPath = System.getProperty("java.class.path");
             String classpath = Stream.concat(
-                        getClassPath().get().getFiles().stream(),
-                        getRuntimeClassPath().get().getFiles().stream()
+                            getClassPath().get().getFiles().stream(),
+                            getRuntimeClassPath().get().getFiles().stream()
                     )
                     .map(File::toString)
                     .collect(Collectors.joining(File.pathSeparator));
@@ -130,6 +143,7 @@ public abstract class CabeTask extends DefaultTask {
             String javaExec = javaExecutable.get();
             getLogger().info("Java executable: {}", javaExec);
 
+            int v = Objects.requireNonNullElse(verbosiy.get(), 0);
             String[] args = {
                     javaExec,
                     "-classpath", systemClassPath,
@@ -137,13 +151,12 @@ public abstract class CabeTask extends DefaultTask {
                     "-i", getInputDirectory().get().getAsFile().toString(),
                     "-o", getOutputDirectory().get().getAsFile().toString(),
                     "-c", config.get().getConfigString(),
-                    "-cp", classpath
+                    "-cp", classpath,
+                    "-v", Integer.toString(v)
             };
 
             Logger logger = getLogger();
-            boolean verbose = logger.isDebugEnabled();
-
-            if (verbose) {
+            if (v>0) {
                 logger.debug("Instrumenting class files: {}", String.join(" ", args));
             }
 
@@ -153,14 +166,14 @@ public abstract class CabeTask extends DefaultTask {
             Process process = pb.start();
 
             try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
-                 CopyOutput ignored = new CopyOutput(process.inputReader(), verbose ? System.out::println : s -> {})) {
+                 CopyOutput ignored = new CopyOutput(process.inputReader(), v > 1 ? System.out::println : s -> {})) {
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
                 }
             }
         } catch (Exception e) {
-            throw new GradleException("An error occurred while instrumenting classes", e);
+            throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
         }
     }
 
