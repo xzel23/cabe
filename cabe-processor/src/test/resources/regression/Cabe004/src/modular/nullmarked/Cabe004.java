@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /*
  * Testing Cabe#4: @NullMarked annotation on module has no effect
  */
-public class Cabe4 {
+public class Cabe004 {
 
     public static void main(String[] args) {
         // check processing of unannotated arguments

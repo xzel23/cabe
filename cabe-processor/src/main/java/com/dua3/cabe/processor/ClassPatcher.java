@@ -34,6 +34,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -493,7 +494,7 @@ public class ClassPatcher {
                 ? ctClass.getDeclaredConstructors()
                 : ctClass.getDeclaredMethods(mi.name());
 
-        List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(Class::getCanonicalName).toList();
+        List<String> params = Arrays.stream(mi.method().getParameterTypes()).map(ClassPatcher::getCanonicalClassName).toList();
         for (CtBehavior ctBehavior : ctBehaviors) {
             List<String> ctParams = Arrays.stream(ctBehavior.getParameterTypes()).map(ClassPatcher::getCanonicalClassName).toList();
             if (ctParams.equals(params)) {
@@ -502,6 +503,23 @@ public class ClassPatcher {
         }
 
         throw new IllegalStateException("method not found: " + mi);
+    }
+
+    private static final Pattern PATTERN_ARRAY_BINARY_NAME = Pattern.compile("(?<brackets>\\[)+L(?<class>[^;]+);");
+
+    private static String getCanonicalClassName(Class<?> cls) {
+        String name = cls.getCanonicalName();
+        if (name == null) {
+            name = cls.getName();
+            Matcher m = PATTERN_ARRAY_BINARY_NAME.matcher(name);
+            if (m.matches()) {
+                String n = m.group("class");
+                String bracketsOpen = m.group("brackets");
+                String bracketsClose = "]".repeat(bracketsOpen.length());
+                name = n + bracketsOpen + bracketsClose;
+            }
+        }
+        return name;
     }
 
     /**
@@ -514,7 +532,7 @@ public class ClassPatcher {
      * @return the canonical class name as a String
      */
     private static String getCanonicalClassName(CtClass ctClass) {
-        return ctClass.getName().replace('$', '.');
+        return ctClass.getName().replaceAll("\\$([^0-9])", ".$1");
     }
 
     /**

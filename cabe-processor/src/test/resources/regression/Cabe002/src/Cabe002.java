@@ -3,7 +3,7 @@
  *
  * Test succeeds if no exception is thrown when class is loaded and method called successfully.
  */
-public class Cabe2 {
+public class Cabe002 {
     public static void main(String[] args) {
         try {
             NullCheckGeneratedForImplicitRecordEquals A = new NullCheckGeneratedForImplicitRecordEquals("A");
