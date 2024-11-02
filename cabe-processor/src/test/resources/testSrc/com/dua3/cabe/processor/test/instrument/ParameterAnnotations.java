@@ -18,6 +18,16 @@ public class ParameterAnnotations {
     }
 
     public void doTest() {
+        check(() -> NullableAnnotatedGenericType.foo("a", "b", "c"), "abc", null);
+        check(() -> NullableAnnotatedGenericType.foo("a", null, "c"), "anullc", null);
+        check(() -> NullableAnnotatedGenericType.foo("a", "b", null), null, "assertion failed: (c|arg#3) is null");
+        check(() -> NullableAnnotatedGenericType.foo(null, "b", "c"), "nullbc", null);
+
+        check(() -> new NullableAnnotatedGenericType().bar("a", "b", "c"), "abc", null);
+        check(() -> new NullableAnnotatedGenericType().bar("a", null, "c"), "anullc", null);
+        check(() -> new NullableAnnotatedGenericType().bar("a", "b", null), null, "assertion failed: (c|arg#3) is null");
+        check(() -> new NullableAnnotatedGenericType().bar(null, "b", "c"), "nullbc", null);
+
         // test with generic parameters
         check(() -> new C("hello world!").toString(), "hello world!", null);
         check(() -> new C(null).toString(), null, "assertion failed: (t|arg#1) is null");
@@ -224,6 +234,17 @@ public class ParameterAnnotations {
 
     public String genericArguments(@NonNull String prefix, @NonNull String suffix, @NonNull Function<C<? extends Object>, String> func) {
         return prefix + func.apply(new C(suffix));
+    }
+
+    @NullMarked
+    class NullableAnnotatedGenericType<T extends @Nullable Object> {
+        public static <T extends @Nullable Object> String foo(T a, @Nullable T b, @NonNull T c) {
+            return Objects.toString(a) + Objects.toString(b) + Objects.toString(c);
+        }
+
+        public String bar(T a, @Nullable T b, @NonNull T c) {
+            return Objects.toString(a) + Objects.toString(b) + Objects.toString(c);
+        }
     }
 
 }
