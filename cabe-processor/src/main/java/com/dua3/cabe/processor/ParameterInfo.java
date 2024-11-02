@@ -1,9 +1,12 @@
 package com.dua3.cabe.processor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -24,8 +27,9 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
     public static List<ParameterInfo> forMethod(MethodInfo mi) {
         ClassInfo ci = mi.classInfo();
 
-        Executable methodDescription = mi.method();
-        Parameter[] parms = methodDescription.getParameters();
+        Executable executable = mi.method();
+        Parameter[] parms = executable.getParameters();
+
         int n = parms.length;
 
         List<ParameterInfo> pi = new ArrayList<>();
@@ -40,7 +44,9 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
             AnnotatedType type = param.getAnnotatedType();
 
             NullnessOperator nullnessOperator = Util.getNullnessOperator(param.getDeclaredAnnotations())
-                            .combineWithParent(() -> Util.getNullnessOperator(type.getDeclaredAnnotations()));
+                    .combineWithParent(() -> getGenericTypeNullnessOperator(param))
+                    .combineWithParent(() -> Util.getNullnessOperator(type.getDeclaredAnnotations()));
+
             pi.add(new ParameterInfo(i, symbol, name, param.getType(), nullnessOperator, isSynthetic, mi));
 
             if (!isSynthetic) {
@@ -49,6 +55,17 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
         }
 
         return pi;
+    }
+
+    private static NullnessOperator getGenericTypeNullnessOperator(Parameter param) {
+        NullnessOperator nullnessOperator = Util.getNullnessOperator(param.getAnnotatedType().getAnnotations());
+        if (param.getParameterizedType() instanceof TypeVariable<?> tv) {
+            Annotation[] annotations = Arrays.stream(tv.getAnnotatedBounds())
+                    .flatMap(ab -> Arrays.stream(ab.getAnnotations()))
+                    .toArray(Annotation[]::new);
+            nullnessOperator = nullnessOperator.combineWithParent(() -> Util.getNullnessOperator(annotations));
+        }
+        return nullnessOperator;
     }
 
     public static boolean isPrimitive(String type) {
