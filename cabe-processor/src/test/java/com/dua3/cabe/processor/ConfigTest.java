@@ -48,7 +48,7 @@ public class ConfigTest {
     public void testParseConfigString(String s1, String s2) {
         Configuration.Check c1 = Configuration.Check.valueOf(s1);
         Configuration.Check c2 = Configuration.Check.valueOf(s2);
-        Configuration expected = new Configuration(c1, c2);
+        Configuration expected = new Configuration(c1, c2, Configuration.Check.NO_CHECK);
 
         Configuration actual = Configuration.parseConfigString("publicApi=%s:privateApi=%s".formatted(s1, s2));
 
@@ -57,9 +57,9 @@ public class ConfigTest {
 
     @Test
     public void testEqualsAndHashCode() {
-        Configuration config1 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE);
-        Configuration config2 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE);
-        Configuration config3 = new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK);
+        Configuration config1 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK);
+        Configuration config2 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK);
+        Configuration config3 = new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK);
 
         assertEquals(config1, config2);
         assertNotEquals(config1, config3);

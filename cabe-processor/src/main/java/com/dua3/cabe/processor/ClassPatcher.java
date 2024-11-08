@@ -405,14 +405,20 @@ public class ClassPatcher {
                 && mi.methodName().equals("equals") && mi.parameters().size() == 1;
 
         LOG.fine(() -> "instrumenting method " + methodName);
-        boolean hasStandardAssertions = false;
-        boolean hasOtherChecks = false;
-        try (Formatter standardAssertions = new Formatter(); Formatter otherChecks = new Formatter()) {
+        boolean hasStandardParameterAssertions = false;
+        boolean hasOtherParameterChecks = false;
+        boolean hasStandardReturnValueAssertions = false;
+        boolean hasOtherReturnValueChecks = false;
+        try (Formatter standardParameterAssertions = new Formatter();
+             Formatter otherParameterChecks = new Formatter();
+             Formatter standardReturnValueAssertions = new Formatter();
+             Formatter otherReturnValueChecks = new Formatter()) {
+
             CtClass ctClass = classPool.getCtClass(ci.name());
             CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
             Map<String,String> parameterNames = getCtParameterNames(mi, ctBehavior);
 
-            // create assertion code
+            // create assertion code for parameters
             for (ParameterInfo pi : mi.parameters()) {
                 // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
                 if (!mi.isCanonicalRecordConstructor() && pi.isSynthetic() || pi.type().isPrimitive() || (mi.isConstructor() && ci.isAnonymousClass())) {
@@ -436,41 +442,88 @@ public class ClassPatcher {
                             // nop
                         }
                         case ASSERT -> {
-                            standardAssertions.format(
+                            standardParameterAssertions.format(
                                     "  if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
                                     pi.param(), parameterName
                             );
-                            hasStandardAssertions = true;
+                            hasStandardParameterAssertions = true;
                         }
                         case ASSERT_ALWAYS -> {
-                            otherChecks.format(
+                            otherParameterChecks.format(
                                     "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
                                     pi.param(), parameterName
                             );
-                            hasOtherChecks = true;
+                            hasOtherParameterChecks = true;
                         }
                         case THROW_NPE -> {
-                            otherChecks.format(
+                            otherParameterChecks.format(
                                     "if (%1$s==null) { throw new NullPointerException(\"%2$s is null\"); }%n",
                                     pi.param(), parameterName
                             );
-                            hasOtherChecks = true;
+                            hasOtherParameterChecks = true;
                         }
                     }
                     LOG.fine(() -> "adding null check for parameter " + parameterName + " in " + ci.name());
                 }
             }
 
-            // modify class
-            String code = (hasStandardAssertions
-                    ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardAssertions)
+            // modify class by injecting parameter checks
+            String codeParamChecks = (hasStandardParameterAssertions
+                    ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardParameterAssertions)
                     : "")
-                    +
-                    (hasOtherChecks ? otherChecks : "");
+                    + (hasOtherParameterChecks ? otherParameterChecks : "");
 
-            if (!code.isEmpty()) {
-                LOG.fine(() -> "injecting code into: " + methodName + "\n" + code.indent(2).stripTrailing());
-                ctBehavior.insertBefore(code);
+            if (!codeParamChecks.isEmpty()) {
+                LOG.fine(() -> "injecting code into: " + methodName + "\n" + codeParamChecks.indent(2).stripTrailing());
+                ctBehavior.insertBefore(codeParamChecks);
+            }
+
+            // create assertion code for return values
+            // do not add assertions for synthetic parameters, primitive types and constructors of anonymous classes
+            if (!mi.hasPrimitiveReturnType()) {
+                NullnessOperator nullnessOperatorRV = mi.resultNullness();
+                boolean isNonNullRV = (nullnessOperatorRV == NullnessOperator.MINUS_NULL)
+                        || (ci.nullnessOperator().andThen(nullnessOperatorRV) == NullnessOperator.MINUS_NULL);
+
+                if (isNonNullRV) {
+                    Configuration.Check check = configuration.checkReturn();
+
+                    switch (check) {
+                        case NO_CHECK -> {
+                            // nop
+                        }
+                        case ASSERT -> {
+                            standardReturnValueAssertions.format(
+                                    "  if ($_==null) { throw new AssertionError((Object) \"invalid null return value\"); }%n"
+                            );
+                            hasStandardReturnValueAssertions = true;
+                        }
+                        case ASSERT_ALWAYS -> {
+                            otherReturnValueChecks.format(
+                                    "  if ($_==null) { throw new AssertionError((Object) \"invalid null return value\"); }%n"
+                            );
+                            hasOtherReturnValueChecks = true;
+                        }
+                        case THROW_NPE -> {
+                            otherReturnValueChecks.format(
+                                    "if ($_==null) { throw new NullPointerException(\"invalid null return value\"); }%n"
+                            );
+                            hasOtherReturnValueChecks = true;
+                        }
+                    }
+                    LOG.fine(() -> "adding null check for return value in " + ci.name());
+                }
+
+                // modify class by injecting return value checks
+                String codeReturnValueChecks = (hasStandardReturnValueAssertions
+                        ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardReturnValueAssertions)
+                        : "")
+                        + (hasOtherReturnValueChecks ? otherReturnValueChecks : "");
+
+                if (!codeReturnValueChecks.isEmpty()) {
+                    LOG.fine(() -> "injecting code into: " + methodName + "\n" + codeReturnValueChecks.indent(2).stripTrailing());
+                    ctBehavior.insertAfter(codeReturnValueChecks);
+                }
             }
         } catch (CannotCompileException e) {
             throw new ClassFileProcessingFailedException("compilation failed for instrumented method '" + methodName + "'", e);

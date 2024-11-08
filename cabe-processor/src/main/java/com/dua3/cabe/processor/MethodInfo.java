@@ -1,11 +1,14 @@
 package com.dua3.cabe.processor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -17,28 +20,33 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
                   boolean isAbstract, boolean isStatic,
                   boolean isPublic, boolean isSynthetic, boolean isBridge, boolean isNative,
                   List<ParameterInfo> parameters, ClassInfo classInfo,
+                  boolean hasPrimitiveReturnType, NullnessOperator resultNullness,
                   Executable method) {
     private static final Pattern PATTERN_EXTRACT_METHOD_NAME = Pattern.compile(".*\\.([\\w$]+)\\(.*");
 
-    public static MethodInfo forMethod(ClassInfo ci, Executable method) {
-        int modifiers = method.getModifiers();
+    public static MethodInfo forMethod(ClassInfo ci, Executable executable) {
+        int modifiers = executable.getModifiers();
 
-        boolean isConstructor = method instanceof Constructor<?>;
-        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, method);
-        boolean isMethod = method instanceof Method m;
+        boolean isConstructor = executable instanceof Constructor<?>;
+        boolean isCanonicalRecordConstructor = isCanonicalRecordConstructor(ci, executable);
+        boolean isMethod = executable instanceof Method;
         boolean isAbstract = Modifier.isAbstract(modifiers);
         boolean isStatic = Modifier.isStatic(modifiers);
         boolean isPublicApi = ci.isPublicApi() && Modifier.isPublic(modifiers);
 
-        boolean isSynthetic = method.isSynthetic();
-        boolean isBridge = isMethod && ((Method) method).isBridge();
+        boolean isSynthetic = executable.isSynthetic();
+        boolean isBridge = isMethod && ((Method) executable).isBridge();
         boolean isNative = Modifier.isNative(modifiers);
 
         List<ParameterInfo> parameters = new ArrayList<>();
 
+        boolean hasPrimitiveResult = isMethod && ((Method) executable).getReturnType().isPrimitive();
+
+        NullnessOperator resultNullness = getReturnValueNullness(executable);
+
         MethodInfo mi = new MethodInfo(
-                method.getName(),
-                method.toGenericString(),
+                executable.getName(),
+                executable.toGenericString(),
                 isConstructor,
                 isCanonicalRecordConstructor,
                 isMethod,
@@ -50,11 +58,28 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
                 isNative,
                 parameters,
                 ci,
-                method);
+                hasPrimitiveResult,
+                resultNullness,
+                executable);
 
         parameters.addAll(ParameterInfo.forMethod(mi));
 
         return mi;
+    }
+
+    private static NullnessOperator getReturnValueNullness(Executable executable) {
+        if (!(executable instanceof Method method)) {
+            // do not check constructor return types
+            return com.dua3.cabe.processor.NullnessOperator.UNION_NULL;
+        }
+        NullnessOperator nullnessOperator = Util.getNullnessOperator(method.getAnnotatedReturnType().getAnnotations());
+        if (method.getGenericReturnType() instanceof TypeVariable<?> tv) {
+            Annotation[] annotations = Arrays.stream(tv.getAnnotatedBounds())
+                    .flatMap(ab -> Arrays.stream(ab.getAnnotations()))
+                    .toArray(Annotation[]::new);
+            nullnessOperator = nullnessOperator.combineWithParent(() -> Util.getNullnessOperator(annotations));
+        }
+        return nullnessOperator;
     }
 
     private static boolean isCanonicalRecordConstructor(ClassInfo ci, Executable method) {

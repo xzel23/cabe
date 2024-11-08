@@ -36,6 +36,7 @@ public class NullMarkedPackage {
         // @Nullable
         check(() -> oneNullableAnnotatedArgument("hello world!"), "hello world!", null);
         check(() -> oneNullableAnnotatedArgument(null), null, null);
+        check(() -> oneNullableAnnotatedArgumentButNonNullReturnType(null), null, "assertion failed: invalid null return value");
 
         check(() -> twoNullableAnnotatedArguments("hello", "world!"), "hello world!", null);
         check(() -> twoNullableAnnotatedArguments(null, "world!"), "null world!", null);
@@ -133,8 +134,13 @@ public class NullMarkedPackage {
         return s;
     }
 
-    private static String oneNullableAnnotatedArgument(@Nullable String arg) {
+    private static @Nullable String oneNullableAnnotatedArgument(@Nullable String arg) {
         System.out.println("oneNullableAnnotatedArgument: " + arg);
+        return arg;
+    }
+
+    private static String oneNullableAnnotatedArgumentButNonNullReturnType(@Nullable String arg) {
+        System.out.println("oneNullableAnnotatedArgumentButNonNullReturnType: " + arg);
         return arg;
     }
 

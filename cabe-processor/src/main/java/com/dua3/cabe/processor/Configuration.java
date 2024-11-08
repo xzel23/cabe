@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * @param publicApi  the validation strategy for public APIs.
  * @param privateApi the validation strategy for private APIs.
  */
-public record Configuration(Check publicApi, Check privateApi) implements Serializable {
+public record Configuration(Check publicApi, Check privateApi, Check checkReturn) implements Serializable {
     private static final Logger LOG = Logger.getLogger(Configuration.class.getName());
 
     /**
@@ -36,7 +36,7 @@ public record Configuration(Check publicApi, Check privateApi) implements Serial
         }
 
         LOG.fine(() -> "parsing custom configuration: " + configStr);
-        Pattern pattern = Pattern.compile("(?<singleParam>\\w+)|(publicApi=(?<publicParam>\\w+):privateApi=(?<privateParam>\\w+))");
+        Pattern pattern = Pattern.compile("(?<singleParam>\\w+)|((publicApi=(?<publicParam>\\w+):)?(privateApi=(?<privateParam>\\w+):)?(returnValue=(?<returnValue>\\w+)))?");
         Matcher matcher = pattern.matcher(configStr);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("invalid configuration string: '" + configStr + "'");
@@ -45,16 +45,17 @@ public record Configuration(Check publicApi, Check privateApi) implements Serial
         String singleParam = matcher.group("singleParam");
         if (singleParam != null) {
             Check c = Check.valueOf(singleParam);
-            return new Configuration(c, c);
+            return new Configuration(c, c, c);
         }
 
-        String publicParam = matcher.group("publicParam");
-        String privateParam = matcher.group("privateParam");
-        if (publicParam != null && privateParam != null) {
-            return new Configuration(Check.valueOf(publicParam), Check.valueOf(privateParam));
-        }
+        Check checkPublicApi = getCheck("publicApi");
+        Check checkPrivateApi = getCheck("privateApi");
+        Check checkReturnValue = getCheck("returnValue");
+        return new Configuration(checkPublicApi, checkPrivateApi, checkReturnValue);
+    }
 
-        throw new IllegalStateException("could not parse configuration string: '" + configStr + "'");
+    static Check getCheck(String checkName) {
+        return checkName == null || checkName.isEmpty() ? Check.NO_CHECK : Check.valueOf(checkName);
     }
 
     /**
@@ -105,20 +106,20 @@ public record Configuration(Check publicApi, Check privateApi) implements Serial
          * When the DEVELOPMENT setting is used, parameters are always checked and for violations an
          * {@link AssertionError} is thrown even when assertions are disabled.
          */
-        DEVELOPMENT(new Configuration(Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS)),
+        DEVELOPMENT(new Configuration(Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS)),
         /**
-         * When the  STANDARD setting is used, parameters are checked differently depending of whether the method is
+         * When the  STANDARD setting is used, parameters are checked differently depending on whether the method is
          * part of the public or private API:
          * <ul>
          * <li>Public API: a {@link NullPointerException} is thrown when a violation is detected
          * <li>Private API: a standard assertion is used that can be controlled by the standard JVM flags
          * </ul>
          */
-        STANDARD(new Configuration(Check.THROW_NPE, Check.ASSERT)),
+        STANDARD(new Configuration(Check.THROW_NPE, Check.ASSERT, Check.NO_CHECK)),
         /**
          * When NO_CHECKS is used, no parameter checks are generated.
          */
-        NO_CHECKS(new Configuration(Check.NO_CHECK, Check.NO_CHECK));
+        NO_CHECKS(new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK));
 
         StandardConfig(Configuration config) {
             this.config = config;
