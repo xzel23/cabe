@@ -206,7 +206,7 @@ public abstract class CabeTask extends DefaultTask {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             try {
                 thread.join(5000); // Wait 5000ms for the thread to die.
             } catch(InterruptedException e) {
