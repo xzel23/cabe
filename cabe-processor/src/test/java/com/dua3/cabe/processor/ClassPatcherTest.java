@@ -248,7 +248,7 @@ class ClassPatcherTest {
     }
 
     private static final Map<Configuration.StandardConfig, String> EXPECTED_FOR_CONFIG = Map.of(
-            Configuration.StandardConfig.NO_CHECKS, """
+            Configuration.StandardConfig.NO_CHECK, """
                     Config: NO_CHECKS
                     =================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
