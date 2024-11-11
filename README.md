@@ -79,7 +79,7 @@ There are three different predefined configurations:
 - DEVELOPMENT: Always throws AssertionError for a failed check in both public and private API. These cannot be disabled
   using the `-da` JVM flag.
 
-- NO_CHECKS: No checks are generated for both public and private API.
+- NO_CHECK: No checks are generated for both public and private API.
 
 **Example for a custom configuration**
 

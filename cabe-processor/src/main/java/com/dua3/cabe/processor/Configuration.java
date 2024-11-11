@@ -126,7 +126,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      *
      * <ul>
      * <li>DEVELOPMENT: Configuration for development with strict checks to detect problems early.
-     * <li>STANDARD: Configuration for standard runtime environment with moderate checks, i.e.,  <li>NO_CHECKS: Configuration with all checks disabled.
+     * <li>STANDARD: Configuration for standard runtime environment with moderate checks, i.e.,  <li>NO_CHECK: Configuration with all checks disabled.
      * </ul>
      *
      * Each enum constant holds a Configuration object that specifies the checks to apply.
@@ -147,7 +147,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
          */
         STANDARD(new Configuration(Check.THROW_NPE, Check.ASSERT, Check.NO_CHECK)),
         /**
-         * When NO_CHECKS is used, no parameter checks are generated.
+         * When NO_CHECK is used, no parameter checks are generated.
          */
         NO_CHECK(new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK));
 

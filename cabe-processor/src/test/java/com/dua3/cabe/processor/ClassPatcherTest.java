@@ -204,7 +204,7 @@ class ClassPatcherTest {
      */
     @ParameterizedTest
     @ValueSource(strings = {
-            "NO_CHECKS",
+            "NO_CHECK",
             "DEVELOPMENT",
             "STANDARD"
     })
@@ -249,8 +249,8 @@ class ClassPatcherTest {
 
     private static final Map<Configuration.StandardConfig, String> EXPECTED_FOR_CONFIG = Map.of(
             Configuration.StandardConfig.NO_CHECK, """
-                    Config: NO_CHECKS
-                    =================
+                    Config: NO_CHECK
+                    ================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
