@@ -61,4 +61,22 @@ allprojects {
             }
         }
     }
+
+    pluginManager.withPlugin("maven-publish") {
+        extensions.configure<PublishingExtension> {
+            publications {
+                all {
+                    // Exclude the examples and its subprojects from being published
+                    if (project.name == "cabe-plugin-test"
+                        || project.name == "examples"
+                        || project.parent?.name == "examples") {
+                        tasks.withType<AbstractPublishToMaven>()?.configureEach {
+                            onlyIf { false }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
