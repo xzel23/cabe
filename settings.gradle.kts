@@ -1,6 +1,12 @@
-rootProject.name = "doc"
+rootProject.name = "cabe"
 
-include("cabe-processor", "cabe-gradle-plugin")
+include(
+    "cabe-processor",
+    "cabe-gradle-plugin",
+    "examples",
+    "examples:hello",
+    "examples:hellofx"
+)
 
 dependencyResolutionManagement {
 
