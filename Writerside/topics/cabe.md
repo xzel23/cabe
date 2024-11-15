@@ -17,7 +17,7 @@ null checks to the private API:
     <tab title="Kotlin DSL">
         <code-block lang="Kotlin">
             plugins {
-              id("com.dua3.cabe") version "3.0-beta-10"
+              id("com.dua3.cabe") version "%PLUGIN_VERSION%"
             }
         </code-block>
     </tab>
@@ -42,7 +42,7 @@ to your code by using JSpecify annotations.
 
 <tip>
 The example projects here are contained within the "examples" subproject. To compile and run the examples, use the 
-commmand <code>./gradlew :examples:&lt;name&gt;:run</code> from the project's main folder.
+commmand <code>./gradlew -Dexamples examples:&lt;name&gt;:run</code> from the project's main folder.
 </tip>
 <warning>
 Note that running the examples will usually result in a failure as the axamples demonstrate how using Cabe asserts
@@ -342,14 +342,14 @@ To use Cabe in your Gradle build, add the plugin to your build script and config
     <tab title="Kotlin DSL">
         <code-block lang="Kotlin">
             plugins {
-              id("com.dua3.cabe") version "3.0-beta-10"
+              id("com.dua3.cabe") version "%PLUGIN_VERSION%"
             }
         </code-block>
     </tab>
     <tab title="Groovy DSL">
         <code-block lang="groovy">
             plugins {
-              id "com.dua3.cabe" version "3.0-beta-10"
+              id "com.dua3.cabe" version "%PLUGIN_VERSION%"
             }        
         </code-block>
     </tab>

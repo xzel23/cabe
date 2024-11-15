@@ -13,6 +13,18 @@ echo "processor ....... " ${PROCESSOR_VERSION}
 echo "gradle plugin ... " ${PLUGIN_VERSION}
 echo
 
+# update version information in documentation
+cat -- > Writerside/v.list <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE vars SYSTEM "https://resources.jetbrains.com/writerside/1.0/vars.dtd">
+<vars>
+    <var name="product" value="Writerside"/>
+    <var name="PROCESSOR_VERSION" value="${PROCESSOR_VERSION}"/>
+    <var name="PLUGIN_VERSION" value="${PLUGIN_VERSION}"/>
+</vars>
+EOF
+
+exit
 # run a second build and then a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
 && ./gradlew clean build test publishToMavenLocal \
