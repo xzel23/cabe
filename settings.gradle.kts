@@ -39,9 +39,16 @@ if (System.getProperty("test") == null) {
     include(
         "cabe-gradle-plugin-test",
         "cabe-gradle-plugin-test:test-gradle-plugin",
-        "cabe-gradle-plugin-test:test-gradle-plugin-modular",
-//        "examples",
-//        "examples:hello",
-//        "examples:hellofx"
+        "cabe-gradle-plugin-test:test-gradle-plugin-modular"
+    )
+}
+
+if (System.getProperty("examples") == null) {
+    logger.info("skipping examples")
+} else {
+    include(
+        "examples",
+        "examples:hello",
+        "examples:hellofx"
     )
 }

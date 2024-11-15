@@ -29,6 +29,12 @@ cd "`dirname $0`" \
   && echo "shadow jar created" \
 && ./gradlew publishToMavenLocal \
   && echo "plugin published to local repository" \
+&& ./gradlew --no-daemon -Dexamples \
+  examples:clean \
+  examples:hello:build \
+  examples:hellofx:build \
+  ${FLAGS} \
+  && echo "compile examples successful" \
 || { echo "ERROR" ; exit 1 ; }
 
 read -p "publish cabe-processor? " -n 1 -r
