@@ -20,7 +20,7 @@ dependencies {
 }
 
 cabe {
-    config.set(Configuration.StandardConfig.DEVELOPMENT.config())
+    config.set(Configuration.DEVELOPMENT)
 }
 
 application {

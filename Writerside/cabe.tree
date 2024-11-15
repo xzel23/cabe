@@ -2,9 +2,9 @@
 <!DOCTYPE instance-profile
         SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
 
-<instance-profile id="howto"
-                 name="How to Use"
-                 start-page="starter-topic.md">
+<instance-profile id="cabe"
+                 name="Cabe"
+                 start-page="cabe.md">
 
-    <toc-element topic="starter-topic.md"/>
+    <toc-element topic="cabe.md"/>
 </instance-profile>

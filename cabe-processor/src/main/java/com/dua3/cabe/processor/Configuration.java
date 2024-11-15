@@ -14,7 +14,7 @@ import java.util.stream.Stream;
  *
  * <p>The Configuration provides a function to parse a configuration string and methods to generate
  * a configuration string representation from its state. Configuration includes a {@link Check} enum which
- * encompasses different validation strategies, and a {@link StandardConfig} enum for standard configurations.
+ * encompasses different validation strategies.
  *
  * @param publicApi  the validation strategy for public APIs.
  * @param privateApi the validation strategy for private APIs.
@@ -22,6 +22,27 @@ import java.util.stream.Stream;
  */
 public record Configuration(Check publicApi, Check privateApi, Check checkReturn) implements Serializable {
     private static final Logger LOG = Logger.getLogger(Configuration.class.getName());
+
+    /**
+     * When the DEVELOPMENT setting is used, parameters are always checked and for violations an
+     * {@link AssertionError} is thrown even when assertions are disabled.
+     */
+    public static final Configuration DEVELOPMENT = new Configuration(Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS);
+
+    /**
+     * When the STANDARD setting is used, parameters are checked differently depending on whether the method is
+     * part of the public or private API:
+     * <ul>
+     * <li>Public API: a {@link NullPointerException} is thrown when a violation is detected
+     * <li>Private API: a standard assertion is used that can be controlled by the standard JVM flags
+     * </ul>
+     */
+    public static final Configuration STANDARD = new Configuration(Check.THROW_NPE, Check.ASSERT, Check.NO_CHECK);
+
+    /**
+     * When NO_CHECK is used, no parameter checks are generated.
+     */
+    public static final Configuration NO_CHECKS =new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK);
 
     /**
      * Parses a configuration string and returns a corresponding Configuration object.
@@ -33,23 +54,21 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * @throws IllegalArgumentException if the configuration string is invalid.
      * @throws IllegalStateException if the configuration string cannot be parsed.
      */
-    public static Configuration parseConfigString(String configStr) {
+    public static Configuration parse(String configStr) {
         switch (configStr) {
-            case "standard" -> {return StandardConfig.STANDARD.config;}
-            case "development" -> {return StandardConfig.DEVELOPMENT.config;}
-            case "no-check" -> {return StandardConfig.NO_CHECK.config;}
+            case "STANDARD":
+                return STANDARD;
+            case "DEVELOPMENT":
+                return DEVELOPMENT;
+            case "NO_CHECKS":
+                return NO_CHECKS;
+            default:
         }
 
         LOG.fine(() -> "parsing custom configuration: " + configStr);
         Pattern pattern = Pattern.compile("(^(?<singleCheck>\\w+)$)|" +
                 "((publicApi=(?<publicApi>\\w+))|(privateApi=(?<privateApi>\\w+))|(returnValue=(?<returnValue>\\w+)))(:?|$)");
-        /*
-        Pattern pattern = Pattern.compile("(^(?<singleCheck>\\w+)$)|(" +
-                "((^|:)(publicApi=(?<publicApi>\\w+))|(privateApi=(?<privateApi>\\w+)|(returnValue=(?<returnValue>\\w+))))+" +
-                "$)"
-        );
 
-         */
         Matcher matcher = pattern.matcher(configStr);
 
         Map<String, Check> checks = new HashMap<>();
@@ -119,53 +138,4 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
         ASSERT_ALWAYS
     }
 
-    /**
-     * Enum representing different standard configurations for an application.
-     * Each configuration corresponds to a specific set of checks that can be
-     * applied during development or runtime.
-     *
-     * <ul>
-     * <li>DEVELOPMENT: Configuration for development with strict checks to detect problems early.
-     * <li>STANDARD: Configuration for standard runtime environment with moderate checks, i.e.,  <li>NO_CHECK: Configuration with all checks disabled.
-     * </ul>
-     *
-     * Each enum constant holds a Configuration object that specifies the checks to apply.
-     */
-    public enum StandardConfig {
-        /**
-         * When the DEVELOPMENT setting is used, parameters are always checked and for violations an
-         * {@link AssertionError} is thrown even when assertions are disabled.
-         */
-        DEVELOPMENT(new Configuration(Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS, Check.ASSERT_ALWAYS)),
-        /**
-         * When the  STANDARD setting is used, parameters are checked differently depending on whether the method is
-         * part of the public or private API:
-         * <ul>
-         * <li>Public API: a {@link NullPointerException} is thrown when a violation is detected
-         * <li>Private API: a standard assertion is used that can be controlled by the standard JVM flags
-         * </ul>
-         */
-        STANDARD(new Configuration(Check.THROW_NPE, Check.ASSERT, Check.NO_CHECK)),
-        /**
-         * When NO_CHECK is used, no parameter checks are generated.
-         */
-        NO_CHECK(new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK));
-
-        StandardConfig(Configuration config) {
-            this.config = config;
-        }
-
-        private static final long serialVersionUID = 1L;
-
-        private final Configuration config;
-
-        /**
-         * Retrieves the configuration.
-         *
-         * @return the current {@link Configuration} denoted by this enum value.
-         */
-        public Configuration config() {
-            return config;
-        }
-    }
 }

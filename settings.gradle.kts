@@ -2,10 +2,7 @@ rootProject.name = "cabe"
 
 include(
     "cabe-processor",
-    "cabe-gradle-plugin",
-    "examples",
-    "examples:hello",
-    "examples:hellofx"
+    "cabe-gradle-plugin"
 )
 
 dependencyResolutionManagement {
@@ -39,7 +36,12 @@ rootProject.name = "cabe"
 if (System.getProperty("test") == null) {
     logger.info("skipping plugin tests")
 } else {
-    include("cabe-gradle-plugin-test")
-    include("cabe-gradle-plugin-test:test-gradle-plugin")
-    include("cabe-gradle-plugin-test:test-gradle-plugin-modular")
+    include(
+        "cabe-gradle-plugin-test",
+        "cabe-gradle-plugin-test:test-gradle-plugin",
+        "cabe-gradle-plugin-test:test-gradle-plugin-modular",
+//        "examples",
+//        "examples:hello",
+//        "examples:hellofx"
+    )
 }

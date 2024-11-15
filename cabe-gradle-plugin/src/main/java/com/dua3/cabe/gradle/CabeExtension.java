@@ -34,7 +34,7 @@ public class CabeExtension {
         verbosity = objectFactory.property(Integer.class).value(0);
 
         // get value of config
-        config = objectFactory.property(Configuration.class).value(Configuration.StandardConfig.STANDARD.config());
+        config = objectFactory.property(Configuration.class).value(Configuration.STANDARD);
 
         // output into the original classes directory
         outputDirectory = objectFactory.directoryProperty();

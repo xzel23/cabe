@@ -58,7 +58,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 t.getVerbosity().set(extension.getVerbosity());
 
                 // set the configuration
-                t.getConfig().set(extension.getConfig().getOrElse(Configuration.StandardConfig.STANDARD.config()));
+                t.getConfig().set(extension.getConfig().getOrElse(Configuration.STANDARD));
 
                 // set directories
                 t.getInputDirectory().set(extension.getInputDirectory());

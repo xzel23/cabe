@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("application")
-    id("com.dua3.cabe") version "3.0-beta-10"
+    id("com.dua3.cabe") version "${projectVersion}"
 }
 
 repositories {

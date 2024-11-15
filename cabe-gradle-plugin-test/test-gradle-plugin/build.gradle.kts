@@ -22,7 +22,7 @@ dependencies {
 }
 
 configure<CabeExtension> {
-    config.set(Configuration.StandardConfig.STANDARD.config())
+    config.set(Configuration.STANDARD)
 }
 
 repositories {

@@ -102,7 +102,7 @@ public class ClassPatcher {
             String configStr = getOptionString(cmdLine, "-c", usedArgs, "standard");
             String classpath = getOptionString(cmdLine, "-cp", usedArgs, "");
 
-            configuration = Configuration.parseConfigString(configStr);
+            configuration = Configuration.parse(configStr);
 
             in = Paths.get(inputFolder);
             out = Paths.get(outputFolder);

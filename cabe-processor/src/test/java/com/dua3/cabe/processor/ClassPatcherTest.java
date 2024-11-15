@@ -167,7 +167,7 @@ class ClassPatcherTest {
         // processFolder will report errors by throwing an exception
         assertDoesNotThrow(() -> {
             Collection<Path> classPath = List.of(testLibDir);
-            ClassPatcher patcher = new ClassPatcher(classPath, Configuration.StandardConfig.DEVELOPMENT.config());
+            ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
             patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
         });
     }
@@ -198,19 +198,24 @@ class ClassPatcherTest {
      * {@link Configuration.Check#ASSERT} are work the same as standard assertions i.e., can be en-/disabled using the
      * standard JVM flags ('-ea and '-da').
      *
-     * @param configName the name of the configuration as defined in {@link Configuration.StandardConfig}
+     * @param configName the {@link Configuration}
      * @throws IOException                           if an I/O error occurs
      * @throws ClassFileProcessingFailedException    if processing of a class file fails
      */
     @ParameterizedTest
     @ValueSource(strings = {
-            "NO_CHECK",
+            "NO_CHECKS",
             "DEVELOPMENT",
             "STANDARD"
     })
     @Order(5)
     public void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
-        Configuration.StandardConfig config = Configuration.StandardConfig.valueOf(configName);
+        Configuration config = switch (configName) {
+            case "NO_CHECKS" -> Configuration.NO_CHECKS;
+            case "DEVELOPMENT" -> Configuration.DEVELOPMENT;
+            case "STANDARD" -> Configuration.STANDARD;
+            default -> throw new IllegalArgumentException("unknown configuration: " + configName);
+        };
 
         // create directories
         Path unprocessedDir = testDir.resolve("classes-unprocessed-" + configName);
@@ -223,11 +228,11 @@ class ClassPatcherTest {
         );
 
         // process classes
-        TestUtil.processClasses(unprocessedDir, processedDir, config.config());
+        TestUtil.processClasses(unprocessedDir, processedDir, config);
 
         // test processed classes
         try (Formatter fmt = new Formatter()) {
-            String header = "Config: " + config.name();
+            String header = "Config: " + config;
             fmt.format("%s%n", header);
             fmt.format("%s%n", "=".repeat(header.length()));
 
@@ -247,10 +252,10 @@ class ClassPatcherTest {
         }
     }
 
-    private static final Map<Configuration.StandardConfig, String> EXPECTED_FOR_CONFIG = Map.of(
-            Configuration.StandardConfig.NO_CHECK, """
-                    Config: NO_CHECK
-                    ================
+    private static final Map<Configuration, String> EXPECTED_FOR_CONFIG = Map.of(
+            Configuration.NO_CHECKS, """
+                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK]
+                    ====================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -304,9 +309,9 @@ class ClassPatcherTest {
                     publicNonNullDefault: -
                                         
                     """,
-            Configuration.StandardConfig.DEVELOPMENT, """
-                    Config: DEVELOPMENT
-                    ===================
+            Configuration.DEVELOPMENT, """
+                    Config: Configuration[publicApi=ASSERT_ALWAYS, privateApi=ASSERT_ALWAYS, checkReturn=ASSERT_ALWAYS]
+                    ===================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -360,9 +365,9 @@ class ClassPatcherTest {
                     publicNonNullDefault: java.lang.AssertionError
                                         
                     """,
-            Configuration.StandardConfig.STANDARD, """
-                    Config: STANDARD
-                    ================
+            Configuration.STANDARD, """
+                    Config: Configuration[publicApi=THROW_NPE, privateApi=ASSERT, checkReturn=NO_CHECK]
+                    ===================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false

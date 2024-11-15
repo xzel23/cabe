@@ -1,13 +1,30 @@
-# How to use Cabe
-
-## What is Cabe?
+# Cabe
 
 Cabe is a Java byte code instrumentation tool that inserts checks based on JSpecify annotations into your class files.
 
 According to the [Fail-Fast Principle](https://www.martinfowler.com/ieeeSoftware/failFast.pdf), all invalid input should be detected and reported early. Cabe helps you
 doing this by automatically checking method and constructor parameters.
 
-Cabe also helps you during develompemnt by checking return values of methods.
+Cabe also helps you during develompment by checking return values of methods.
+
+<tldr>
+<strong>TLDR</strong>
+
+Add this to your Gradle build file to add automatic null-checks to the public API of your project and assertion based
+null checks to the private API:
+
+<tabs>
+    <tab title="Kotlin DSL">
+        <code-block lang="Kotlin">
+            plugins {
+              id("com.dua3.cabe") version "3.0-beta-10"
+            }
+        </code-block>
+    </tab>
+</tabs>
+
+Read on for examples and more detailed configuration options.
+</tldr>
 
 ## What are JSpecify Annotations?
 
@@ -154,7 +171,14 @@ different configurations.
   testing.
 
 - Once you are certain your project is thoroughly tested, you can restrict parameter checking to methods called by
-  third-party code.
+  third-party code. When the standard setting is used, parameters to private API methods are checked using standard
+  assertions that can be enabled or disabled at runtime. Standard assertions are usually optimized out by the JIT
+  compiler when assertions are disabled. There may still be a minor impact due to increased class file size.
+
+- You can also disable all checks by using the <code>NO_CHECK</code> configuration and there will be no performance
+  hit at all. Be aware that you might trade correctness to speed in this case as invalid inputs will not be detected.
+
+When in doubt, profile your application when compiled using the different settings.
 
 ## How are Null Checks implemented?
 
@@ -194,7 +218,9 @@ The predefined configurations are:
 | STANDARD    | THROW_NPE     | ASSERT        | NO_CHECK      |
 | NO_CHECK    | NO_CHECK      | NO_CHECK      | NO_CHECK      |
 
-## What are Special Cases and Restrictions are known?
+## Things to note
+
+Here are some points that you should be aware of when using Cabe.
 
 ### Records
 
@@ -305,7 +331,7 @@ want to use a SpotBugs exclusion file.
     &lt;/FindBugsFilter&gt;
 </code-block>
 
-## Using Cabe in your Gradle Build
+### Using Cabe in your Gradle Build
 
 Cabe can be used either as a standalone program that you can run manually to instrument your class files or as a Gradle
 plugin that runs automatically in your build process. Let's see how it is done with Gradle.
@@ -331,7 +357,7 @@ To use Cabe in your Gradle build, add the plugin to your build script and config
 
 This will run the Cabe processor in your build. When no configuration is given, a standard configuration is used.
 
-### Configure the Cabe Task
+#### Configure the Cabe Task
 
 To configure the instrumentation, you can configure Cabe like this to use one of the predefined configurations:
 
@@ -339,7 +365,7 @@ To configure the instrumentation, you can configure Cabe like this to use one of
     <tab title="Kotlin DSL">
         <code-block lang="Kotlin">
             cabe {
-                config.set(Configuration.StandardConfig.STANDARD.config())
+                config.set(Configuration.STANDARD)
             }
         </code-block>
     </tab>
@@ -348,7 +374,7 @@ To configure the instrumentation, you can configure Cabe like this to use one of
 
 If you omit the configuration block in your build, the standard configuration will be used.
 
-### Using different Configurations for Development and Release Builds
+#### Using different Configurations for Development and Release Builds
 
 You can also automatically select a configuration based on your version string. In this example, strict checking is done
 for snapshot and beta versions whereas a release build will use the standard configuration:
@@ -359,12 +385,67 @@ for snapshot and beta versions whereas a release build will use the standard con
             val isSnapshot = project.version.toString().toDefaultLowerCase().contains("snapshot")
             cabe {
                 if (isSnapshot) {
-                    config.set(Configuration.StandardConfig.DEVELOPMENT.config())
+                    config.set(Configuration.DEVELOPMENT)
                 } else {
-                    config.set(Configuration.StandardConfig.STANDARD.config())
+                    config.set(Configuration.STANDARD)
                 }
             }
         </code-block>
     </tab>
     <!-- FIXME add Groovy syntax -->
 </tabs>
+
+### Defining Custom Configurations
+
+You can define a custom configuration that differs from the provided predefined configurations by providing a
+configuration String:
+
+<code-block lang="Kotlin">
+    cabe {
+        config.set(Configuration.parse("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS"))
+    }
+</code-block>
+
+When using a configuration String, you can use either
+
+- a predefined name: "STANDARD", "DEVELOPMEN", "NOCHECKSS"
+- a single Check to be used public and private API and return values
+- multiple combination of keys ("publicApi", "privateApi", "returnValue") and checks; 
+  in this the remaining will be set to "NO_CHECK"
+
+Examples:
+
+| Configuration String                     | Public API    | Private API   | Return Value   |
+|------------------------------------------|---------------|---------------|----------------|
+| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK       |
+| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS  |
+| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK       |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE      |
+| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT         |
+| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS  |
+| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK       |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE      |
+| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK       |
+| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT         |
+
+You can also use the standard record constructor of <code>Configuration</code>
+
+<code-block lang="Kotlin">
+    cabe {
+        config.set(new Configuration(Check.THROW_NPE, Check.ASSERT, Check.ASSERT_ALWAYS))
+    }
+</code-block>
+
+## What about the Name?
+
+In Javanese, both cabe and lombok both refer to chili peppers. At the same time, Lombok is a... well, I really don't
+know. It is something between a library and a language on its own that extends Java with certain features. One of
+these features are annotations to mark nullable and non-nullable types and code instrumentation to do runtime checks
+based on these annotations.
+
+While widely used, Lombok is quite controversial, you will find plenty of discussions on this topic on the internet.
+
+Newer Java versions brought many features that developers used Lombok for, perhaps most notably Java recorrds.
+
+Having automated null checks in your code is one Lombok feature that I liked but could not find any non-Lombok
+alternative. That's why I started Cabe, and that's where the name came from.
