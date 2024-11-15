@@ -24,7 +24,6 @@ cat -- > Writerside/v.list <<EOF
 </vars>
 EOF
 
-exit
 # run a second build and then a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
 && ./gradlew clean build test publishToMavenLocal \
