@@ -9,10 +9,8 @@ Usage
 - add the plugin in `build.gradle`:
    ```
    plugins {
-       id 'com.dua3.cabe
+       id 'com.dua3.cabe'
    }
    ```
-
-- (optional) configure the plugin:
 
 - read the [documentation](https://xzel23.github.io/cabe/index.html) for details on configuration and usage.
