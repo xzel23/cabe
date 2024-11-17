@@ -15,4 +15,4 @@ Usage
 
 - (optional) configure the plugin:
 
-- read the [documentation](docs/cabe.html) for details on configuration and usage.
+- read the [documentation](https://xzel23.github.io/cabe/index.html) for details on configuration and usage.
