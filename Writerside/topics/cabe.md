@@ -438,14 +438,12 @@ You can also use the standard record constructor of <code>Configuration</code>
 
 ## What about the Name?
 
-In Javanese, both cabe and lombok both refer to chili peppers. At the same time, Lombok is a... well, I really don't
-know. It is something between a library and a language on its own that extends Java with certain features. One of
-these features are annotations to mark nullable and non-nullable types and code instrumentation to do runtime checks
-based on these annotations.
+In Javanese, both cabe and lombok refer to chili peppers. At the same time, Lombok is a... well, it's something between
+a library and a language on its own that extends Java with certain features. One of these features are annotations to
+mark nullable and non-nullable types and code instrumentation to do runtime checks based on these annotations.
 
-While widely used, Lombok is quite controversial, you will find plenty of discussions on this topic on the internet.
+While widely used, Lombok is quite controversial - you will find plenty of discussions on this topic on the internet.
 
-Newer Java versions brought many features that developers used Lombok for, perhaps most notably Java recorrds.
-
-Having automated null checks in your code is one Lombok feature that I liked but could not find any non-Lombok
-alternative. That's why I started Cabe, and that's where the name came from.
+Newer Java versions brought many features that developers used Lombok for, perhaps most notably Java records. But
+having automated null checks in your code is one Lombok feature that I liked but could not find any non-Lombok
+alternative. That's why I started Cabe, and that's where the name comes from.
