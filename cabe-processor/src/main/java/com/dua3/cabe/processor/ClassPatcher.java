@@ -170,13 +170,14 @@ public class ClassPatcher {
                 
                 Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>] [-v <verbosity>]
                 
-                    <configurations> : standard|development|no-checks (default: standard)
+                    <configuration>  : STANDARD|DEVELOPMENT|NO_CHECKS|<configstr> (default: STANDARD)
                 
-                                       'standard'    - use standard assertions for private API methods,
-                                                       throw NullPointerException for public API methods 
-                                       'development' - failed checks will always throw an AssertionError 
-                                       'no-check'    - do not add any null checks
-                    
+                                       STANDARD    - use standard assertions for private API methods,
+                                                       throw NullPointerException for public API methods
+                                       DEVELOPMENT - failed checks will always throw an AssertionError, also checks return values
+                                       NO_CHECKS   - do not add any null checks (class files are copied unchanged)
+                                       <configstr> - configuration string as described in the documentation
+                
                     <verbosity>      : 0 - show warnings and errors only (default)
                                      : 1 - show basic processing information
                                      : 2 - show detailed information

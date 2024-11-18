@@ -436,6 +436,33 @@ You can also use the standard record constructor of <code>Configuration</code>
     }
 </code-block>
 
+### Using as a Command Line Tool
+
+The instrumentation is done by the CabeProcessor class. A precompiled Jar file can be downloaded from
+[Maven Central Repository](https://mvnrepository.com/artifact/com.dua3.cabe/cabe-processor-all/%PROCESSOR_VERSION%).
+
+```text
+    ClassPatcher
+    ============
+    
+    Add null checks in Java class file byte code.
+    
+    Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>] [-v <verbosity>]
+    
+        <configuration>  : STANDARD|DEVELOPMENT|NO_CHECKS|<configstr> (default: STANDARD)
+    
+                           STANDARD    - use standard assertions for private API methods,
+                                         throw NullPointerException for public API methods
+                           DEVELOPMENT - failed checks will always throw an AssertionError, also checks return values
+                           NO_CHECKS   - do not add any null checks (class files are copied unchanged)
+                           <configstr> - configuration string as described in the documentation
+    
+        <verbosity>      : 0 - show warnings and errors only (default)
+                         : 1 - show basic processing information
+                         : 2 - show detailed information
+                         : 1 - show all information
+```
+
 ## What about the Name?
 
 In Javanese, both cabe and lombok refer to chili peppers. At the same time, Lombok is a... well, it's something between
