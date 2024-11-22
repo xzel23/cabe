@@ -436,12 +436,18 @@ You can also use the standard record constructor of <code>Configuration</code>
     }
 </code-block>
 
-### Using as a Command Line Tool
+### Using as a Cabe as a standalone Command Line Tool
 
-The instrumentation is done by the CabeProcessor class. A precompiled Jar file can be downloaded from
-[Maven Central Repository](https://mvnrepository.com/artifact/com.dua3.cabe/cabe-processor-all/%PROCESSOR_VERSION%).
+The instrumentation is done by the `ClassPatcher` class. A precompiled runnable Jar that includes all necessary dependencies can be downloaded from
+[Maven Central Repository](https://mvnrepository.com/artifact/com.dua3.cabe/cabe-processor-all/%PROCESSOR_VERSION%) and run using `java -jar`:
 
 ```text
+    % curl https://repo1.maven.org/maven2/com/dua3/cabe/cabe-processor-all/3.0-rc/cabe-processor-all-%PROCESSOR_VERSION%-rc.jar -o cabe-processor-all.jar
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100 2955k  100 2955k    0     0   973k      0  0:00:03  0:00:03 --:--:--  973k
+    
+    % java -jar cabe-processor-all.jar --help
     ClassPatcher
     ============
     
