@@ -13,4 +13,4 @@ Usage
    }
    ```
 
-- read the [documentation](https://xzel23.github.io/cabe/index.html) for details on configuration and usage.
+- read the [documentation](https://xzel23.github.io/cabe/cabe.html) for details on configuration and usage.
