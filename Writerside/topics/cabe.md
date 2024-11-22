@@ -469,6 +469,24 @@ The instrumentation is done by the `ClassPatcher` class. A precompiled runnable 
                          : 1 - show all information
 ```
 
+## What Java version is Cabe compatible with?
+
+Cabe needs at least Java 17 to run. The instrumentation should work for class files from Java 11, but I have only
+tested this with versions 17 to 23.
+
+## Is there a Maven Plugin for Cabe?
+
+Not yet. But it's on my Todo list.
+
+## Is the Source available?
+
+Sourcecode is available under the [MIT license](https://github.com/xzel23/cabe/blob/main/LICENSE) on the project 
+[GitHub page](https://github.com/xzel23/cabe).
+
+## Where do I report Bugs?
+
+Use [GitHub issues](https://github.com/xzel23/cabe/issues) to report Bugs and suggestions.
+
 ## What about the Name?
 
 In Javanese, both cabe and lombok refer to chili peppers. At the same time, Lombok is a... well, it's something between
