@@ -1,7 +1,5 @@
 package com.dua3.cabe.processor.test.config;
 
-import org.jspecify.annotations.NonNull;
-
 import java.util.Formatter;
 
 public class TestClassStdAssert {

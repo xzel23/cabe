@@ -185,12 +185,13 @@ When in doubt, profile your application when compiled using the different settin
 This depends on the configuration used. There are four types of checks. The examples assume a non-nullable parameter
 #named `p`.
 
-| Check              | Equivalent Java code                                        |
-|--------------------|-------------------------------------------------------------|
-| NO_CHECK           | [N/A]                                                       |
-| STANDARD_ASSERTION | `assert p!=null : "p is null";`                             |
-| ASSERT_ALWAYS      | `if (p==null) throw new AssertionError("p is null");`       |
-| THROW_NPE          | `if (p==null) throw new NullPointerException("p is null");` |
+| Check              | Equivalent Java code                                            |
+|--------------------|-----------------------------------------------------------------|
+| NO_CHECK           | [N/A]                                                           |
+| STANDARD_ASSERTION | `assert p!=null : "p is null";`                                 |
+| ASSERT_ALWAYS      | `if (p==null) throw new AssertionError("p is null");`           |
+| THROW_NPE          | `if (p==null) throw new NullPointerException("p is null");`     |
+| THROW_IAE          | `if (p==null) throw new IllegalArgumentException("p is null");` |
 
 ## Public vs Private API
 
@@ -415,18 +416,19 @@ When using a configuration String, you can use either
 
 Examples:
 
-| Configuration String                     | Public API    | Private API   | Return Value   |
-|------------------------------------------|---------------|---------------|----------------|
-| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK       |
-| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS  |
-| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK       |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE      |
-| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT         |
-| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS  |
-| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK       |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE      |
-| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK       |
-| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT         |
+| Configuration String                     | Public API    | Private API   | Return Value  |
+|------------------------------------------|---------------|---------------|---------------|
+| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      |
+| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS |
+| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     |
+| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        |
+| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS |
+| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK      |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     |
+| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      |
+| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        |
+| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      |
 
 You can also use the standard record constructor of <code>Configuration</code>
 

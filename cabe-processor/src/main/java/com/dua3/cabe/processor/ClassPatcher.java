@@ -406,8 +406,6 @@ public class ClassPatcher {
                 && mi.methodName().equals("equals") && mi.parameters().size() == 1;
 
         LOG.fine(() -> "instrumenting method " + methodName);
-        boolean hasStandardParameterAssertions = false;
-        boolean hasOtherParameterChecks = false;
         boolean hasStandardReturnValueAssertions = false;
         boolean hasOtherReturnValueChecks = false;
         try (Formatter standardParameterAssertions = new Formatter();
@@ -432,48 +430,24 @@ public class ClassPatcher {
                 NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
                 boolean isNonNull = (nullnessOperatorParameter == NullnessOperator.MINUS_NULL)
                         || (!ignoreNonMethodNonNullAnnotation && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
+
                 if (isNonNull) {
-                    Configuration.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
-                    if (ci.isRecord() && check== Configuration.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
-                        LOG.info("cannot use assert in record " + ci.name() + " using THROW_NPE instead / https://github.com/xzel23/cabe/issues/1");
-                        check = Configuration.Check.THROW_NPE;
-                    }
-                    switch (check) {
-                        case NO_CHECK -> {
-                            // nop
-                        }
-                        case ASSERT -> {
-                            standardParameterAssertions.format(
-                                    "  if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                                    pi.param(), parameterName
-                            );
-                            hasStandardParameterAssertions = true;
-                        }
-                        case ASSERT_ALWAYS -> {
-                            otherParameterChecks.format(
-                                    "if (%1$s==null) { throw new AssertionError((Object) \"%2$s is null\"); }%n",
-                                    pi.param(), parameterName
-                            );
-                            hasOtherParameterChecks = true;
-                        }
-                        case THROW_NPE -> {
-                            otherParameterChecks.format(
-                                    "if (%1$s==null) { throw new NullPointerException(\"%2$s is null\"); }%n",
-                                    pi.param(), parameterName
-                            );
-                            hasOtherParameterChecks = true;
-                        }
-                    }
+                    Configuration.Check check = getCheck(ci, mi);
+                    check.getCodeForNewInstance("\"%2$s is null\"")
+                            .map(createThrowableCode -> "  if (%1$s==null) { throw " + createThrowableCode + "; }%n")
+                            .ifPresent(checkCode -> {
+                                if (check == Configuration.Check.ASSERT) {
+                                    standardParameterAssertions.format(checkCode, pi.param(), parameterName);
+                                } else {
+                                    otherParameterChecks.format(checkCode, pi.param(), parameterName);
+                                }
+                            });
                     LOG.fine(() -> "adding null check for parameter " + parameterName + " in " + ci.name());
                 }
             }
 
             // modify class by injecting parameter checks
-            String codeParamChecks = (hasStandardParameterAssertions
-                    ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardParameterAssertions)
-                    : "")
-                    + (hasOtherParameterChecks ? otherParameterChecks : "");
-
+            String codeParamChecks = getCheckCode(ci, standardParameterAssertions.toString(), otherParameterChecks.toString());
             if (!codeParamChecks.isEmpty()) {
                 LOG.fine(() -> "injecting code into: " + methodName + "\n" + codeParamChecks.indent(2).stripTrailing());
                 ctBehavior.insertBefore(codeParamChecks);
@@ -489,37 +463,20 @@ public class ClassPatcher {
                 if (isNonNullRV) {
                     Configuration.Check check = configuration.checkReturn();
 
-                    switch (check) {
-                        case NO_CHECK -> {
-                            // nop
-                        }
-                        case ASSERT -> {
-                            standardReturnValueAssertions.format(
-                                    "  if ($_==null) { throw new AssertionError((Object) \"invalid null return value\"); }%n"
-                            );
-                            hasStandardReturnValueAssertions = true;
-                        }
-                        case ASSERT_ALWAYS -> {
-                            otherReturnValueChecks.format(
-                                    "  if ($_==null) { throw new AssertionError((Object) \"invalid null return value\"); }%n"
-                            );
-                            hasOtherReturnValueChecks = true;
-                        }
-                        case THROW_NPE -> {
-                            otherReturnValueChecks.format(
-                                    "if ($_==null) { throw new NullPointerException(\"invalid null return value\"); }%n"
-                            );
-                            hasOtherReturnValueChecks = true;
-                        }
-                    }
+                    check.getCodeForNewInstance("\"invalid null return value\"")
+                            .map(createThrowableCode -> "  if ($_==null) { throw " + createThrowableCode + "; }%n")
+                            .ifPresent(checkCode -> {
+                                if (check == Configuration.Check.ASSERT) {
+                                    standardReturnValueAssertions.format(checkCode);
+                                } else {
+                                    otherReturnValueChecks.format(checkCode);
+                                }
+                            });
                     LOG.fine(() -> "adding null check for return value in " + ci.name());
                 }
 
                 // modify class by injecting return value checks
-                String codeReturnValueChecks = (hasStandardReturnValueAssertions
-                        ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardReturnValueAssertions)
-                        : "")
-                        + (hasOtherReturnValueChecks ? otherReturnValueChecks : "");
+                String codeReturnValueChecks = getCheckCode(ci, standardReturnValueAssertions.toString(), otherReturnValueChecks.toString());
 
                 if (!codeReturnValueChecks.isEmpty()) {
                     LOG.fine(() -> "injecting code into: " + methodName + "\n" + codeReturnValueChecks.indent(2).stripTrailing());
@@ -533,6 +490,43 @@ public class ClassPatcher {
         } catch (RuntimeException e) {
             throw new ClassFileProcessingFailedException("exception while instrumenting method '" + methodName + "'", e);
         }
+    }
+
+    /**
+     * Constructs a string of code that includes checks for parameter or return value assertions.
+     *
+     * @param ci                    the ClassInfo object representing the class being processed
+     * @param standardAssertionsCode the code for standard assertions to be included in the check
+     * @param otherAssertionsCode    additional assertion code to be included in the check
+     * @return a String representing the complete check code
+     * @throws CannotCompileException if the code compilation fails
+     * @throws NotFoundException if a required class or method is not found
+     */
+    private String getCheckCode(ClassInfo ci, String standardAssertionsCode, String otherAssertionsCode) throws CannotCompileException, NotFoundException {
+        return (!standardAssertionsCode.isEmpty()
+                ? "if (%1$s) {%n%2$s}%n".formatted(getAssertionEnabledExpression(ci), standardAssertionsCode)
+                : "")
+                + otherAssertionsCode;
+    }
+
+    /**
+     * Determines the appropriate check configuration for the given class and method.
+     *
+     * <p>For record constructors, standard assertions cannot be injected for technical reasons, so in that case
+     * {@code Check.THROW_NPE} will be returned instead of {@code Check.ASSERT}.
+     *
+     * @param ci the ClassInfo object representing the class being processed
+     * @param mi the MethodInfo object representing the method being processed
+     * @return the check configuration to be used, which could be a public API check,
+     *         private API check, or adjusted if the class is a record
+     */
+    private Configuration.Check getCheck(ClassInfo ci, MethodInfo mi) {
+        Configuration.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
+        if (ci.isRecord() && check == Configuration.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
+            LOG.info("cannot use assert in record " + ci.name() + " using THROW_NPE instead / https://github.com/xzel23/cabe/issues/1");
+            check = Configuration.Check.THROW_NPE;
+        }
+        return check;
     }
 
     /**

@@ -206,16 +206,12 @@ class ClassPatcherTest {
     @ValueSource(strings = {
             "NO_CHECKS",
             "DEVELOPMENT",
-            "STANDARD"
+            "STANDARD",
+            "publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK"
     })
     @Order(5)
     public void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
-        Configuration config = switch (configName) {
-            case "NO_CHECKS" -> Configuration.NO_CHECKS;
-            case "DEVELOPMENT" -> Configuration.DEVELOPMENT;
-            case "STANDARD" -> Configuration.STANDARD;
-            default -> throw new IllegalArgumentException("unknown configuration: " + configName);
-        };
+        Configuration config = Configuration.parse(configName);
 
         // create directories
         Path unprocessedDir = testDir.resolve("classes-unprocessed-" + configName);
@@ -419,6 +415,62 @@ class ClassPatcherTest {
                     publicNonNull       : java.lang.NullPointerException
                     publicNullableDefault: -
                     publicNonNullDefault: java.lang.NullPointerException
+                                        
+                    """,
+            Configuration.parse("publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK"), """
+                    Config: Configuration[publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK]
+                    ===================================================================================
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
+                    ---------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNonNull      : -
+                    publicNullable      : -
+                    publicNonNull       : java.lang.IllegalArgumentException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions true
+                    --------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNonNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNonNull       : java.lang.IllegalArgumentException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions false
+                    ------------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNonNull      : -
+                    publicNullable      : -
+                    publicNonNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
+                    -----------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNonNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNonNull       : java.lang.NullPointerException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
+                    -------------------------------------------------------------------------------------
+                    assertions enabled  : false
+                    privateNullable     : -
+                    privateNonNull      : -
+                    publicNullable      : -
+                    publicNonNull       : java.lang.IllegalArgumentException
+                    publicNullableDefault: -
+                    publicNonNullDefault: java.lang.IllegalArgumentException
+                                        
+                    Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions true
+                    ------------------------------------------------------------------------------------
+                    assertions enabled  : true
+                    privateNullable     : -
+                    privateNonNull      : java.lang.AssertionError
+                    publicNullable      : -
+                    publicNonNull       : java.lang.IllegalArgumentException
+                    publicNullableDefault: -
+                    publicNonNullDefault: java.lang.IllegalArgumentException
                                         
                     """
     );
