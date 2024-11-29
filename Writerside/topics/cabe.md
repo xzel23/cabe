@@ -444,7 +444,7 @@ The instrumentation is done by the `ClassPatcher` class. A precompiled runnable 
 [Maven Central Repository](https://mvnrepository.com/artifact/com.dua3.cabe/cabe-processor-all/%PROCESSOR_VERSION%) and run using `java -jar`:
 
 ```text
-    % curl https://repo1.maven.org/maven2/com/dua3/cabe/cabe-processor-all/3.0-rc/cabe-processor-all-%PROCESSOR_VERSION%-rc.jar -o cabe-processor-all.jar
+    % curl https://repo1.maven.org/maven2/com/dua3/cabe/cabe-processor-all/%PROCESSOR_VERSION%/cabe-processor-all-%PROCESSOR_VERSION%.jar -o cabe-processor-all.jar
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
     100 2955k  100 2955k    0     0   973k      0  0:00:03  0:00:03 --:--:--  973k
