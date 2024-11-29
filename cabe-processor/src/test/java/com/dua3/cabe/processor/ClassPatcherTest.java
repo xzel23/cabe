@@ -442,7 +442,7 @@ class ClassPatcherTest {
                     privateNullable     : -
                     privateNonNull      : -
                     publicNullable      : -
-                    publicNonNull       : java.lang.IllegalArgumentException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestClassStdAssert.class with assertions true
                     -----------------------------------------------------------------------------------------
@@ -450,7 +450,7 @@ class ClassPatcherTest {
                     privateNullable     : -
                     privateNonNull      : java.lang.AssertionError
                     publicNullable      : -
-                    publicNonNull       : java.lang.IllegalArgumentException
+                    publicNonNull       : java.lang.NullPointerException
                                         
                     Testing com/dua3/cabe/processor/test/config/TestInterface.class with assertions false
                     -------------------------------------------------------------------------------------
