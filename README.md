@@ -9,7 +9,7 @@ Usage
 - add the plugin in `build.gradle`:
    ```
    plugins {
-       id 'com.dua3.cabe' version '3.0.1-SNAPSHOT'
+       id 'com.dua3.cabe' version '3.0.1'
    }
    ```
 
