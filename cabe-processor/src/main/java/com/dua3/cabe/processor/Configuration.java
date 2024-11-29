@@ -123,19 +123,48 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
         /**
          * Do not generate Checks.
          */
-        NO_CHECK,
+        NO_CHECK(null, null),
+
         /**
          * Generate standard assertions that can be controlled at runtime (i.e., g {@code -ea} and {@code -da} JVM flags).
+         *
+         * <p>If assertions are enabled, violations will result in throwing an {@link AssertionError}.
          */
-        ASSERT,
+
+        ASSERT("new AssertionError((Object) ", ")"),
+
         /**
-         * Throw a NullPointerException if parameter is null.
+         * Throw a {@link NullPointerException} if parameter is null.
          */
-        THROW_NPE,
+        THROW_NPE("new NullPointerException(",")"),
+
         /**
-         * Throw an AssertionError if parameter is null, regardless of the assertion setting.
+         * Throw an {@link AssertionError} if parameter is null, regardless of the assertion setting.
          */
-        ASSERT_ALWAYS
+        ASSERT_ALWAYS("new AssertionError((Object) ", ")"),
+
+        /**
+         * Throw an {@link IllegalArgumentException} if parameter is null.
+         */
+        THROW_IAE("new IllegalArgumentException(",")");
+
+        private final String prefix;
+        private final String suffix;
+
+        Check(String prefix, String suffix) {
+            this.prefix = prefix;
+            this.suffix = suffix;
+        }
+
+        /**
+         * Generate the code fragment that creates a new instance of this Check instance's throwable class.
+         * @param message the text to use as the message parameter of the throwable constructor.
+         *
+         * @return the code to create an instance of this Check instance's throwable
+         */
+        public Optional<String> getCodeForNewInstance(String message) {
+            return Optional.ofNullable(prefix).map(pre -> pre + message + suffix);
+        }
     }
 
 }
