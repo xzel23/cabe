@@ -468,7 +468,7 @@ The instrumentation is done by the `ClassPatcher` class. A precompiled runnable 
         <verbosity>      : 0 - show warnings and errors only (default)
                          : 1 - show basic processing information
                          : 2 - show detailed information
-                         : 1 - show all information
+                         : 3 - show all information
 ```
 
 ## What Java version is Cabe compatible with?

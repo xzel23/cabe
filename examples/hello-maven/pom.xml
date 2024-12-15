@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>hello-maven</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>hello-maven</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <configuration>
+              <compilerArguments>
+                <d>${project.build.directory}/unprocessed-classes</d>
+              </compilerArguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.dua3.cabe</groupId>
+        <artifactId>cabe-maven-plugin</artifactId>
+        <version>3.0.1</version>
+        <configuration>
+          <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
+          <verbosity>1</verbosity>
+          <configurationString>STANDARD</configurationString>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>cabe</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <addClasspath>true</addClasspath>
+              <mainClass>hello.Hello</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
