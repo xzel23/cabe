@@ -2,7 +2,8 @@ rootProject.name = "cabe"
 
 include(
     "cabe-processor",
-    "cabe-gradle-plugin"
+    "cabe-gradle-plugin",
+    "cabe-maven-plugin"
 )
 
 dependencyResolutionManagement {

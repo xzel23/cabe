@@ -181,7 +181,7 @@ public class ClassPatcher {
                     <verbosity>      : 0 - show warnings and errors only (default)
                                      : 1 - show basic processing information
                                      : 2 - show detailed information
-                                     : 1 - show all information
+                                     : 3 - show all information
                 """;
         System.out.println(msg);
     }
