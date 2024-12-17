@@ -138,6 +138,7 @@ public abstract class CabeTask extends DefaultTask {
                             getRuntimeClassPath().get().getFiles().stream()
                     )
                     .map(File::toString)
+                    .distinct()
                     .collect(Collectors.joining(File.pathSeparator));
 
             String javaExec = javaExecutable.get();
