@@ -1,3 +1,8 @@
+version 3.0.2 (in progress)
+=============
+
+- fix: duplicated jars in classpath (contributed by mk868)
+
 version 3.0.1
 =============
 
