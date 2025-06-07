@@ -3,8 +3,8 @@ plugins {
     id("com.dorongold.task-tree") version "2.1.1"
 }
 
-extra["plugin_version"] = "3.0.2-SNAPSHOT"
-extra["processor_version"] = "3.0.2-SNAPSHOT"
+extra["plugin_version"] = "3.0.2"
+extra["processor_version"] = "3.0.2"
 
 subprojects {
     apply(plugin = "java")
