@@ -21,20 +21,29 @@ subprojects {
     }
 }
 
-tasks.create("printProcessorVersion") {
+tasks.register("printProcessorVersion") {
+    group = "other"
+    description = "Prints the processor version"
+
     doLast {
         println(rootProject.extra["processor_version"])
     }
 }
 
-tasks.create("printPluginVersion") {
+tasks.register("printPluginVersion") {
+    group = "other"
+    description = "Prints the plugin version"
+
     doLast {
         println(rootProject.extra["plugin_version"])
     }
 }
 
 allprojects {
-    tasks.create("printTaskInputsAndOutputs") {
+    tasks.register("printTaskInputsAndOutputs") {
+        group = "other"
+        description = "Prints task inputs and outputs"
+
         doLast {
             project.tasks.forEach {
                 println("--------------------------------------------------------------------------------")
