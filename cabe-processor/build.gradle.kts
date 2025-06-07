@@ -44,6 +44,13 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
 }
 
+// Configure JavaFX for test scope only
+javafx {
+    version = "17"
+    modules = listOf("javafx.controls")
+    configuration = "testImplementation"
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
@@ -67,6 +74,19 @@ tasks.shadowJar {
 
 tasks.test {
     useJUnitPlatform()
+
+    // Set JavaFX path for tests that run in a separate process
+    doFirst {
+        // Get the JavaFX path from the JavaFX plugin using a resolvable configuration
+        val javaFxPath = configurations.named("testRuntimeClasspath")
+            .get()
+            .filter { it.name.contains("javafx") }
+            .joinToString(File.pathSeparator)
+
+        if (javaFxPath.isNotEmpty()) {
+            systemProperty("org.openjfx.javafxplugin.path", javaFxPath)
+        }
+    }
 }
 
 // === publication: MAVEN = == >

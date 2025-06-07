@@ -184,9 +184,23 @@ public final class TestUtil {
     }
 
     public static String runClass(Path dir, String className, boolean assertionsEnabled) throws IOException, InterruptedException {
-        ProcessBuilder processBuilder =
-                new ProcessBuilder("java", (assertionsEnabled ? "-ea" : "-da"), className)
-                        .directory(dir.toFile());
+        List<String> command = new ArrayList<>();
+        command.add("java");
+        command.add(assertionsEnabled ? "-ea" : "-da");
+
+        // Add JavaFX modules to the module path for tests
+        String javaFxPath = System.getProperty("org.openjfx.javafxplugin.path");
+        if (javaFxPath != null && !javaFxPath.isEmpty()) {
+            command.add("--module-path");
+            command.add(javaFxPath);
+            command.add("--add-modules");
+            command.add("javafx.controls");
+        }
+
+        command.add(className);
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command)
+                .directory(dir.toFile());
         Process process = processBuilder.start();
         int exitCode = process.waitFor();
         if (exitCode != 0) {
