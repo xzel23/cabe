@@ -14,6 +14,10 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_17
         withJavadocJar()
         withSourcesJar()
+
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
     }
 }
 

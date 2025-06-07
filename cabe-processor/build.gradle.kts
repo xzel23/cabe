@@ -5,8 +5,9 @@ plugins {
     id("application")
     id("maven-publish")
     id("signing")
-    id("com.github.spotbugs") version "6.0.22"
+    id("com.github.spotbugs") version "6.1.13"
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("org.openjfx.javafxplugin") version "0.1.0"
 }
 
 /////////////////////////////////////////////////////////////////////////////
