@@ -69,6 +69,8 @@ public class NullMarkedPackage {
 
         // check that enum constructors work
         check(() -> F.WITH_INITIALISER_1.toString(), null, "assertion failed: (txt|arg#2) is null");
+//        check(() -> G.WITH_INITIALISER_1.toString(), null, null);
+        check(() -> H.WITH_INITIALISER_1.toString(), null, "assertion failed: (unannotatedTxt|arg#2) is null");
 
         // check that lambdas are not instrumented
         check(() -> apply(a -> String.valueOf(a), 1), "1", null);
@@ -238,6 +240,24 @@ public class NullMarkedPackage {
         WITH_INITIALISER_2(2, null);
 
         F(int i, @NonNull String txt) {
+            // nop
+        }
+    }
+
+    enum G {
+        WITH_INITIALISER_1(1, "one"),
+        WITH_INITIALISER_2(2, null);
+
+        G(int i, @Nullable String nullableTxt) {
+            // nop
+        }
+    }
+
+    enum H {
+        WITH_INITIALISER_1(1, "one"),
+        WITH_INITIALISER_2(2, null);
+
+        H(int i, String unannotatedTxt) {
             // nop
         }
     }

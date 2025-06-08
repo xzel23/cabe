@@ -56,6 +56,11 @@ public class NullUnmarkedPackage {
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
+
+        // check that enum constructors work
+        check(() -> F.WITH_INITIALISER_1.toString(), null, "assertion failed: (txt|arg#2) is null");
+        check(() -> G.WITH_INITIALISER_1.toString(), null, null);
+        check(() -> H.WITH_INITIALISER_1.toString(), null, null);
     }
 
     private static String unannotatedArgument(String arg) {
@@ -160,6 +165,33 @@ public class NullUnmarkedPackage {
 
         public String toString() {
             return super.toString() + b;
+        }
+    }
+
+    enum F {
+        WITH_INITIALISER_1(1, "one"),
+        WITH_INITIALISER_2(2, null);
+
+        F(int i, @NonNull String txt) {
+            // nop
+        }
+    }
+
+    enum G {
+        WITH_INITIALISER_1(1, "one"),
+        WITH_INITIALISER_2(2, null);
+
+        G(int i, @Nullable String nullableTxt) {
+            // nop
+        }
+    }
+
+    enum H {
+        WITH_INITIALISER_1(1, "one"),
+        WITH_INITIALISER_2(2, null);
+
+        H(int i, String unannotatedTxt) {
+            // nop
         }
     }
 }
