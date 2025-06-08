@@ -1,5 +1,7 @@
 package com.dua3.cabe.processor;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Executable;
@@ -12,6 +14,23 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 record ParameterInfo(int index, String param, String name, Class<?> type, NullnessOperator nullnessOperator, boolean isSynthetic, MethodInfo methodInfo) {
+
+    enum Reproducer {
+        A(null);
+
+        Reproducer(@Nullable String s) {
+            // nothing to do
+        }
+    }
+
+    private static final boolean IS_COMPILER_BUG_ENUM_PARAMETER_INDEX_PRESENT;
+
+    static {
+        var Constructor = Reproducer.class.getDeclaredConstructors()[0];
+        Parameter[] parameters = Constructor.getParameters();
+        IS_COMPILER_BUG_ENUM_PARAMETER_INDEX_PRESENT = parameters[0].getAnnotatedType().getDeclaredAnnotations().length > 0;
+    }
+
     private static final Set<String> PRIMITIVES = Set.of(
             "byte",
             "char",
@@ -41,7 +60,9 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
             boolean isSynthetic = param.isSynthetic()
                     || (mi.isConstructor() && !ci.isStaticClass() && ci.isInnerClass() && i==0);
 
-            AnnotatedType type = param.getAnnotatedType();
+            Parameter paramForType = ci.isEnum() && mi.isConstructor() && IS_COMPILER_BUG_ENUM_PARAMETER_INDEX_PRESENT && i > 1
+                    ? parms[i-2] : param;
+            AnnotatedType type = paramForType.getAnnotatedType();
 
             NullnessOperator nullnessOperator = Util.getNullnessOperator(param.getDeclaredAnnotations())
                     .combineWithParent(() -> getGenericTypeNullnessOperator(param))

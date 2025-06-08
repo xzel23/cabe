@@ -12,5 +12,6 @@ public class Cabe018 {
             System.out.println("FAIL");
             System.exit(1);
         }
+        System.out.println("OK");
     }
 }

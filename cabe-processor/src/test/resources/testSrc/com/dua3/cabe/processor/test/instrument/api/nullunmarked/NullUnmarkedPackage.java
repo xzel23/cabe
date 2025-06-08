@@ -59,8 +59,8 @@ public class NullUnmarkedPackage {
 
         // check that enum constructors work
         check(() -> F.WITH_INITIALISER_1.toString(), null, "assertion failed: (txt|arg#2) is null");
-        check(() -> G.WITH_INITIALISER_1.toString(), null, null);
-        check(() -> H.WITH_INITIALISER_1.toString(), null, null);
+        check(() -> G.WITH_INITIALISER_1.toString(), "WITH_INITIALISER_1", null);
+        check(() -> H.WITH_INITIALISER_1.toString(), "WITH_INITIALISER_1", null);
     }
 
     private static String unannotatedArgument(String arg) {
