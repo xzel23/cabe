@@ -1,3 +1,11 @@
+version 3.2.0
+=============
+
+- make the cabe task cacheable
+- dependency updates
+- should be commpatible with upcoming Gradle 9 (tested with RC 3)
+- the cabe processor version did not change (still 3.1.0)
+
 version 3.1.0
 =============
 
