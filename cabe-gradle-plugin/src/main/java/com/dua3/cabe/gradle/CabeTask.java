@@ -11,10 +11,13 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
@@ -32,6 +35,7 @@ import java.util.stream.Stream;
 /**
  * This tasks injects assertions for parameters marked as not allowing null values into the source code.
  */
+@CacheableTask
 public abstract class CabeTask extends DefaultTask {
     private final DirectoryProperty inputDirectory;
     private final DirectoryProperty outputDirectory;
@@ -64,6 +68,7 @@ public abstract class CabeTask extends DefaultTask {
      * @return The input directory for the Cabe task.
      */
     @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public DirectoryProperty getInputDirectory() {
         return inputDirectory;
     }
