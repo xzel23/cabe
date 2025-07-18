@@ -35,13 +35,14 @@ repositories {
 dependencies {
     implementation("org.jspecify:jspecify:1.0.0")
     implementation("org.javassist:javassist:3.30.2-GA")
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
 
-    runtimeOnly("org.apache.logging.log4j:log4j-core:2.22.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+
+    runtimeOnly("org.apache.logging.log4j:log4j-core:2.25.1")
 }
 
 // Configure JavaFX for test scope only
