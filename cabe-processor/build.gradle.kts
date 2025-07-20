@@ -36,12 +36,12 @@ dependencies {
     implementation("org.jspecify:jspecify:1.0.0")
     implementation("org.javassist:javassist:3.30.2-GA")
 
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation(platform("org.junit:junit-bom:5.13.3"))
+    testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
-
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.25.1")
 }
 
