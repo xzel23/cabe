@@ -134,7 +134,7 @@ public abstract class CabeTask extends DefaultTask {
     }
 
     @TaskAction
-    void run() {
+    void run() throws InterruptedException, GradleException {
         try {
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
             String systemClassPath = System.getProperty("java.class.path");
@@ -162,11 +162,9 @@ public abstract class CabeTask extends DefaultTask {
             };
 
             Logger logger = getLogger();
-            if (v>0) {
-                logger.debug("Instrumenting class files: {}", String.join(" ", args));
+            if (logger.isInfoEnabled()) {
+                logger.info(String.join(" ", args));
             }
-
-            logger.info(String.join(" ", args));
             ProcessBuilder pb = new ProcessBuilder(args);
 
             Process process = pb.start();
@@ -178,6 +176,9 @@ public abstract class CabeTask extends DefaultTask {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
                 }
             }
+        } catch (InterruptedException e) {
+            getLogger().warn("instrumenting class files interrupted");
+            throw e;
         } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
         }

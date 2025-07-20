@@ -110,7 +110,7 @@ public class ClassPatcher {
         } catch (RuntimeException e) {
             System.err.println("Commandline error: " + e.getMessage());
             System.err.println("Command Arguments: " + Arrays.stream(args)
-                    .map(s -> "\"" + s.replaceAll("\"", "\\\"") + "\"")
+                    .map(s -> "\"" + s.replace("\"", "\\\"") + "\"")
                     .collect(Collectors.joining(" ")));
             System.exit(1);
         }
@@ -259,7 +259,7 @@ public class ClassPatcher {
                 classFiles = paths
                         .filter(Files::isRegularFile)
                         .filter(f -> f.getFileName().toString().endsWith(".class"))
-                        .collect(Collectors.toList());
+                        .toList();
             }
 
             if (classFiles.isEmpty()) {
@@ -326,11 +326,11 @@ public class ClassPatcher {
                 }
 
                 // Write the class file
-                LOG.fine("writing class file: " + classFile);
+                LOG.fine(() -> "writing class file: " + classFile);
                 Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
                 ctClass.writeFile(outputFolder.toString());
 
-                LOG.fine("instrumenting class file successful: " + classFile);
+                LOG.fine(() -> "instrumenting class file successful: " + classFile);
             } finally {
                 ctClass.detach();
             }
@@ -406,8 +406,6 @@ public class ClassPatcher {
                 && mi.methodName().equals("equals") && mi.parameters().size() == 1;
 
         LOG.fine(() -> "instrumenting method " + methodName);
-        boolean hasStandardReturnValueAssertions = false;
-        boolean hasOtherReturnValueChecks = false;
         try (Formatter standardParameterAssertions = new Formatter();
              Formatter otherParameterChecks = new Formatter();
              Formatter standardReturnValueAssertions = new Formatter();
