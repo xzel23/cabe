@@ -6,7 +6,7 @@ plugins {
     id("maven-publish")
     id("signing")
     id("com.github.spotbugs") version "6.1.13"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "8.3.8"
     id("org.openjfx.javafxplugin") version "0.1.0"
 }
 
@@ -36,7 +36,7 @@ dependencies {
     implementation("org.jspecify:jspecify:1.0.0")
     implementation("org.javassist:javassist:3.30.2-GA")
 
-    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
