@@ -157,10 +157,6 @@ public abstract class CabeTask extends DefaultTask {
             };
 
             Logger logger = getLogger();
-            if (v>0) {
-                logger.debug("Instrumenting class files: {}", String.join(" ", args));
-            }
-
             logger.info(String.join(" ", args));
             ProcessBuilder pb = new ProcessBuilder(args);
 
