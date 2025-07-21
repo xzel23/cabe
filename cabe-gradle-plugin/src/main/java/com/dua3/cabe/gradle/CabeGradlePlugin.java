@@ -1,7 +1,6 @@
 package com.dua3.cabe.gradle;
 
 import com.dua3.cabe.processor.Configuration;
-import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -16,7 +15,6 @@ import java.util.Objects;
 /**
  * The Gradle plugin class for Cabe.
  */
-@NonNullApi
 public class CabeGradlePlugin implements Plugin<Project> {
 
     /**
