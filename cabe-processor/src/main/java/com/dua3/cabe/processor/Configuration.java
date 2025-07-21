@@ -43,6 +43,9 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * When NO_CHECK is used, no parameter checks are generated.
      */
     public static final Configuration NO_CHECKS =new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK);
+    public static final String PUBLIC_API = "publicApi";
+    public static final String PRIVATE_API = "privateApi";
+    public static final String RETURN_VALUE = "returnValue";
 
     /**
      * Parses a configuration string and returns a corresponding Configuration object.
@@ -73,7 +76,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
 
         Map<String, Check> checks = new HashMap<>();
         while (matcher.find()) {
-            Stream.of("singleCheck", "publicApi", "privateApi", "returnValue")
+            Stream.of("singleCheck", PUBLIC_API, PRIVATE_API, RETURN_VALUE)
                             .forEach(group -> checks.compute(group, (k, v) -> updateCheck(k, v, matcher.group(k))));
         }
 
@@ -81,12 +84,12 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
             throw new IllegalArgumentException("invalid configuration string: '" + configStr + "'");
         }
 
-        Optional.ofNullable(checks.get("singleCheck")).ifPresent(c -> {checks.put("publicApi", c); checks.put("privateApi", c); checks.put("returnValue", c);});
+        Optional.ofNullable(checks.get("singleCheck")).ifPresent(c -> {checks.put(PUBLIC_API, c); checks.put(PRIVATE_API, c); checks.put(RETURN_VALUE, c);});
 
         return new Configuration(
-                checks.getOrDefault("publicApi", Check.NO_CHECK),
-                checks.getOrDefault("privateApi", Check.NO_CHECK),
-                checks.getOrDefault("returnValue", Check.NO_CHECK)
+                checks.getOrDefault(PUBLIC_API, Check.NO_CHECK),
+                checks.getOrDefault(PRIVATE_API, Check.NO_CHECK),
+                checks.getOrDefault(RETURN_VALUE, Check.NO_CHECK)
         );
     }
 
