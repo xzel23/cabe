@@ -5,8 +5,10 @@ import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.Directory;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.util.Objects;
@@ -60,9 +62,13 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 // set the configuration
                 t.getConfig().set(extension.getConfig().getOrElse(Configuration.STANDARD));
 
-                // set directories
-                t.getInputDirectory().set(extension.getInputDirectory());
-                t.getOutputDirectory().set(extension.getOutputDirectory());
+                // Create providers for input and output directories
+                Provider<Directory> inputDirProvider = extension.getInputDirectory();
+                Provider<Directory> outputDirProvider = extension.getOutputDirectory();
+
+                // Set the CabeTask directories using providers
+                t.getInputDirectory().set(inputDirProvider);
+                t.getOutputDirectory().set(outputDirProvider);
                 t.getClassPath().set(compileClasspath);
                 t.getRuntimeClassPath().set(runtimeClasspath);
                 t.getJavaExecutable().set(compileJavaTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java").toString());
@@ -71,7 +77,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 compileJavaTask.finalizedBy(t);
 
                 // change the compileJava class output directory to the cabe class input directory
-                compileJavaTask.getDestinationDirectory().set(project.file(t.getInputDirectory().get()));
+                compileJavaTask.getDestinationDirectory().set(inputDirProvider);
 
                 // make the classes task depend on the cabe task
                 Task classesTask = Objects.requireNonNull(
