@@ -4,12 +4,12 @@ import com.dua3.cabe.processor.Configuration;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.Directory;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.compile.JavaCompile;
 
+import java.io.File;
 import java.util.Objects;
 
 /**
@@ -46,20 +46,39 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     "task 'compileJava' not found"
             );
 
-            // Create providers for input and output directories
-            Provider<Directory> inputDirProvider = extension.getInputDirectory();
-            Provider<Directory> outputDirProvider = extension.getOutputDirectory();
+            // Get the original output directory (where compiled classes will be)
+            File originalOutputDir = compileJavaTask.getDestinationDirectory().getAsFile().get();
+            log.warn("Original output directory: {}", originalOutputDir);
 
-            // Change the compileJava class output directory to the cabe class input directory
-            // This critical configuration must happen eagerly at configuration time
-            compileJavaTask.getDestinationDirectory().set(inputDirProvider);
+            // Create a specific input directory for the cabe task
+            File cabeInputDir = project.getLayout().getBuildDirectory().dir("classes-cabe-input").get().getAsFile();
+            log.warn("Cabe input directory: {}", cabeInputDir);
+            
+            // Ensure the input directory exists
+            cabeInputDir.mkdirs();
+            log.warn("Created input directory: {}", cabeInputDir);
+
+            // Set the extension's input and output directories
+            extension.getInputDirectory().set(cabeInputDir);
+            extension.getOutputDirectory().set(originalOutputDir);
+            log.warn("Extension input directory set to: {}", extension.getInputDirectory().get().getAsFile());
+            log.warn("Extension output directory set to: {}", extension.getOutputDirectory().get().getAsFile());
+
+            // Create a copy task to copy compiled class files to the input directory
+            Copy copyClassesTask = project.getTasks().create("copyClassesForCabe", Copy.class, copy -> {
+                copy.from(originalOutputDir);
+                copy.into(cabeInputDir);
+                copy.include("**/*.class");
+                copy.dependsOn(compileJavaTask);
+                log.warn("Created copy task to copy class files from {} to {}", originalOutputDir, cabeInputDir);
+            });
 
             // prepare the classpaths
             org.gradle.api.artifacts.Configuration compileClasspath = p.getConfigurations().getByName("compileClasspath");
             org.gradle.api.artifacts.Configuration runtimeClasspath = p.getConfigurations().getByName("runtimeClasspath");
 
-            // wire the cabe input task using register (avoiding deprecated create)
-            project.getTasks().register("cabe", CabeTask.class, t -> {
+            // wire the cabe input task
+            CabeTask cabeTask = project.getTasks().create("cabe", CabeTask.class, t -> {
                 log.debug("initialising cabe task");
 
                 // set verbosity level
@@ -68,25 +87,29 @@ public class CabeGradlePlugin implements Plugin<Project> {
                 // set the configuration
                 t.getConfig().set(extension.getConfig().getOrElse(Configuration.STANDARD));
 
-                // Set the CabeTask directories using providers
-                t.getInputDirectory().set(inputDirProvider);
-                t.getOutputDirectory().set(outputDirProvider);
+                // set directories
+                t.getInputDirectory().set(extension.getInputDirectory());
+                t.getOutputDirectory().set(extension.getOutputDirectory());
                 t.getClassPath().set(compileClasspath);
                 t.getRuntimeClassPath().set(runtimeClasspath);
                 t.getJavaExecutable().set(compileJavaTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java").toString());
+                
+                // Make the cabe task depend on the copy task
+                t.dependsOn(copyClassesTask);
+                log.warn("Made cabe task depend on copy task");
             });
-
-            // Set up task dependencies
-            // These must happen eagerly at configuration time
-            compileJavaTask.finalizedBy("cabe");
             
+            // run the cabe task after the compileJava task
+            compileJavaTask.finalizedBy(cabeTask);
+            log.warn("Made compileJava task finalized by cabe task");
+
             // make the classes task depend on the cabe task
             Task classesTask = Objects.requireNonNull(
                     project.getTasks().getByName("classes"),
                     "task 'classes' not found"
             );
-            classesTask.dependsOn("cabe");
-
+            classesTask.dependsOn(cabeTask);
+            log.warn("Made classes task depend on cabe task");
         });
     }
 }

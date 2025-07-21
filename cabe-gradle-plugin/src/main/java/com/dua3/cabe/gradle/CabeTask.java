@@ -131,7 +131,29 @@ public abstract class CabeTask extends DefaultTask {
     @TaskAction
     void run() throws InterruptedException, GradleException {
         try {
+            // Log input and output directories
+            File inputDir = getInputDirectory().get().getAsFile();
+            File outputDir = getOutputDirectory().get().getAsFile();
+            getLogger().info("CabeTask executing with input directory: {}", inputDir);
+            getLogger().info("CabeTask executing with output directory: {}", outputDir);
+            
+            // Check if input directory exists and has class files
+            if (!inputDir.exists()) {
+                getLogger().warn("Input directory does not exist: {}", inputDir);
+            } else {
+                File[] classFiles = inputDir.listFiles((dir, name) -> name.endsWith(".class"));
+                getLogger().info("Input directory contains {} class files", classFiles != null ? classFiles.length : 0);
+            }
+            
+            // Ensure output directory exists
+            if (!outputDir.exists()) {
+                getLogger().info("Creating output directory: {}", outputDir);
+                outputDir.mkdirs();
+            }
+            
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
+            getLogger().debug("ClassPatcher jar location: {}", jarLocation);
+            
             String systemClassPath = System.getProperty("java.class.path");
             String classpath = Stream.concat(
                             getClassPath().get().getFiles().stream(),
@@ -142,34 +164,40 @@ public abstract class CabeTask extends DefaultTask {
                     .collect(Collectors.joining(File.pathSeparator));
 
             String javaExec = javaExecutable.get();
-            getLogger().info("Java executable: {}", javaExec);
+            getLogger().debug("Java executable: {}", javaExec);
 
             int v = Objects.requireNonNullElse(verbosiy.get(), 0);
             String[] args = {
                     javaExec,
                     "-classpath", systemClassPath,
                     "-jar", jarLocation,
-                    "-i", getInputDirectory().get().getAsFile().toString(),
-                    "-o", getOutputDirectory().get().getAsFile().toString(),
+                    "-i", inputDir.toString(),
+                    "-o", outputDir.toString(),
                     "-c", config.get().getConfigString(),
                     "-cp", classpath,
                     "-v", Integer.toString(v)
             };
 
             Logger logger = getLogger();
+            // Always log the command being executed
             if (logger.isInfoEnabled()) {
-                logger.info(String.join(" ", args));
+                logger.info("{}", String.join(" ", args));
             }
             ProcessBuilder pb = new ProcessBuilder(args);
 
             Process process = pb.start();
 
-            try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
-                 CopyOutput ignored = new CopyOutput(process.inputReader(), v > 1 ? System.out::println : s -> {})) {
+            try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), s -> logger.debug("STDERR: {}", s));
+                 CopyOutput ignore = new CopyOutput(process.inputReader(), s -> logger.debug("STDOUT: {}", s))) {
                 int exitCode = process.waitFor();
+                getLogger().info("Process completed with exit code: {}", exitCode);
                 if (exitCode != 0) {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
                 }
+                
+                // Check if output directory has class files
+                File[] outputClassFiles = outputDir.listFiles((dir, name) -> name.endsWith(".class"));
+                getLogger().debug("Output directory contains {} class files", outputClassFiles != null ? outputClassFiles.length : 0);
             }
         } catch (InterruptedException e) {
             getLogger().warn("instrumenting class files interrupted");
