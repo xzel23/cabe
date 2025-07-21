@@ -162,8 +162,9 @@ public abstract class CabeTask extends DefaultTask {
             };
 
             Logger logger = getLogger();
+            // Always log the command being executed
             if (logger.isInfoEnabled()) {
-                logger.info(String.join(" ", args));
+                logger.info("{}", String.join(" ", args));
             }
             ProcessBuilder pb = new ProcessBuilder(args);
 
