@@ -1,9 +1,36 @@
+version 3.3.0 (in development)
+==============================
+
+- Gradle 9 compatibility
+
 version 3.2.0
 =============
 
 - make the cabe task cacheable
 - dependency updates
-- should be commpatible with upcoming Gradle 9 (tested with RC 3)
+- ~~should be commpatible with upcoming Gradle 9 (tested with RC 3)~~
+  
+  __Version 3.2.0 is unfortunately not fully compatible with Gradle 9!__
+
+  While neither warnings nor deprecations are shown,
+  processed classes do not end up in the correct build/classes directory.
+  This is not a problem for most tasks (like jar) since task outputs are configured
+  and subsequent tasks use the processed files. Third party tools however
+  might not find the class files or have to be configured differently.
+
+  Such silently breaking changes make supporting Gradle plugins a frustrating
+  experience. Even more so when the internal Gradle code has everything in
+  place to do this right, but what is the point of using factories and
+  separating interface from implementation when use of the default factories
+  and implementations is hard-coded in private methods that cannot be
+  overridden?
+
+  Anyone interested in details: in Gradle 9, changing the compileJava destination
+  output dir automatically changes the sourceset output dir and there is no way
+  around this.
+  
+  Version 9 compatibility will be in the next release (currently testing).
+  
 - the cabe processor version did not change (still 3.1.0)
 
 version 3.1.0
