@@ -5,8 +5,6 @@ import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
 
 import javax.inject.Inject;
 
@@ -16,8 +14,8 @@ import javax.inject.Inject;
  */
 public class CabeExtension {
 
-    private final DirectoryProperty inputDirectory;
-    private final DirectoryProperty outputDirectory;
+    private final DirectoryProperty originalClassesDirectory;
+    private final DirectoryProperty classesDirectory;
     private final Property<Configuration> config;
     private final Property<Integer> verbosity;
 
@@ -36,16 +34,8 @@ public class CabeExtension {
         // get value of config
         config = objectFactory.property(Configuration.class).value(Configuration.STANDARD);
 
-        // output into the original classes directory
-        outputDirectory = objectFactory.directoryProperty();
-        outputDirectory.fileProvider(project.provider(() -> ((SourceSetContainer) project.getExtensions().getByName("sourceSets"))
-                .getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-                .getOutput()
-                .getClassesDirs()
-                .getSingleFile()));
-        // input from classes-cabe-input
-        inputDirectory = objectFactory.directoryProperty();
-        inputDirectory.set(project.getLayout().getBuildDirectory().dir("classes-cabe-input"));
+        classesDirectory = objectFactory.directoryProperty();
+        originalClassesDirectory = objectFactory.directoryProperty();
 
         project.getLogger().info("{} instance creation success", CabeExtension.class.getSimpleName());
     }
@@ -55,8 +45,8 @@ public class CabeExtension {
      *
      * @return the input directory as a DirectoryProperty object
      */
-    public DirectoryProperty getInputDirectory() {
-        return inputDirectory;
+    public DirectoryProperty getOriginalClassesDirectory() {
+        return originalClassesDirectory;
     }
 
     /**
@@ -64,8 +54,8 @@ public class CabeExtension {
      *
      * @return the output directory as a DirectoryProperty object
      */
-    public DirectoryProperty getOutputDirectory() {
-        return outputDirectory;
+    public DirectoryProperty getClassesDirectory() {
+        return classesDirectory;
     }
 
     /**

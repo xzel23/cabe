@@ -23,7 +23,10 @@ import org.gradle.api.tasks.TaskAction;
 import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +40,8 @@ import java.util.stream.Stream;
  */
 @CacheableTask
 public abstract class CabeTask extends DefaultTask {
-    private final DirectoryProperty inputDirectory;
-    private final DirectoryProperty outputDirectory;
+    private final DirectoryProperty originalClassesDir;
+    private final DirectoryProperty classesDir;
     private final Provider<FileCollection> classPath;
     private final Provider<FileCollection> runtimeClassPath;
     private final Provider<String> javaExecutable;
@@ -53,8 +56,8 @@ public abstract class CabeTask extends DefaultTask {
     @Inject
     public CabeTask(ObjectFactory objectFactory) {
         // Properties are created via Gradle's ObjectFactory
-        inputDirectory = objectFactory.directoryProperty();
-        outputDirectory = objectFactory.directoryProperty();
+        originalClassesDir = objectFactory.directoryProperty();
+        classesDir = objectFactory.directoryProperty();
         classPath = objectFactory.property(FileCollection.class);
         runtimeClassPath = objectFactory.property(FileCollection.class);
         javaExecutable = objectFactory.property(String.class);
@@ -69,8 +72,8 @@ public abstract class CabeTask extends DefaultTask {
      */
     @InputFiles
     @PathSensitive(PathSensitivity.RELATIVE)
-    public DirectoryProperty getInputDirectory() {
-        return inputDirectory;
+    public DirectoryProperty getOriginalClassesDir() {
+        return originalClassesDir;
     }
 
     /**
@@ -79,8 +82,8 @@ public abstract class CabeTask extends DefaultTask {
      * @return The output directory for the Cabe task.
      */
     @OutputDirectory
-    public DirectoryProperty getOutputDirectory() {
-        return outputDirectory;
+    public DirectoryProperty getClassesDir() {
+        return classesDir;
     }
 
     /**
@@ -135,7 +138,24 @@ public abstract class CabeTask extends DefaultTask {
 
     @TaskAction
     void run() throws InterruptedException, GradleException {
+        Logger logger = getLogger();
+
         try {
+            // move inputs
+            File cabeOutputDir = getClassesDir().get().getAsFile();
+            if (!cabeOutputDir.isDirectory()) {
+                logger.info("classes directory does not exist: {}", cabeOutputDir.getAbsolutePath());
+                return;
+            }
+            
+            File cabeInputDir = getOriginalClassesDir().get().getAsFile();
+            if (!(cabeInputDir.exists() && cabeInputDir.isDirectory()) && !cabeInputDir.mkdirs()) {
+                throw new GradleException("could not create intermediate directory " + cabeInputDir.getAbsolutePath());
+            }
+
+            copyClassesToCabeInputDir(cabeOutputDir, cabeInputDir);
+
+            // process files
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
             String systemClassPath = System.getProperty("java.class.path");
             String classpath = Stream.concat(
@@ -147,21 +167,20 @@ public abstract class CabeTask extends DefaultTask {
                     .collect(Collectors.joining(File.pathSeparator));
 
             String javaExec = javaExecutable.get();
-            getLogger().info("Java executable: {}", javaExec);
+            logger.info("Java executable: {}", javaExec);
 
             int v = Objects.requireNonNullElse(verbosiy.get(), 0);
             String[] args = {
                     javaExec,
                     "-classpath", systemClassPath,
                     "-jar", jarLocation,
-                    "-i", getInputDirectory().get().getAsFile().toString(),
-                    "-o", getOutputDirectory().get().getAsFile().toString(),
+                    "-i", cabeInputDir.toString(),
+                    "-o", cabeOutputDir.toString(),
                     "-c", config.get().getConfigString(),
                     "-cp", classpath,
                     "-v", Integer.toString(v)
             };
 
-            Logger logger = getLogger();
             // Always log the command being executed
             if (logger.isInfoEnabled()) {
                 logger.info("{}", String.join(" ", args));
@@ -170,15 +189,15 @@ public abstract class CabeTask extends DefaultTask {
 
             Process process = pb.start();
 
-            try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), System.err::println);
-                 CopyOutput ignored = new CopyOutput(process.inputReader(), v > 1 ? System.out::println : s -> {})) {
+            try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), msg -> logger.warn("{}", msg));
+                 CopyOutput copyStdOut = new CopyOutput(process.inputReader(), msg -> logger.info("{}", msg))) {
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
                     throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
                 }
             }
         } catch (InterruptedException e) {
-            getLogger().warn("instrumenting class files interrupted");
+            logger.warn("instrumenting class files interrupted");
             throw e;
         } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
@@ -186,8 +205,34 @@ public abstract class CabeTask extends DefaultTask {
     }
 
     /**
-     * This class is responsible for copying the output of a Reader to a specified Consumer.
-     * The first 10 lines are stored.
+     * Copies `.class` files from the specified output directory to the specified input directory.
+     * Preserves the directory structure while copying files. Only `.class` files are included in the operation.
+     *
+     * @param cabeOutputDir the directory containing the original class files to be copied
+     * @param cabeInputDir the target directory where the class files will be copied
+     * @throws GradleException if an I/O error occurs during the operation
+     */
+    private static void copyClassesToCabeInputDir(File cabeOutputDir, File cabeInputDir) {
+        try (Stream<Path> classFileStream = Files.walk(cabeOutputDir.toPath())) {
+            classFileStream
+                    .filter(path -> path.toString().endsWith(".class"))
+                    .forEach(source -> {
+                        try {
+                            Path target = cabeInputDir.toPath().resolve(cabeOutputDir.toPath().relativize(source));
+                            Files.createDirectories(target.getParent());
+                            Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            throw new GradleException("Failed to copy class file: " + source, e);
+                        }
+                    });
+        } catch (IOException e) {
+            throw new GradleException("Failed to copy classes directory: " + cabeOutputDir.getAbsolutePath(), e);
+        }
+    }
+
+    /**
+     * This class is responsible for copies the output of a Reader to a specified Consumer
+     * and stores the first 10 lines to be printed later using {@code }toString()}.
      */
     private class CopyOutput implements AutoCloseable {
         public static final int MAX_LINES = 10;
