@@ -28,6 +28,17 @@ object Meta {
 project.version = rootProject.extra["processor_version"] as String
 val isReleaseVersion = !project.version.toString().endsWith("SNAPSHOT")
 
+// write the version to the file src/main/resources/com/dua3/cabe/processor/cabe_processor.properties
+file("src/main/java/com/dua3/cabe/processor/CabeProcessorMetaData.java")
+    .writeText("""
+        package com.dua3.cabe.processor;
+        
+        public class CabeProcessorMetaData {
+            public static final String PROCESSOR_VERSION = "$version";
+        }
+        """
+    )
+
 repositories {
     mavenCentral()
 }

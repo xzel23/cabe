@@ -2,6 +2,7 @@ package com.dua3.cabe.processor;
 
 import javassist.CtBehavior;
 import javassist.CtClass;
+import javassist.ClassPool;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -11,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
@@ -28,6 +30,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClassPatcherTest {
@@ -39,6 +44,8 @@ class ClassPatcherTest {
     static Path testClassesUnprocessedDir = testDir.resolve("classes-unprocessed");
     static Path testClassesProcessedParameterInfoDir = testDir.resolve("classes-processed-parameterinfo");
     static Path testClassesProcessedInstrumentedDir = testDir.resolve("classes-processed-instrumented");
+    static Path testClassesProcessedWithAttributeDir = testDir.resolve("classes-processed-with-attribute");
+    static Path testClassesReprocessedDir = testDir.resolve("classes-reprocessed");
     static List<Path> classFiles = new ArrayList<>();
 
 
@@ -59,6 +66,8 @@ class ClassPatcherTest {
         Files.createDirectories(testDir);
         Files.createDirectories(testClassesUnprocessedDir);
         Files.createDirectories(testClassesProcessedInstrumentedDir);
+        Files.createDirectories(testClassesProcessedWithAttributeDir);
+        Files.createDirectories(testClassesReprocessedDir);
 
         // copy test source files
         LOG.info("copying test sources ...");
@@ -170,6 +179,84 @@ class ClassPatcherTest {
             ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
             patcher.processFolder(testClassesUnprocessedDir, testClassesProcessedInstrumentedDir);
         });
+    }
+    
+    @Test
+    @Order(4)
+    void testCabeAttribute() throws Exception {
+        LOG.info("testing CabeAttribute functionality");
+        
+        // Process class files with the CabeAttribute
+        Collection<Path> classPath1 = List.of(TestUtil.resourceDir.resolve("testLib"));
+        ClassPatcher patcher1 = new ClassPatcher(classPath1, Configuration.DEVELOPMENT);
+        patcher1.processFolder(testClassesUnprocessedDir, testClassesProcessedWithAttributeDir);
+
+        // Verify that the attribute was added to at least one class file
+        boolean attributeFound = false;
+        ClassPool pool = ClassPool.getDefault();
+        
+        // Add the processed classes directory to the class pool
+        pool.appendClassPath(testClassesProcessedWithAttributeDir.toString());
+        
+        // Check a few class files to verify the attribute was added
+        try (Stream<Path> paths = Files.walk(testClassesProcessedWithAttributeDir)) {
+            List<Path> classFiles = paths
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".class"))
+                    .limit(5) // Check up to 5 class files
+                    .collect(Collectors.toList());
+            
+            for (Path classFile : classFiles) {
+                String className = TestUtil.getClassName(classFile)
+                        .substring(testClassesProcessedWithAttributeDir.toString().length() + 1)
+                        .replace(File.separatorChar, '.');
+                
+                try {
+                    CtClass ctClass = pool.get(className);
+                    if (CabeAttribute.hasAttribute(ctClass)) {
+                        attributeFound = true;
+                        String version = CabeAttribute.getProcessorVersion(ctClass);
+                        assertEquals(CabeProcessorMetaData.PROCESSOR_VERSION, version,
+                                "Processor version in attribute should match the version used for processing");
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Error checking class " + className + ": " + e.getMessage());
+                }
+            }
+        }
+        
+        assertTrue(attributeFound, "At least one class file should have the CabeMeta attribute");
+        
+        // Now try to process the already processed files again
+        Collection<Path> classPath = List.of(TestUtil.resourceDir.resolve("testLib"));
+        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
+        patcher.processFolder(testClassesProcessedWithAttributeDir, testClassesReprocessedDir);
+
+        // Verify that the attribute in the reprocessed files still has the original version
+        try (Stream<Path> paths = Files.walk(testClassesReprocessedDir)) {
+            List<Path> classFiles = paths
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".class"))
+                    .limit(5) // Check up to 5 class files
+                    .collect(Collectors.toList());
+            
+            for (Path classFile : classFiles) {
+                String className = TestUtil.getClassName(classFile)
+                        .substring(testClassesReprocessedDir.toString().length() + 1)
+                        .replace(File.separatorChar, '.');
+                
+                try {
+                    CtClass ctClass = pool.get(className);
+                    if (CabeAttribute.hasAttribute(ctClass)) {
+                        String version = CabeAttribute.getProcessorVersion(ctClass);
+                        assertEquals(CabeProcessorMetaData.PROCESSOR_VERSION, version,
+                                "Processor version should not change when reprocessing");
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Error checking reprocessed class " + className + ": " + e.getMessage());
+                }
+            }
+        }
     }
 
     @ParameterizedTest

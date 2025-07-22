@@ -33,7 +33,6 @@ public final class TestUtil {
 
     private TestUtil() {}
 
-
     /**
      * Copy a folder from the source path to the destination path.
      *
@@ -183,6 +182,18 @@ public final class TestUtil {
         patcher.processFolder(unprocessedDir, processedDir);
     }
 
+    /**
+     * Executes a Java class in a specified directory with the option to enable or disable assertions.
+     * Takes into account JavaFX modules if their path is configured via the system property "org.openjfx.javafxplugin.path".
+     * Returns the process's output if the exit code is zero, or the error output otherwise.
+     *
+     * @param dir               the directory from which to execute the Java class
+     * @param className         the fully qualified name of the class to execute
+     * @param assertionsEnabled a flag indicating whether assertions should be enabled (-ea) or disabled (-da) during execution
+     * @return the standard output of the process if successful, or the error output otherwise
+     * @throws IOException          if an I/O error occurs while starting the process
+     * @throws InterruptedException if the current thread is interrupted while waiting for the process to terminate
+     */
     public static String runClass(Path dir, String className, boolean assertionsEnabled) throws IOException, InterruptedException {
         List<String> command = new ArrayList<>();
         command.add("java");

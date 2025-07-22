@@ -316,6 +316,18 @@ public class ClassPatcher {
         try {
             ClassInfo classInfo = ClassInfo.forClass(classLoader.loadClass(className));
             CtClass ctClass = classPool.getCtClass(className);
+            
+            // Check if the class has already been processed
+            if (CabeAttribute.hasAttribute(ctClass)) {
+                String version = CabeAttribute.getProcessorVersion(ctClass);
+                LOG.warning(() -> "class file " + className + " has already been processed by processor version " + version + ", copying unchanged");
+                
+                Path target = outputFolder.resolve(inputFolder.relativize(classFile));
+                LOG.fine(() -> "copying unchanged: " + classFile + " -> " + target);
+                Files.copy(classFile, target, StandardCopyOption.REPLACE_EXISTING);
+                return;
+            }
+            
             try {
                 for (var methodInfo : classInfo.methods()) {
                     try {
@@ -323,6 +335,17 @@ public class ClassPatcher {
                     } finally {
                         ctClass.defrost();
                     }
+                }
+
+                // Add the CabeMeta attribute to mark the class as processed
+                CabeAttribute.addToClass(ctClass, com.dua3.cabe.processor.CabeProcessorMetaData.PROCESSOR_VERSION);
+                
+                // Verify that the attribute was added correctly
+                if (!CabeAttribute.hasAttribute(ctClass)) {
+                    LOG.warning(() -> "Failed to add CabeMeta attribute to class " + className);
+                } else {
+                    String version = CabeAttribute.getProcessorVersion(ctClass);
+                    LOG.fine(() -> "Added CabeMeta attribute to class " + className + " with processor version " + version);
                 }
 
                 // Write the class file
