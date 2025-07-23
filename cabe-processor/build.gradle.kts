@@ -229,6 +229,8 @@ signing {
 }
 
 // === SPOTBUGS ===
+spotbugs.excludeFilter.set(rootProject.file("spotbugs-exclude.xml"))
+
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
     reports.create("html") {
         required.set(true)
@@ -245,7 +247,3 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
-
-
-// === SPOTBUGS ===
-spotbugs.excludeFilter.set(rootProject.file("spotbugs-exclude.xml"))
