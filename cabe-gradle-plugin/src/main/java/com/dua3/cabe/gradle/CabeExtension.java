@@ -2,7 +2,6 @@ package com.dua3.cabe.gradle;
 
 import com.dua3.cabe.processor.Configuration;
 import org.gradle.api.Project;
-import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 
@@ -14,8 +13,6 @@ import javax.inject.Inject;
  */
 public class CabeExtension {
 
-    private final DirectoryProperty originalClassesDirectory;
-    private final DirectoryProperty classesDirectory;
     private final Property<Configuration> config;
     private final Property<Integer> verbosity;
 
@@ -34,28 +31,7 @@ public class CabeExtension {
         // get value of config
         config = objectFactory.property(Configuration.class).value(Configuration.STANDARD);
 
-        classesDirectory = objectFactory.directoryProperty();
-        originalClassesDirectory = objectFactory.directoryProperty();
-
         project.getLogger().info("{} instance creation success", CabeExtension.class.getSimpleName());
-    }
-
-    /**
-     * Returns the input directory for the Cabe plugin.
-     *
-     * @return the input directory as a DirectoryProperty object
-     */
-    public DirectoryProperty getOriginalClassesDirectory() {
-        return originalClassesDirectory;
-    }
-
-    /**
-     * Returns the output directory for the Cabe plugin.
-     *
-     * @return the output directory as a DirectoryProperty object
-     */
-    public DirectoryProperty getClassesDirectory() {
-        return classesDirectory;
     }
 
     /**
