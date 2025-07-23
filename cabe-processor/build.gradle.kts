@@ -135,23 +135,33 @@ tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-// Customize the mavenJava publication to avoid duplicate artifacts
-afterEvaluate {
-    publishing {
-        publications {
-            named<MavenPublication>("mavenJava") {
-                // Remove all artifacts that were automatically added
-                artifacts.clear()
-                
-                // Add only the specific artifacts we want
-                artifact(tasks.jar)
-                artifact(tasks.named("javadocJar"))
-                artifact(tasks.named("sourcesJar"))
-                
-                // Add the shadow jar and its associated artifacts
-                artifact(tasks.named("shadowJar"))
-                artifact(tasks.named("javadocAllJar"))
-                artifact(tasks.named("sourcesAllJar"))
+// Create a separate publication for the shadow JAR
+configure<PublishingExtension> {
+    publications {
+        // Leave the mavenJava publication as is (created by the root build.gradle.kts)
+        
+        // Create a separate publication for the shadow JAR with artifactId "cabe-processor-all"
+        create<MavenPublication>("shadowJar") {
+            artifactId = "cabe-processor-all"
+            groupId = "com.dua3.cabe"
+            version = project.version.toString()
+            
+            // Add the shadow jar and its associated artifacts
+            artifact(tasks.named("shadowJar")) {
+                // Remove the classifier since we're using a different artifactId
+                classifier = ""
+            }
+            artifact(tasks.named("javadocAllJar")) {
+                classifier = "javadoc"
+            }
+            artifact(tasks.named("sourcesAllJar")) {
+                classifier = "sources"
+            }
+            
+            // Add simplified POM information
+            pom {
+                name.set("${project.name}-all")
+                description.set("${project.description ?: "CABE Processor with all dependencies"}")
             }
         }
     }
