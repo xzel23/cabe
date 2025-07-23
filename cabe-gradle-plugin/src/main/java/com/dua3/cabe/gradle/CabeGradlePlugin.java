@@ -6,7 +6,6 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.Directory;
-import org.gradle.api.internal.TaskOutputsInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -18,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,15 +74,15 @@ public class CabeGradlePlugin implements Plugin<Project> {
         try {
             Directory classesDir = compileTask.getDestinationDirectory().get();
             Directory unprocessedClassesDir = project.getLayout().getBuildDirectory().dir("classes-cabe-input").get();
-            TaskOutputsInternal outputs = compileTask.getOutputs();
-            logger.warn("classesDir: {}", classesDir.getAsFile().getAbsolutePath());
-            logger.warn("unProcessedClassesDir: {}", unprocessedClassesDir.getAsFile().getAbsolutePath());
+
+            logger.info("instrumenting classes using Cabe\n  classesDir              : {}  unprocessedClassesDir:  {}",
+                    classesDir.getAsFile().getAbsolutePath(),
+                    unprocessedClassesDir.getAsFile().getAbsolutePath()
+            );
 
             // prepare the classpaths
             org.gradle.api.artifacts.Configuration compileClasspath = project.getConfigurations().getByName("compileClasspath");
             org.gradle.api.artifacts.Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
-
-            logger.warn("task outputs: {}", outputs.getFiles().getAsPath());
 
             // move inputs
             copyFilesRecursively(classesDir.getAsFile().toPath(), unprocessedClassesDir.getAsFile().toPath(), logger);
@@ -98,7 +96,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     .collect(Collectors.joining(File.pathSeparator));
 
             String javaExec = compileTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java").toString();
-            logger.info("Java executable: {}", javaExec);
+            logger.debug("Java executable: {}", javaExec);
 
             int v = Objects.requireNonNullElse(extension.getVerbosity().get(), 0);
             String[] args = {
@@ -145,17 +143,17 @@ public class CabeGradlePlugin implements Plugin<Project> {
                         } else {
                             Path relative = source.relativize(path);
                             Path dest = target.resolve(relative);
-                            logger.warn("copying:\n  path: {}\n  relative: {}\n  dest: {}", path, relative, dest);
+                            logger.debug("copying:\n  path: {}\n  relative: {}\n  dest: {}", path, relative, dest);
                             if (Files.isDirectory(path)) {
-                                logger.warn("creating directory: {}", dest);
+                                logger.debug("creating directory: {}", dest);
                                 Files.createDirectories(dest);
                             } else {
-                                logger.warn("copying file: {}", dest);
+                                logger.debug("copying file: {}", dest);
                                 Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
                             }
                         }
                     } catch (IOException e) {
-                        logger.warn("Cabe: failed to copy file/directory: {}", path, e);
+                        logger.warn("failed to copy file/directory: {}", path, e);
                         throw new UncheckedIOException(e);
                     }
                 });
