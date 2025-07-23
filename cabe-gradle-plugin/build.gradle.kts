@@ -22,6 +22,20 @@ tasks.named("compileJava") {
     dependsOn(":cabe-processor:publishToMavenLocal")
 }
 
+// Fix for task dependency issues
+// Use afterEvaluate to ensure all tasks are created before configuration
+afterEvaluate {
+    // Explicitly configure the task dependencies mentioned in the error messages
+    tasks.named("publishMavenJavaPublicationToMavenLocal") {
+        dependsOn("signPluginMavenPublication")
+    }
+    
+    // Add dependency for the second task pair
+    tasks.findByName("publishPluginMavenPublicationToMavenLocal")?.let { task ->
+        task.dependsOn("signMavenJavaPublication")
+    }
+}
+
 gradlePlugin {
     website = "https://github.com/xzel23/cabe"
     vcsUrl = "https://github.com/xzel23/cabe"
