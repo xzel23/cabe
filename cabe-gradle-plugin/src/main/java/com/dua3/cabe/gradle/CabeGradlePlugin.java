@@ -57,6 +57,11 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     "task 'compileJava' not found"
             );
 
+            // make compilation task depend on instrumentation configuration
+            compileJavaTask.getInputs().property("cabe.config", extension.getConfig());
+            compileJavaTask.getInputs().property("cabe.verbosity", extension.getVerbosity());
+
+            // run istrumentation after compilation
             compileJavaTask.doLast(task -> instrumentClasses(extension, compileJavaTask));
         });
     }
