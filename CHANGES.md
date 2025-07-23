@@ -1,8 +1,9 @@
 version 3.3.0-rc
 ================
 
-This version adds Gradle 9 compatibility. The task wiring has been changed
-to be compatible with Gradle 9 changes.
+- Gradle 9 compatibility. The explicit `cabe` task has been removed and the
+  instrumentation is now run as a doLast() action.
+- Support running the plugin with the Gradle configuration cache enabled.
 
 version 3.2.0
 =============
