@@ -231,8 +231,12 @@ public class ClassPatcher {
             this.classPool = new ClassPool(true);
 
             // no directory
+            if (!Files.exists(inputFolder)) {
+                LOG.info(() -> "input does not exist, ignoring: " + inputFolder);
+                return;
+            }
             if (!Files.isDirectory(inputFolder)) {
-                LOG.warning("does not exist or is not a directory: " + inputFolder);
+                LOG.warning(() -> "Not a directory, ignoring: " + inputFolder);
                 return;
             }
 
@@ -252,23 +256,26 @@ public class ClassPatcher {
             });
 
             ModuleClassLoader moduleClassLoader = new ModuleClassLoader(ClassLoader.getSystemClassLoader(), currentClasspath.toArray(Path[]::new));
-            this.classLoader = new URLClassLoader(classpathUrls.toArray(URL[]::new), moduleClassLoader);
+            try (var cl = new URLClassLoader(classpathUrls.toArray(URL[]::new), moduleClassLoader)) {
+                this.classLoader = cl;
 
-            List<Path> classFiles;
-            try (Stream<Path> paths = Files.walk(inputFolder)) {
-                classFiles = paths
-                        .filter(Files::isRegularFile)
-                        .filter(f -> f.getFileName().toString().endsWith(".class"))
-                        .toList();
+                List<Path> classFiles;
+                try (Stream<Path> paths = Files.walk(inputFolder)) {
+                    classFiles = paths
+                            .filter(Files::isRegularFile)
+                            .filter(f -> f.getFileName().toString().endsWith(".class"))
+                            .toList();
+                }
+
+                if (classFiles.isEmpty()) {
+                    LOG.info("no class files!");
+                    return;
+                }
+
+                processClassFiles(classFiles);
             }
-
-            if (classFiles.isEmpty()) {
-                LOG.info("no class files!");
-                return;
-            }
-
-            processClassFiles(classFiles);
         } finally {
+            this.classLoader = null;
             this.inputFolder = null;
             this.classPool = null;
         }
@@ -601,7 +608,7 @@ public class ClassPatcher {
      * @return the canonical class name as a String
      */
     private static String getCanonicalClassName(CtClass ctClass) {
-        return ctClass.getName().replaceAll("\\$([^0-9])", ".$1");
+        return ctClass.getName().replaceAll("\\$(\\D)", ".$1");
     }
 
     /**

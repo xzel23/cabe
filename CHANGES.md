@@ -1,7 +1,8 @@
-version 3.3.0 (in development)
-==============================
+version 3.3.0-rc
+================
 
-- Gradle 9 compatibility
+This version adds Gradle 9 compatibility. The task wiring has been changed
+to be compatible with Gradle 9 changes.
 
 version 3.2.0
 =============
