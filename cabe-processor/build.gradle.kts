@@ -70,8 +70,8 @@ tasks.jar {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set("${project.name}-all")
-    archiveClassifier.set("")
+    archiveBaseName.set("${project.name}")
+    archiveClassifier.set("all")
     mergeServiceFiles()
 }
 
@@ -98,8 +98,8 @@ tasks.register<Javadoc>("javadocAll") {
 }
 
 tasks.register<Jar>("javadocAllJar") {
-    archiveBaseName.set("${project.name}-all")
-    archiveClassifier.set("javadoc")
+    archiveBaseName.set("${project.name}")
+    archiveClassifier.set("all-javadoc")
     from(tasks.named("javadocAll"))
 }
 
@@ -109,8 +109,8 @@ tasks.register<Copy>("sourcesAll") {
 }
 
 tasks.register<Jar>("sourcesAllJar") {
-    archiveBaseName.set("${project.name}-all")
-    archiveClassifier.set("sources")
+    archiveBaseName.set("${project.name}")
+    archiveClassifier.set("all-sources")
     from(tasks.named("sourcesAll"))
 }
 
@@ -133,4 +133,26 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+// Customize the mavenJava publication to avoid duplicate artifacts
+afterEvaluate {
+    publishing {
+        publications {
+            named<MavenPublication>("mavenJava") {
+                // Remove all artifacts that were automatically added
+                artifacts.clear()
+                
+                // Add only the specific artifacts we want
+                artifact(tasks.jar)
+                artifact(tasks.named("javadocJar"))
+                artifact(tasks.named("sourcesJar"))
+                
+                // Add the shadow jar and its associated artifacts
+                artifact(tasks.named("shadowJar"))
+                artifact(tasks.named("javadocAllJar"))
+                artifact(tasks.named("sourcesAllJar"))
+            }
+        }
+    }
 }
