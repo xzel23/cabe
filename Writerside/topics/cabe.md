@@ -204,7 +204,7 @@ When developing a library, you can configure different checks for:
 
 <note>
 In the standard configuration, parameters that are part of the public API will always be checked and throw a
-<code>NnullPointerException</code> when an <code>null</code> parameter value is detected where it is not allowed
+<code>NullPointerException</code> when an <code>null</code> parameter value is detected where it is not allowed
 and for parts of your private API, standard assertions are used that can be enabled at runtime using the standard
 <code>-ea</code> flag.
 </note>
@@ -474,11 +474,11 @@ The instrumentation is done by the `ClassPatcher` class. A precompiled runnable 
 ## What Java version is Cabe compatible with?
 
 Cabe needs at least Java 17 to run. The instrumentation should work for class files from Java 11, but I have only
-tested this with versions 17 to 23.
+tested this with versions 17 to 24.
 
 ## Is there a Maven Plugin for Cabe?
 
-Not yet. But it's on my Todo list.
+A Maven plugin was contributed but is still undocumented.
 
 ## Is the Source available?
 

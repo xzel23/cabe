@@ -40,41 +40,6 @@ tasks.register("printPluginVersion") {
 }
 
 allprojects {
-    tasks.register("printTaskInputsAndOutputs") {
-        group = "other"
-        description = "Prints task inputs and outputs"
-
-        doLast {
-            project.tasks.forEach {
-                println("--------------------------------------------------------------------------------")
-                println(" Task '${project.name}:${it.name}'")
-                println("--------------------------------------------------------------------------------")
-                println("")
-
-                println("File inputs:")
-                it.inputs.files.forEach {
-                    println(" - ${it}")
-                }
-                println("")
-
-                println("Property inputs:")
-                it.inputs.properties.forEach {
-                    println(" - ${it}")
-                }
-                println("")
-
-                println("File outputs:")
-                it.outputs.files.forEach {
-                    println(" - ${it}")
-                }
-                println("")
-
-                println("--------------------------------------------------------------------------------")
-                println("")
-            }
-        }
-    }
-
     pluginManager.withPlugin("maven-publish") {
         extensions.configure<PublishingExtension> {
             publications {
@@ -91,5 +56,4 @@ allprojects {
             }
         }
     }
-
 }
