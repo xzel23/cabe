@@ -71,7 +71,7 @@ class ClassPatcherTest {
 
         // copy test source files
         LOG.info("copying test sources ...");
-        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testsrc"), testSrcDir);
+        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testSrc"), testSrcDir);
 
         // compile source files to classes-unprocessed folder
         LOG.info("compiling test sources ...");
