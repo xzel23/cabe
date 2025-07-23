@@ -134,28 +134,29 @@ public class CabeGradlePlugin implements Plugin<Project> {
     }
 
     private static void copyFilesRecursively(Path source, Path target, Logger logger) throws IOException {
-        Files.walk(source)
-                .sorted()
-                .forEach(path -> {
-                    try {
-                        if (!Files.exists(path)) {
-                            logger.warn("Cabe: source path does not exist: {}", path);
-                        } else {
-                            Path relative = source.relativize(path);
-                            Path dest = target.resolve(relative);
-                            logger.debug("copying:\n  path: {}\n  relative: {}\n  dest: {}", path, relative, dest);
-                            if (Files.isDirectory(path)) {
-                                logger.debug("creating directory: {}", dest);
-                                Files.createDirectories(dest);
+        try (Stream<Path> files = Files.walk(source)) {
+            files.sorted()
+                    .forEach(path -> {
+                        try {
+                            if (!Files.exists(path)) {
+                                logger.warn("Cabe: source path does not exist: {}", path);
                             } else {
-                                logger.debug("copying file: {}", dest);
-                                Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
+                                Path relative = source.relativize(path);
+                                Path dest = target.resolve(relative);
+                                logger.debug("copying:\n  path: {}\n  relative: {}\n  dest: {}", path, relative, dest);
+                                if (Files.isDirectory(path)) {
+                                    logger.debug("creating directory: {}", dest);
+                                    Files.createDirectories(dest);
+                                } else {
+                                    logger.debug("copying file: {}", dest);
+                                    Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
+                                }
                             }
+                        } catch (IOException e) {
+                            logger.warn("failed to copy file/directory: {}", path, e);
+                            throw new UncheckedIOException(e);
                         }
-                    } catch (IOException e) {
-                        logger.warn("failed to copy file/directory: {}", path, e);
-                        throw new UncheckedIOException(e);
-                    }
-                });
+                    });
+        }
     }
 }
