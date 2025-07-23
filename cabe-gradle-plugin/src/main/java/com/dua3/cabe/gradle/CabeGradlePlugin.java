@@ -1,15 +1,27 @@
 package com.dua3.cabe.gradle;
 
+import com.dua3.cabe.processor.ClassPatcher;
 import com.dua3.cabe.processor.Configuration;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.Directory;
+import org.gradle.api.internal.TaskOutputsInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.compile.JavaCompile;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The Gradle plugin class for Cabe.
@@ -45,47 +57,102 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     "task 'compileJava' not found"
             );
 
-
-            // wire the cabe input task using register (avoiding deprecated create)
-            project.getTasks().register("cabe", CabeTask.class, t -> {
-                log.debug("initialising cabe task");
-
-                // set verbosity level
-                t.getVerbosity().set(extension.getVerbosity());
-
-                // set the configuration
-                t.getConfig().set(extension.getConfig().getOrElse(Configuration.STANDARD));
-
-                // Create providers for input and output directories
-                DirectoryProperty originalClassesDirProvider = extension.getOriginalClassesDirectory();
-                originalClassesDirProvider.set(project.getLayout().getBuildDirectory().dir("classes-cabe-input"));
-
-                DirectoryProperty classesDirProvider = extension.getClassesDirectory();
-                classesDirProvider.set(compileJavaTask.getDestinationDirectory());
-
-                // prepare the classpaths
-                org.gradle.api.artifacts.Configuration compileClasspath = p.getConfigurations().getByName("compileClasspath");
-                org.gradle.api.artifacts.Configuration runtimeClasspath = p.getConfigurations().getByName("runtimeClasspath");
-
-                // Set the CabeTask directories using providers
-                t.getOriginalClassesDir().set(originalClassesDirProvider);
-                t.getClassesDir().set(classesDirProvider);
-                t.getClassPath().set(compileClasspath);
-                t.getRuntimeClassPath().set(runtimeClasspath);
-                t.getJavaExecutable().set(compileJavaTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java").toString());
-            });
-
-            // Set up task dependencies
-            // These must happen eagerly at configuration time
-            compileJavaTask.finalizedBy("cabe");
-            
-            // make the classes task depend on the cabe task
-            Task classesTask = Objects.requireNonNull(
-                    project.getTasks().getByName("classes"),
-                    "task 'classes' not found"
-            );
-            classesTask.dependsOn("cabe");
-
+            compileJavaTask.doLast(task -> instrumentClasses(extension, compileJavaTask));
         });
+    }
+
+    private void instrumentClasses(
+            CabeExtension extension,
+            JavaCompile compileTask
+    ) throws GradleException {
+        Project project = compileTask.getProject();
+        Logger logger = project.getLogger();
+
+        try {
+            Directory classesDir = compileTask.getDestinationDirectory().get();
+            Directory unprocessedClassesDir = project.getLayout().getBuildDirectory().dir("classes-cabe-input").get();
+            TaskOutputsInternal outputs = compileTask.getOutputs();
+            logger.warn("classesDir: {}", classesDir.getAsFile().getAbsolutePath());
+            logger.warn("unProcessedClassesDir: {}", unprocessedClassesDir.getAsFile().getAbsolutePath());
+
+            // prepare the classpaths
+            org.gradle.api.artifacts.Configuration compileClasspath = project.getConfigurations().getByName("compileClasspath");
+            org.gradle.api.artifacts.Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+
+            logger.warn("task outputs: {}", outputs.getFiles().getAsPath());
+
+            // move inputs
+            copyFilesRecursively(classesDir.getAsFile().toPath(), unprocessedClassesDir.getAsFile().toPath(), logger);
+
+            // process files
+            String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
+            String systemClassPath = System.getProperty("java.class.path");
+            String classpath = Stream.concat(compileClasspath.getFiles().stream(), runtimeClasspath.getFiles().stream())
+                    .map(File::toString)
+                    .distinct()
+                    .collect(Collectors.joining(File.pathSeparator));
+
+            String javaExec = compileTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java").toString();
+            logger.info("Java executable: {}", javaExec);
+
+            int v = Objects.requireNonNullElse(extension.getVerbosity().get(), 0);
+            String[] args = {
+                    javaExec,
+                    "-classpath", systemClassPath,
+                    "-jar", jarLocation,
+                    "-i", unprocessedClassesDir.toString(),
+                    "-o", classesDir.toString(),
+                    "-c", extension.getConfig().getOrElse(Configuration.STANDARD).getConfigString(),
+                    "-cp", classpath,
+                    "-v", Integer.toString(v)
+            };
+
+            // Always log the command being executed
+            if (logger.isInfoEnabled()) {
+                logger.info("{}", String.join(" ", args));
+            }
+            ProcessBuilder pb = new ProcessBuilder(args);
+
+            Process process = pb.start();
+
+            try (CopyOutput copyStdErr = new CopyOutput(process.errorReader(), logger::warn);
+                 CopyOutput copyStdOut = new CopyOutput(process.inputReader(), logger::info)) {
+                int exitCode = process.waitFor();
+                if (exitCode != 0) {
+                    throw new GradleException("instrumenting class files failed\n\n" + copyStdErr);
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new GradleException("Interrupted while instrumenting classes: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
+        }
+    }
+
+    private static void copyFilesRecursively(Path source, Path target, Logger logger) throws IOException {
+        Files.walk(source)
+                .sorted()
+                .forEach(path -> {
+                    try {
+                        if (!Files.exists(path)) {
+                            logger.warn("Cabe: source path does not exist: {}", path);
+                        } else {
+                            Path relative = source.relativize(path);
+                            Path dest = target.resolve(relative);
+                            logger.warn("copying:\n  path: {}\n  relative: {}\n  dest: {}", path, relative, dest);
+                            if (Files.isDirectory(path)) {
+                                logger.warn("creating directory: {}", dest);
+                                Files.createDirectories(dest);
+                            } else {
+                                logger.warn("copying file: {}", dest);
+                                Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
+                            }
+                        }
+                    } catch (IOException e) {
+                        logger.warn("Cabe: failed to copy file/directory: {}", path, e);
+                        throw new UncheckedIOException(e);
+                    }
+                });
     }
 }
