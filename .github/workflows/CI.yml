@@ -1,0 +1,71 @@
+name: CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Setup JDK 17 for build
+      - name: 'Set up JDK 17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      # Extract Gradle version from wrapper properties for cache key
+      - name: 'Extract Gradle Version'
+        id: gradle-version
+        run: |
+          GRADLE_VERSION=$(sed -n -e 's!.*gradle-!!' -e 's!-bin.zip!!p' < gradle/wrapper/gradle-wrapper.properties)
+          echo "Detected Gradle version: $GRADLE_VERSION"
+          echo "gradle_version=$GRADLE_VERSION" >> "$GITHUB_OUTPUT"
+          # Create a file with the Gradle version for other jobs to use
+          mkdir -p build/gradle-version
+          echo "$GRADLE_VERSION" > build/gradle-version/version.txt
+
+      - name: 'Setup Gradle'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ steps.gradle-version.outputs.gradle_version }}
+          gradle-home-cache-includes: |
+            caches
+            notifications
+            jdks
+            wrapper
+            toolchains
+
+      - name: 'Execute Gradle build'
+        run: gradle --no-daemon --build-cache build test publishToMavenLocal publishToStagingDirectory
+        id: compile
+
+      # run a first build and test and then a second build and then a clean after successful execution
+      # to check files are not locked after executing the gradle task (weird? this is actually a regression test)
+      - name: 'Run plugin tests'
+        run: gradle --no-daemon --build-cache -Dtest |
+          cabe-gradle-plugin-test:clean|
+          cabe-gradle-plugin-test:test-gradle-plugin:run
+          cabe-gradle-plugin-test:test-gradle-plugin-modular:run 
+          && ./gradlew --no-daemon -Dtest cabe-gradle-plugin-test:build
+          && ./gradlew --no-daemon -Dtest cabe-gradle-plugin-test:clean
+          && echo "plugin test successful"
+        id: testplugin
+
+      - name: 'Create shadow jar for the cabe processor'
+        run: gradlew cabe-processor:shadowJar
+        id: createshadowjar
+
+      - name: 'Compile examples'
+        run: gradlew --no-daemon -Dexamples examples:hello:build examples:hellofx:build
+        id: compileexamples
