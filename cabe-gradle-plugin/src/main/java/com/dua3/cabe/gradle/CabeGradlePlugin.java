@@ -56,52 +56,62 @@ public class CabeGradlePlugin implements Plugin<Project> {
             );
 
             // make compilation task depend on instrumentation configuration
-            compileJavaTask.getInputs().property("cabe.config", extension.getConfig());
-            compileJavaTask.getInputs().property("cabe.verbosity", extension.getVerbosity());
+            compileJavaTask.getInputs().property("cabe.config", extension.getConfig().orElse(Configuration.STANDARD));
+            compileJavaTask.getInputs().property("cabe.verbosity", extension.getVerbosity().orElse(0));
 
             // run istrumentation after compilation
-            compileJavaTask.doLast(task -> instrumentClasses(extension, compileJavaTask));
-        });
-    }
-
-    private void instrumentClasses(
-            CabeExtension extension,
-            JavaCompile compileTask
-    ) throws GradleException {
-        Project project = compileTask.getProject();
-        Logger logger = project.getLogger();
-
-        try {
-            Directory classesDir = compileTask.getDestinationDirectory().get();
+            Logger logger = project.getLogger();
+            Directory classesDir = compileJavaTask.getDestinationDirectory().get();
             Directory unprocessedClassesDir = project.getLayout().getBuildDirectory().dir("classes-cabe-input").get();
+            Path javaExec = compileJavaTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java");
 
-            logger.info("instrumenting classes using Cabe\n  classesDir              : {}  unprocessedClassesDir:  {}",
-                    classesDir.getAsFile().getAbsolutePath(),
-                    unprocessedClassesDir.getAsFile().getAbsolutePath()
-            );
-
-            // prepare the classpaths
             org.gradle.api.artifacts.Configuration compileClasspath = project.getConfigurations().getByName("compileClasspath");
             org.gradle.api.artifacts.Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
-
-            // move inputs
-            copyFilesRecursively(classesDir.getAsFile().toPath(), unprocessedClassesDir.getAsFile().toPath(), logger);
-
-            // process files
-            String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
             String systemClassPath = System.getProperty("java.class.path");
             String classpath = Stream.concat(compileClasspath.getFiles().stream(), runtimeClasspath.getFiles().stream())
                     .map(File::toString)
                     .distinct()
                     .collect(Collectors.joining(File.pathSeparator));
 
-            String javaExec = compileTask.getJavaCompiler().get().getExecutablePath().getAsFile().toPath().getParent().resolve("java").toString();
+            compileJavaTask.doLast(task -> instrumentClasses(
+                    extension,
+                    classesDir,
+                    unprocessedClassesDir,
+                    systemClassPath,
+                    classpath,
+                    javaExec,
+                    logger)
+            );
+        });
+    }
+
+    private void instrumentClasses(
+            CabeExtension extension,
+            Directory classesDir,
+            Directory unprocessedClassesDir,
+            String systemClasspath,
+            String classpath,
+            Path javaExec,
+            Logger logger
+    ) throws GradleException {
+        try {
+            logger.info("instrumenting classes using Cabe\n  classesDir              : {}  unprocessedClassesDir:  {}",
+                    classesDir.getAsFile().getAbsolutePath(),
+                    unprocessedClassesDir.getAsFile().getAbsolutePath()
+            );
+
+            // move inputs
+            copyFilesRecursively(classesDir.getAsFile().toPath(), unprocessedClassesDir.getAsFile().toPath(), logger);
+
+            // process files
+            String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
+
             logger.debug("Java executable: {}", javaExec);
 
             int v = Objects.requireNonNullElse(extension.getVerbosity().get(), 0);
             String[] args = {
-                    javaExec,
-                    "-classpath", systemClassPath,
+                    javaExec.toString(),
+                    "-classpath", systemClasspath,
                     "-jar", jarLocation,
                     "-i", unprocessedClassesDir.toString(),
                     "-o", classesDir.toString(),
