@@ -57,7 +57,7 @@ jobs:
             toolchains
 
       - name: 'Execute Gradle build'
-        run: gradle --no-daemon --build-cache build test publishToMavenLocal publishToStagingDirectory
+        run: gradle --no-daemon --build-cache build test publishToMavenLocal
         id: compile
 
       # run a first build and test and then a second build and then a clean after successful execution
