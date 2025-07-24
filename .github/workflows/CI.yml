@@ -81,8 +81,17 @@ jobs:
         run: gradle --no-daemon -Dexamples examples:hello:build examples:hellofx:build
         id: compileexamples
 
+      - name: 'Upload build reports'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            build/reports
+            */build/reports
+          retention-days: 7
+
       - name: 'publish build'
-        run: gradle --no-daemon jreleaserDeploy jreleaserUpload
+        run: gradle --no-daemon jreleaserDeploy jreleaserUpload --stacktrace --info
         env:
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
           JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
