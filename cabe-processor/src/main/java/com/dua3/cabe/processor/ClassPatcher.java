@@ -192,7 +192,11 @@ public class ClassPatcher {
      * The pattern matches valid Java identifiers separated by dots, allowing for nested classes.
      * It does not match reserved keywords or invalid identifier characters.
      */
-    private static final Pattern PATTERN_FQCN = Pattern.compile("^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\$\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*$");
+    private static final Pattern PATTERN_FQCN = Pattern.compile(
+            "^(?:(?>\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\.)*" +
+            "(?>\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)" +
+            "(?:\\$(?>\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*))*$"
+    );
 
     private static final Pattern GET_CLASS_NAME_PATTERN = Pattern.compile("\\.[^.]*$");
 
