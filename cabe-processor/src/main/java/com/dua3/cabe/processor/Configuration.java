@@ -43,8 +43,17 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * When NO_CHECK is used, no parameter checks are generated.
      */
     public static final Configuration NO_CHECKS =new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK);
+    /**
+     * String constant to define parameter checks for public API methods.
+     */
     public static final String PUBLIC_API = "publicApi";
+    /**
+     * String constant to define parameter checks for private API methods.
+     */
     public static final String PRIVATE_API = "privateApi";
+    /**
+     * String constant to define return value checks.
+     */
     public static final String RETURN_VALUE = "returnValue";
 
     /**
