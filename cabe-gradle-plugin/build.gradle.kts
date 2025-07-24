@@ -24,20 +24,24 @@ tasks.named("compileJava") {
 
 // Fix for task dependency issues
 // Use afterEvaluate to ensure all tasks are created before configuration
+tasks.named("publishMavenJavaPublicationToMavenLocal") {
+    dependsOn("signPluginMavenPublication")
+}
+
+tasks.named("publishMavenJavaPublicationToStagingDirectoryRepository") {
+    dependsOn("signPluginMavenPublication")
+}
+
+// Use afterEvaluate to ensure all tasks are created before configuration
 afterEvaluate {
-    // Explicitly configure the task dependencies mentioned in the error messages
-    tasks.named("publishMavenJavaPublicationToMavenLocal") {
-        dependsOn("signPluginMavenPublication")
-    }
-    
-    // Add dependency for the second task pair
-    tasks.findByName("publishPluginMavenPublicationToMavenLocal")?.let { task ->
-        task.dependsOn("signMavenJavaPublication")
-    }
-    
-    // Access isReleaseVersion from root project
-    val isReleaseVersion = rootProject.extra["isReleaseVersion"] as Boolean
-    
+    tasks.findByName("publishPluginMavenPublicationToMavenLocal")?.dependsOn("signMavenJavaPublication")
+    tasks.findByName("publishPluginMavenPublicationToStagingDirectoryRepository")?.dependsOn("signMavenJavaPublication")
+}
+
+// Access isReleaseVersion from root project
+val isReleaseVersion = rootProject.extra["isReleaseVersion"] as Boolean
+
+afterEvaluate {
     // Configure publishPlugins task to be skipped when not a release version
     tasks.named("publishPlugins") {
         onlyIf {
