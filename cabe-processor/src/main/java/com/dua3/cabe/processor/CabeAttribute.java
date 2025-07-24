@@ -14,6 +14,9 @@ import java.util.logging.Logger;
 public class CabeAttribute {
     private static final Logger LOG = Logger.getLogger(CabeAttribute.class.getName());
     private static final String ATTRIBUTE_NAME = "CabeMeta";
+    private static final String SET_PROCESSOR_VERSION = "processorVersion=";
+
+    private CabeAttribute() { /* utility class constructor */ }
 
     /**
      * Adds the CabeMeta attribute to a class file.
@@ -23,7 +26,7 @@ public class CabeAttribute {
      */
     public static void addToClass(CtClass ctClass, String processorVersion) {
         ClassFile classFile = ctClass.getClassFile();
-        String attributeValue = "processorVersion=" + processorVersion;
+        String attributeValue = SET_PROCESSOR_VERSION + processorVersion;
         byte[] data = attributeValue.getBytes(StandardCharsets.UTF_8);
         AttributeInfo attribute = new AttributeInfo(classFile.getConstPool(), ATTRIBUTE_NAME, data);
         classFile.addAttribute(attribute);
@@ -55,8 +58,8 @@ public class CabeAttribute {
         }
 
         String attributeValue = new String(attribute.get(), StandardCharsets.UTF_8);
-        if (attributeValue.startsWith("processorVersion=")) {
-            return attributeValue.substring("processorVersion=".length());
+        if (attributeValue.startsWith(SET_PROCESSOR_VERSION)) {
+            return attributeValue.substring(SET_PROCESSOR_VERSION.length());
         }
         return null;
     }

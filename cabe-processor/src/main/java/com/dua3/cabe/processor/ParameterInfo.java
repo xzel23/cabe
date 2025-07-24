@@ -26,8 +26,8 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
     private static final boolean IS_COMPILER_BUG_ENUM_PARAMETER_INDEX_PRESENT;
 
     static {
-        var Constructor = Reproducer.class.getDeclaredConstructors()[0];
-        Parameter[] parameters = Constructor.getParameters();
+        var constructor = Reproducer.class.getDeclaredConstructors()[0];
+        Parameter[] parameters = constructor.getParameters();
         IS_COMPILER_BUG_ENUM_PARAMETER_INDEX_PRESENT = parameters[0].getAnnotatedType().getDeclaredAnnotations().length > 0;
     }
 

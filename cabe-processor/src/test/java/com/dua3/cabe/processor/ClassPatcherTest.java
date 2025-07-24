@@ -31,8 +31,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClassPatcherTest {
@@ -200,13 +198,13 @@ class ClassPatcherTest {
         
         // Check a few class files to verify the attribute was added
         try (Stream<Path> paths = Files.walk(testClassesProcessedWithAttributeDir)) {
-            List<Path> classFiles = paths
+            List<Path> processedFiles = paths
                     .filter(Files::isRegularFile)
                     .filter(p -> p.toString().endsWith(".class"))
                     .limit(5) // Check up to 5 class files
-                    .collect(Collectors.toList());
+                    .toList();
             
-            for (Path classFile : classFiles) {
+            for (Path classFile : processedFiles) {
                 String className = TestUtil.getClassName(classFile)
                         .substring(testClassesProcessedWithAttributeDir.toString().length() + 1)
                         .replace(File.separatorChar, '.');
@@ -234,13 +232,13 @@ class ClassPatcherTest {
 
         // Verify that the attribute in the reprocessed files still has the original version
         try (Stream<Path> paths = Files.walk(testClassesReprocessedDir)) {
-            List<Path> classFiles = paths
+            List<Path> processedFiles = paths
                     .filter(Files::isRegularFile)
                     .filter(p -> p.toString().endsWith(".class"))
                     .limit(5) // Check up to 5 class files
-                    .collect(Collectors.toList());
+                    .toList();
             
-            for (Path classFile : classFiles) {
+            for (Path classFile : processedFiles) {
                 String className = TestUtil.getClassName(classFile)
                         .substring(testClassesReprocessedDir.toString().length() + 1)
                         .replace(File.separatorChar, '.');
@@ -297,7 +295,7 @@ class ClassPatcherTest {
             "publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK"
     })
     @Order(5)
-    public void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
+    void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
         Configuration config = Configuration.parse(configName);
 
         // create directories
