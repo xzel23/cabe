@@ -34,6 +34,22 @@ afterEvaluate {
     tasks.findByName("publishPluginMavenPublicationToMavenLocal")?.let { task ->
         task.dependsOn("signMavenJavaPublication")
     }
+    
+    // Access isReleaseVersion from root project
+    val isReleaseVersion = rootProject.extra["isReleaseVersion"] as Boolean
+    
+    // Configure publishPlugins task to be skipped when not a release version
+    tasks.named("publishPlugins") {
+        onlyIf {
+            if (isReleaseVersion) {
+                logger.lifecycle("Publishing plugin to Gradle Plugin Portal (release version)")
+                true
+            } else {
+                logger.lifecycle("Skipping plugin publishing to Gradle Plugin Portal (non-release version)")
+                false
+            }
+        }
+    }
 }
 
 gradlePlugin {

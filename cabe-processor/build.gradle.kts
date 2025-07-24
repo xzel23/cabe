@@ -10,15 +10,6 @@ plugins {
 
 project.version = rootProject.extra["processor_version"] as String
 
-fun isDevelopmentVersion(versionString: String): Boolean {
-    val v = versionString.toDefaultLowerCase()
-    val markers = listOf("snapshot", "alpha", "beta")
-    return markers.any { marker -> v.contains("-$marker") || v.contains(".$marker") }
-}
-
-val isReleaseVersion = !isDevelopmentVersion(project.version.toString())
-val isSnapshot = project.version.toString().toDefaultLowerCase().contains("snapshot")
-
 file("src/main/java/com/dua3/cabe/processor/CabeProcessorMetaData.java")
     .writeText("""
         package com.dua3.cabe.processor;

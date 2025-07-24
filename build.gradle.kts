@@ -27,11 +27,13 @@ extra["processor_version"] = projectVersion
 
 fun isDevelopmentVersion(versionString: String): Boolean {
     val v = versionString.toDefaultLowerCase()
-    val markers = listOf("snapshot", "alpha", "beta")
+    val markers = listOf("snapshot", "alpha", "beta", "rc")
     return markers.any { marker -> v.contains("-$marker") || v.contains(".$marker") }
 }
 
 val isReleaseVersion = !isDevelopmentVersion(project.version.toString())
+// Make isReleaseVersion available as an extra property for subprojects
+extra["isReleaseVersion"] = isReleaseVersion
 val isSnapshot = project.version.toString().toDefaultLowerCase().contains("snapshot")
 
 subprojects {
