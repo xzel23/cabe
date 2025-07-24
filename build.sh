@@ -48,24 +48,4 @@ cd "`dirname $0`" \
   && echo "compile examples successful" \
 || { echo "ERROR" ; exit 1 ; }
 
-read -p "publish cabe-processor? " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-  echo "publishing cabe-processor jar"
-  ./gradlew cabe-processor:publish --no-parallel \
-  && echo "cabe-processor jar published" \
-  || { echo "ERROR" ; exit 1 ; }
-fi
-
-read -p "publish cabe-plugin? " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-  echo "publishing cabe-plugin" \
-  && ./gradlew cabe-gradle-plugin:publishPlugins --no-parallel \
-  && echo "cabe-plugin published" \
-  || { echo "ERROR" ; exit 1 ; }
-fi
-
 echo "SUCCESS"
