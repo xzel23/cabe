@@ -324,6 +324,7 @@ class ClassPatcherTest {
                         .filter(Files::isRegularFile)
                         .filter(p -> p.toString().endsWith(".class"))
                         .filter(p -> !p.toString().contains("$")) // filter out anonymous classes
+                        .sorted()
                         .map(path -> runAndTestProcessedClassesForConfig(processedDir, processedDir.relativize(path)))
                         .collect(Collectors.joining());
                 fmt.format("%s", result);
