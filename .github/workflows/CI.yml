@@ -81,6 +81,14 @@ jobs:
         run: gradle --no-daemon -Dexamples examples:hello:build examples:hellofx:build
         id: compileexamples
 
+      - name: 'publish build'
+        run: gradle --no-daemon jreleaserDeploy jreleaserUpload
+        env:
+          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.JRELEASER_GPG_PASSPHRASE }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-docs:
     needs: build
     runs-on: ubuntu-latest
