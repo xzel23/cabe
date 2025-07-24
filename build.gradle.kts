@@ -119,48 +119,45 @@ subprojects {
             }
         }
 
-        // Publications for non-BOM projects
-        if (!project.name.endsWith("-bom")) {
-            publications {
-                create<MavenPublication>("mavenJava") {
-                    from(components["java"])
+        publications {
+            create<MavenPublication>("mavenJava") {
+                from(components["java"])
 
-                    groupId = Meta.GROUP
-                    artifactId = project.name
-                    version = project.version.toString()
+                groupId = Meta.GROUP
+                artifactId = project.name
+                version = project.version.toString()
 
-                    pom {
-                        name.set(project.name)
-                        description.set(project.description)
+                pom {
+                    name.set(project.name)
+                    description.set(project.description)
+                    url.set(Meta.SCM)
+
+                    licenses {
+                        license {
+                            name.set(Meta.LICENSE_NAME)
+                            url.set(Meta.LICENSE_URL)
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set(Meta.DEVELOPER_ID)
+                            name.set(Meta.DEVELOPER_NAME)
+                            email.set(Meta.DEVELOPER_EMAIL)
+                            organization.set(Meta.ORGANIZATION_NAME)
+                            organizationUrl.set(Meta.ORGANIZATION_URL)
+                        }
+                    }
+
+                    scm {
+                        connection.set("scm:git:${Meta.SCM}")
+                        developerConnection.set("scm:git:${Meta.SCM}")
                         url.set(Meta.SCM)
+                    }
 
-                        licenses {
-                            license {
-                                name.set(Meta.LICENSE_NAME)
-                                url.set(Meta.LICENSE_URL)
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id.set(Meta.DEVELOPER_ID)
-                                name.set(Meta.DEVELOPER_NAME)
-                                email.set(Meta.DEVELOPER_EMAIL)
-                                organization.set(Meta.ORGANIZATION_NAME)
-                                organizationUrl.set(Meta.ORGANIZATION_URL)
-                            }
-                        }
-
-                        scm {
-                            connection.set("scm:git:${Meta.SCM}")
-                            developerConnection.set("scm:git:${Meta.SCM}")
-                            url.set(Meta.SCM)
-                        }
-
-                        withXml {
-                            val root = asNode()
-                            root.appendNode("inceptionYear", "2019")
-                        }
+                    withXml {
+                        val root = asNode()
+                        root.appendNode("inceptionYear", "2019")
                     }
                 }
             }

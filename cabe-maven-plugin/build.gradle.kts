@@ -34,7 +34,6 @@ java {
 /////////////////////////////////////////////////////////////////////////////
 object Meta {
     const val SCM = "https://github.com/xzel23/cabe.git"
-    const val REPO = "public"
     const val LICENSE_NAME = "Apache License 2.0"
     const val LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
     const val DEVELOPER_ID = "axh"
