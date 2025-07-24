@@ -22,6 +22,7 @@ object Meta {
 /////////////////////////////////////////////////////////////////////////////
 
 val projectVersion = "3.3.0"
+version = projectVersion
 extra["plugin_version"] = projectVersion
 extra["processor_version"] = projectVersion
 
@@ -41,7 +42,10 @@ subprojects {
     apply(plugin = "java")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
-
+    
+    // Set version for all subprojects
+    project.version = rootProject.version
+    
     java {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -275,6 +279,14 @@ tasks.register<Javadoc>("aggregateJavadoc") {
         // Disable module path to avoid module-related errors
         addBooleanOption("module-path", false)
     }
+}
+
+tasks.named("jreleaserDeploy") {
+    dependsOn("publishToStagingDirectory", "aggregateJavadoc")
+}
+
+tasks.named("jreleaserUpload") {
+    dependsOn("publishToStagingDirectory", "aggregateJavadoc")
 }
 
 jreleaser {
