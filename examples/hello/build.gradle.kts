@@ -6,13 +6,17 @@ buildscript {
         mavenLocal()
         mavenCentral()
     }
+    dependencies {
+        classpath("com.dua3.cabe", "com.dua3.cabe.gradle.plugin", rootProject.extra["plugin_version"] as String)
+    }
 }
 
 plugins {
     id("java")
     id("application")
-    id("com.dua3.cabe") version rootProject.extra["plugin_version"] as String
 }
+
+apply(plugin = "com.dua3.cabe")
 
 repositories {
     mavenLocal()
