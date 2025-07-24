@@ -21,7 +21,7 @@ object Meta {
 }
 /////////////////////////////////////////////////////////////////////////////
 
-val projectVersion = "3.3.0-SNAPSHOT"
+val projectVersion = "3.3.0"
 extra["plugin_version"] = projectVersion
 extra["processor_version"] = projectVersion
 
