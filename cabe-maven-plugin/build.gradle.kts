@@ -55,6 +55,7 @@ publishing {
 
             pom {
                 description.set(project.description)
+                url.set(Meta.SCM)
                 packaging = "maven-plugin"
 
                 withXml {

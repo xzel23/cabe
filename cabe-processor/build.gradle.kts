@@ -161,6 +161,7 @@ configure<PublishingExtension> {
             pom {
                 name.set("${project.name}-all")
                 description.set("${project.description ?: "CABE Processor with all dependencies"}")
+                url.set("https://github.com/xzel23/cabe")
             }
         }
     }

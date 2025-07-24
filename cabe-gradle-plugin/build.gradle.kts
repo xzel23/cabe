@@ -56,6 +56,17 @@ afterEvaluate {
     }
 }
 
+// Configure all publications to ensure URL is set in POM
+publishing {
+    publications {
+        withType<MavenPublication> {
+            pom {
+                url.set("https://github.com/xzel23/cabe")
+            }
+        }
+    }
+}
+
 gradlePlugin {
     website = "https://github.com/xzel23/cabe"
     vcsUrl = "https://github.com/xzel23/cabe"
