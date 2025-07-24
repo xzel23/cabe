@@ -31,7 +31,8 @@ fun isDevelopmentVersion(versionString: String): Boolean {
     return markers.any { marker -> v.contains("-$marker") || v.contains(".$marker") }
 }
 
-val isReleaseVersion = !isDevelopmentVersion(project.version.toString())
+val isReleaseVersion = !isDevelopmentVersion(projectVersion)
+
 // Make isReleaseVersion available as an extra property for subprojects
 extra["isReleaseVersion"] = isReleaseVersion
 val isSnapshot = project.version.toString().toDefaultLowerCase().contains("snapshot")
