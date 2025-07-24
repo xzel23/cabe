@@ -34,7 +34,45 @@ tasks.named("publishMavenJavaPublicationToStagingDirectoryRepository") {
 // Use afterEvaluate to ensure all tasks are created before configuration
 afterEvaluate {
     tasks.findByName("publishPluginMavenPublicationToMavenLocal")?.dependsOn("signMavenJavaPublication")
-    tasks.findByName("publishPluginMavenPublicationToStagingDirectoryRepository")?.dependsOn("signMavenJavaPublication")
+    
+    // Skip publishing the Gradle Plugin publications to the staging directory
+    tasks.findByName("publishPluginMavenPublicationToStagingDirectoryRepository")?.let { task ->
+        task.enabled = false
+        logger.lifecycle("Skipping pluginMaven publication to staging directory as per requirements")
+    }
+    
+    tasks.findByName("publishCabePluginPluginMarkerMavenPublicationToStagingDirectoryRepository")?.let { task ->
+        task.enabled = false
+        logger.lifecycle("Skipping cabePluginPluginMarkerMaven publication to staging directory as per requirements")
+    }
+    
+    // Disable all publication tasks to staging directory except for mavenJava
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        if (name != "publishMavenJavaPublicationToStagingDirectoryRepository" && repository.name == "stagingDirectory") {
+            enabled = false
+            logger.lifecycle("Disabling task $name to prevent Gradle Plugin publication to staging directory")
+        }
+    }
+    
+    // Also disable the publishAllPublicationsToStagingDirectoryRepository task and recreate it to only include mavenJava
+    tasks.findByName("publishAllPublicationsToStagingDirectoryRepository")?.let { task ->
+        task.enabled = false
+        logger.lifecycle("Disabling publishAllPublicationsToStagingDirectoryRepository task")
+    }
+    
+    // Create a custom task that only publishes the mavenJava publication to staging directory
+    tasks.register("publishOnlyMavenJavaToStagingDirectory") {
+        dependsOn("publishMavenJavaPublicationToStagingDirectoryRepository")
+        group = "publishing"
+        description = "Publishes only the mavenJava publication to staging directory"
+    }
+    
+    // Make the publishToStagingDirectory task depend on our custom task instead
+    tasks.findByName("publishToStagingDirectory")?.let { task ->
+        task.dependsOn.clear()
+        task.dependsOn("publishOnlyMavenJavaToStagingDirectory")
+        logger.lifecycle("Reconfigured publishToStagingDirectory task to only publish mavenJava publication")
+    }
 }
 
 // Access isReleaseVersion from root project
@@ -70,6 +108,3 @@ gradlePlugin {
         }
     }
 }
-
-// The metadata is already added by the root build.gradle.kts
-// No need to add it here to avoid duplication
