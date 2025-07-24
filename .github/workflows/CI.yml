@@ -91,7 +91,7 @@ jobs:
           retention-days: 7
 
       - name: 'publish build'
-        run: gradle --no-daemon jreleaserDeploy jreleaserUpload --stacktrace --info
+        run: gradle --no-daemon jreleaserDeploy jreleaserUpload
         env:
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
           JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
@@ -100,11 +100,11 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
-#      - name: 'publish plugin'
-#        run: gradle --no-daemon cabe-gradle-plugin:publishPlugins
-#        env:
-#          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
-#          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+      - name: 'publish plugin'
+        run: gradle --no-daemon cabe-gradle-plugin:publishPlugins
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
 
   build-docs:
     needs: build

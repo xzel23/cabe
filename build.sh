@@ -26,8 +26,8 @@ EOF
 
 # run a second build and then a clean after successful execution to check files are not locked after executing gradle task
 cd "`dirname $0`" \
-&& ./gradlew clean build test publishToMavenLocal \
-  && echo "build successful" \
+&& ./gradlew clean build test cabe-processor:shadowJar publishToMavenLocal publishToStagingDirectory \
+  && echo "build and plugin published to local repository successful" \
 && ./gradlew --no-daemon -Dtest \
   cabe-gradle-plugin-test:clean \
   cabe-gradle-plugin-test:test-gradle-plugin:run \
@@ -36,10 +36,6 @@ cd "`dirname $0`" \
   && ./gradlew --no-daemon -Dtest cabe-gradle-plugin-test:build ${FLAGS} \
   && ./gradlew --no-daemon -Dtest cabe-gradle-plugin-test:clean ${FLAGS} \
   && echo "plugin test successful" \
-&& ./gradlew cabe-processor:shadowJar \
-  && echo "shadow jar created" \
-&& ./gradlew publishToMavenLocal \
-  && echo "plugin published to local repository" \
 && ./gradlew --no-daemon -Dexamples \
   examples:clean \
   examples:hello:build \
