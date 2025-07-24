@@ -63,13 +63,14 @@ jobs:
       # run a first build and test and then a second build and then a clean after successful execution
       # to check files are not locked after executing the gradle task (weird? this is actually a regression test)
       - name: 'Run plugin tests'
-        run: gradle --no-daemon --build-cache -Dtest |
-          cabe-gradle-plugin-test:clean
-          cabe-gradle-plugin-test:test-gradle-plugin:run
-          cabe-gradle-plugin-test:test-gradle-plugin-modular:run 
-          && gradle --no-daemon -Dtest cabe-gradle-plugin-test:build
-          && gradle --no-daemon -Dtest cabe-gradle-plugin-test:clean
-          && echo "plugin test successful"
+        run: |
+          gradle --no-daemon --build-cache -Dtest \
+            cabe-gradle-plugin-test:clean \
+            cabe-gradle-plugin-test:test-gradle-plugin:run \
+            cabe-gradle-plugin-test:test-gradle-plugin-modular:run  \
+            && gradle --no-daemon -Dtest cabe-gradle-plugin-test:build \
+            && gradle --no-daemon -Dtest cabe-gradle-plugin-test:clean \
+            && echo "plugin test successful"
         id: testplugin
 
       - name: 'Create shadow jar for the cabe processor and publish to Maven local'
