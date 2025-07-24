@@ -5,6 +5,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.50.0"
 }
 
+description = "The Gradle plugin adds null checks based on JSpecify annotations at compile time."
 version = project.findProperty("plugin_version") as String? ?: project.version
 
 repositories {
@@ -22,8 +23,6 @@ tasks.named("compileJava") {
     dependsOn(":cabe-processor:publishToMavenLocal")
 }
 
-// Fix for task dependency issues
-// Use afterEvaluate to ensure all tasks are created before configuration
 tasks.named("publishMavenJavaPublicationToMavenLocal") {
     dependsOn("signPluginMavenPublication")
 }
@@ -56,20 +55,9 @@ afterEvaluate {
     }
 }
 
-// Configure all publications to ensure URL is set in POM
-publishing {
-    publications {
-        withType<MavenPublication> {
-            pom {
-                url.set("https://github.com/xzel23/cabe")
-            }
-        }
-    }
-}
-
 gradlePlugin {
-    website = "https://github.com/xzel23/cabe"
-    vcsUrl = "https://github.com/xzel23/cabe"
+    website = rootProject.extra["SCM"] as String
+    vcsUrl = rootProject.extra["SCM"] as String
 
     plugins {
         create("cabePlugin") {
@@ -82,3 +70,6 @@ gradlePlugin {
         }
     }
 }
+
+// The metadata is already added by the root build.gradle.kts
+// No need to add it here to avoid duplication

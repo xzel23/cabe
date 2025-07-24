@@ -7,18 +7,16 @@ plugins {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-object Meta {
-    const val GROUP = "com.dua3.cabe"
-    const val SCM = "https://github.com/xzel23/cabe.git"
-    const val INCEPTION_YEAR = "2021"
-    const val LICENSE_NAME = "Apache License 2.0"
-    const val LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
-    const val DEVELOPER_ID = "axh"
-    const val DEVELOPER_NAME = "Axel Howind"
-    const val DEVELOPER_EMAIL = "axh@dua3.com"
-    const val ORGANIZATION_NAME = "dua3"
-    const val ORGANIZATION_URL = "https://www.dua3.com"
-}
+extra["GROUP"]              = "com.dua3.cabe"
+extra["SCM"]                = "https://github.com/xzel23/cabe.git"
+extra["INCEPTION_YEAR"]     = "2021"
+extra["LICENSE_NAME"]       = "Apache License 2.0"
+extra["LICENSE_URL"]        = "https://www.apache.org/licenses/LICENSE-2.0"
+extra["DEVELOPER_ID"]       = "axh"
+extra["DEVELOPER_NAME"]     = "Axel Howind"
+extra["DEVELOPER_EMAIL"]    = "axh@dua3.com"
+extra["ORGANIZATION_NAME"]  = "dua3"
+extra["ORGANIZATION_URL"]   = "https://www.dua3.com"
 /////////////////////////////////////////////////////////////////////////////
 
 val projectVersion = "3.3.0"
@@ -123,41 +121,41 @@ subprojects {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])
 
-                groupId = Meta.GROUP
+                groupId = rootProject.extra["GROUP"].toString()
                 artifactId = project.name
                 version = project.version.toString()
 
                 pom {
                     name.set(project.name)
                     description.set(project.description)
-                    url.set(Meta.SCM)
+                    url.set(rootProject.extra["SCM"].toString())
 
                     licenses {
                         license {
-                            name.set(Meta.LICENSE_NAME)
-                            url.set(Meta.LICENSE_URL)
+                            name.set(rootProject.extra["LICENSE_NAME"].toString())
+                            url.set(rootProject.extra["LICENSE_URL"].toString())
                         }
                     }
 
                     developers {
                         developer {
-                            id.set(Meta.DEVELOPER_ID)
-                            name.set(Meta.DEVELOPER_NAME)
-                            email.set(Meta.DEVELOPER_EMAIL)
-                            organization.set(Meta.ORGANIZATION_NAME)
-                            organizationUrl.set(Meta.ORGANIZATION_URL)
+                            id.set(rootProject.extra["DEVELOPER_ID"].toString())
+                            name.set(rootProject.extra["DEVELOPER_NAME"].toString())
+                            email.set(rootProject.extra["DEVELOPER_EMAIL"].toString())
+                            organization.set(rootProject.extra["ORGANIZATION_NAME"].toString())
+                            organizationUrl.set(rootProject.extra["ORGANIZATION_URL"].toString())
                         }
                     }
 
                     scm {
-                        connection.set("scm:git:${Meta.SCM}")
-                        developerConnection.set("scm:git:${Meta.SCM}")
-                        url.set(Meta.SCM)
+                        connection.set("scm:git:${rootProject.extra["SCM"].toString()}")
+                        developerConnection.set("scm:git:${rootProject.extra["SCM"].toString()}")
+                        url.set(rootProject.extra["SCM"].toString())
                     }
 
                     withXml {
                         val root = asNode()
-                        root.appendNode("inceptionYear", "2019")
+                        root.appendNode("inceptionYear", rootProject.extra["INCEPTION_YEAR"].toString())
                     }
                 }
             }
@@ -290,13 +288,13 @@ jreleaser {
     project {
         name.set(rootProject.name)
         version.set(projectVersion)
-        group = Meta.GROUP
-        authors.set(listOf(Meta.DEVELOPER_NAME))
-        license.set(Meta.LICENSE_NAME)
+        group = extra["GROUP"].toString()
+        authors.set(listOf(extra["DEVELOPER_NAME"].toString()))
+        license.set(extra["LICENSE_NAME"].toString())
         links {
-            homepage.set(Meta.ORGANIZATION_URL)
+            homepage.set(extra["ORGANIZATION_URL"].toString())
         }
-        inceptionYear.set(Meta.INCEPTION_YEAR)
+        inceptionYear.set(extra["INCEPTION_YEAR"].toString())
         gitRootSearch.set(true)
     }
 

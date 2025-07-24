@@ -1,5 +1,3 @@
-import org.gradle.internal.extensions.stdlib.toDefaultLowerCase
-
 plugins {
     id("java-library")
     id("application")
@@ -9,6 +7,7 @@ plugins {
 }
 
 project.version = rootProject.extra["processor_version"] as String
+description = "The Cabe processor injects null checks based on JSpecify annotations into class files."
 
 file("src/main/java/com/dua3/cabe/processor/CabeProcessorMetaData.java")
     .writeText("""
@@ -157,11 +156,41 @@ configure<PublishingExtension> {
                 classifier = "sources"
             }
             
-            // Add simplified POM information
+            // Add complete POM information
             pom {
                 name.set("${project.name}-all")
                 description.set("${project.description ?: "CABE Processor with all dependencies"}")
-                url.set("https://github.com/xzel23/cabe")
+                url.set(rootProject.extra["SCM"].toString())
+                
+                licenses {
+                    license {
+                        name.set(rootProject.extra["LICENSE_NAME"].toString())
+                        url.set(rootProject.extra["LICENSE_URL"].toString())
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set(rootProject.extra["DEVELOPER_ID"].toString())
+                        name.set(rootProject.extra["DEVELOPER_NAME"].toString())
+                        email.set(rootProject.extra["DEVELOPER_EMAIL"].toString())
+                        organization.set(rootProject.extra["ORGANIZATION_NAME"].toString())
+                        organizationUrl.set(rootProject.extra["ORGANIZATION_URL"].toString())
+                    }
+                }
+                
+                scm {
+                    connection.set("scm:git:${rootProject.extra["SCM"].toString()}")
+                    developerConnection.set("scm:git:${rootProject.extra["SCM"].toString()}")
+                    url.set(rootProject.extra["SCM"].toString())
+                }
+                
+                // Add inceptionYear for the shadowJar publication
+                // This is needed because this publication is not affected by the root build.gradle.kts
+                withXml {
+                    val root = asNode()
+                    root.appendNode("inceptionYear", rootProject.extra["INCEPTION_YEAR"].toString())
+                }
             }
         }
     }
