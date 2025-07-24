@@ -18,6 +18,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      is_release_version: ${{ steps.check-version.outputs.is_release_version }}
+      version: ${{ steps.check-version.outputs.version }}
     permissions:
       contents: read
     steps:
@@ -25,6 +28,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
+      - name: Extract version and check if it's a release version
+        id: check-version
+        run: |
+          # Extract version from build.gradle.kts
+          VERSION=$(grep -E "val projectVersion = " build.gradle.kts | sed -E 's/.*"(.*)".*/\1/')
+          echo "Extracted version: $VERSION"
+          
+          # Check if it's a release version (no suffix like -SNAPSHOT, -rc, etc.)
+          if [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "This is a release version"
+            echo "is_release_version=true" >> $GITHUB_OUTPUT
+          else
+            echo "This is not a release version"
+            echo "is_release_version=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       # Setup JDK 17 for build
       - name: 'Set up JDK 17'
@@ -169,14 +190,33 @@ jobs:
         uses: JetBrains/writerside-checker-action@v1
         with:
           instance: ${{ env.INSTANCE }}
+          
+  log-docs-deployment-status:
+    needs: [build, test-docs]
+    runs-on: ubuntu-latest
+    if: ${{ needs.build.outputs.is_release_version != 'true' }}
+    steps:
+      - name: Log version information
+        run: |
+          echo "Project version: ${{ needs.build.outputs.version }}"
+          echo "Is release version: ${{ needs.build.outputs.is_release_version }}"
+          echo "Skipping documentation deployment because this is not a final release version."
+          echo "Documentation will only be deployed for versions in the format a.b.c without any suffix."
 
   deploy-docs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: [build-docs, test-docs]
+    needs: [build, build-docs, test-docs]
+    if: ${{ needs.build.outputs.is_release_version == 'true' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Log version information
+        run: |
+          echo "Project version: ${{ needs.build.outputs.version }}"
+          echo "Is release version: ${{ needs.build.outputs.is_release_version }}"
+          echo "Deploying documentation to GitHub Pages because this is a final release version."
+      
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
