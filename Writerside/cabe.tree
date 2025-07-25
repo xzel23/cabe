@@ -7,4 +7,7 @@
                  start-page="cabe.md">
 
     <toc-element topic="cabe.md"/>
+    <toc-element topic="cabe-gradle-plugin.md"/>
+    <toc-element topic="cabe-maven-plugin.md"/>
+    <toc-element topic="cabe-standalone-processor.md"/>
 </instance-profile>
