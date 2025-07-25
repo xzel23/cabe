@@ -90,23 +90,31 @@ tasks.test {
 
 // === JAVADOC / SOURCES for shaded jar ===
 tasks.register<Javadoc>("javadocAll") {
+    group = "documentation"
+    description = "Generates aggregated Javadoc for all subprojects"
     source = sourceSets["main"].allJava
     classpath = sourceSets["main"].runtimeClasspath
     setDestinationDir(file("${reporting.baseDirectory.asFile.get()}/javadocAll"))
 }
 
 tasks.register<Jar>("javadocAllJar") {
+    group = "documentation"
+    description = "Assembles a jar archive containing the aggregated Javadoc for all subprojects"
     archiveBaseName.set("${project.name}")
     archiveClassifier.set("all-javadoc")
     from(tasks.named("javadocAll"))
 }
 
 tasks.register<Copy>("sourcesAll") {
+    group = "documentation"
+    description = "Copies all source files into a single directory"
     from(sourceSets["main"].allSource)
     into(reporting.file("sourcesAll"))
 }
 
 tasks.register<Jar>("sourcesAllJar") {
+    group = "documentation"
+    description = "Assembles a jar archive containing the aggregated sources for all subprojects"
     archiveBaseName.set("${project.name}")
     archiveClassifier.set("all-sources")
     from(tasks.named("sourcesAll"))

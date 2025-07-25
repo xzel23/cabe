@@ -162,7 +162,7 @@ public final class TestUtil {
                     .filter(Files::isRegularFile)
                     .filter(f -> f.getFileName().toString().endsWith(".class"))
                     .map(dir::relativize)
-                    .collect(Collectors.toList());
+                    .toList();
         }
     }
 
