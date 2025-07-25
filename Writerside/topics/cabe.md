@@ -2,7 +2,8 @@
 
 Cabe is a Java byte code instrumentation tool that inserts checks based on JSpecify annotations into your class files.
 
-According to the [Fail-Fast Principle](https://www.martinfowler.com/ieeeSoftware/failFast.pdf), all invalid input should be detected and reported early. Cabe helps you
+According to the [Fail-Fast Principle](https://www.martinfowler.com/ieeeSoftware/failFast.pdf), all invalid input should
+be detected and reported early. Cabe helps you
 doing this by automatically checking method and constructor parameters.
 
 Cabe also helps you during develompment by checking return values of methods.
@@ -28,10 +29,10 @@ Read on for examples and more detailed configuration options.
 
 ## What are JSpecify Annotations?
 
-JSpecify is a project that aims to enhance Java code by providing a set of annotations specifically designed to improve 
+JSpecify is a project that aims to enhance Java code by providing a set of annotations specifically designed to improve
 code quality and facilitate better type-checking. These annotations help developers specify nullability and (later)
-other type-related constraints more precisely, allowing for more robust and error-free code. This ultimately leads to 
-improved documentation, better IDE support, and more reliable results during static analysis. 
+other type-related constraints more precisely, allowing for more robust and error-free code. This ultimately leads to
+improved documentation, better IDE support, and more reliable results during static analysis.
 
 You can find more details about JSpecify on their official [website](https://jspecify.dev).
 
@@ -53,7 +54,7 @@ Let's look at an example (use <code>./gradlew :examples:hello:run</code> to exec
 
 <code-block lang="Java">
     import org.jspecify.annotations.NonNull;
-    
+
     public class hello.Hello {
         public static void main(String[] args) {
             sayHello(null);
@@ -63,9 +64,10 @@ Let's look at an example (use <code>./gradlew :examples:hello:run</code> to exec
             System.out.println("hello.Hello, " + name + "!");
         }
     }
+
 </code-block>
 
-The contract of `sayHello(@NonNull String name)` is that `name` must have a non-null value when called. When you run 
+The contract of `sayHello(@NonNull String name)` is that `name` must have a non-null value when called. When you run
 this code through Cabe, using the standard configuration, an automatic null-check will be inserted, and when you run
 the program, you will see this:
 
@@ -147,8 +149,14 @@ Caused by: java.lang.AssertionError: invalid null return value
         at javafx.graphics/com.sun.glass.ui.InvokeLaterDispatcher$Future.run(InvokeLaterDispatcher.java:95)
 ```
 
-Note that the cause now points directly at the exact method that returned the invalid <code>null</code> value. This is
-of course a rather trivial example, but it shows how Cabe can simplify your workflow.
+Note that the cause now points directly at the exact method that returned the invalid <code>null</code> value:
+
+```
+Caused by: java.lang.AssertionError: invalid null return value
+        at hellofx.HelloFX.getResourceAsStream(HelloFX.java:19)
+```
+
+This is of course a rather trivial example, but it shows how Cabe can simplify your workflow.
 
 <tip>
 If you look at the HelloFX source code, you might notice that the method return value was not even marked as
@@ -161,6 +169,103 @@ as if it were annotated as <code>@NonNull</code>.
 The <code>@NullMarked</code> annotation can be applied to classes, packages, and even Jigsaw modules. Read more about
 how to use JSpecify annotations in the <a href="https://jspecify.dev/docs/user-guide/">Nullness User Guide</a>.
 </note>
+
+## What makes Cabe different from other projects like Nullaway?
+
+NullAway does static analysis and reports possible problems in your code. Cabe instead inserts runtime checks.
+But what does this mean in practice?
+
+### As a library developer
+
+Even if you use NullAway (or other static analyzers like Sonar, Qodana, etc.), the users of your library might not.
+This means you still should check every parameter your library is passed from user code ("fail early").
+
+Let's look at an example. We have a public method that is callable from user code:
+
+```
+        @NullMarked
+        public static void sayHelloOnDay(String name, String day) {
+            System.out.println("Hello, " + name + ", today is " + day +".);
+        }
+```
+
+NullAway will report when you use it in your own code, but it cannot tell whether the user of your library
+will always call it with non-null parameters. To make it fail early, you need to check the parameters:
+
+```
+        @NullMarked
+        public static void sayHelloOnDay(String name, String day) {
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(day);
+            System.out.println("Hello, " + name + ", today is " + day +".);
+        }
+```
+
+This works, but when a `NullPointerException` is thrown, there is no information about which of the parameters
+caused it. So you better do it like this:
+
+```
+        @NullMarked
+        public static void sayHelloOnDay(String name, String day) {
+            Objects.requireNonNull(name, "name is null");
+            Objects.requireNonNull(day), "day is null");
+            System.out.println("Hello, " + name + ", today is " + day +".);
+        }
+```
+
+Much better. But you know have to remember to change the messages too should you ever change parameter names.
+And of course, you have the maintenance cost of always making sure your checks match the method declaration.
+
+Using the Cabe plugin, this code:
+
+```
+        @NullMarked
+        public static void sayHelloOnDay(String name, String day) {
+            System.out.println("Hello, " + name + ", today is " + day +".);
+        }
+```
+
+will be replaced at compilation time by:
+
+```
+        @NullMarked
+        public static void sayHelloOnDay(String name, String day) {
+            if (name == null) {
+                throw new NullPointerException("name is null);
+            }
+            if (day == null) {
+                throw new NullPointerException("day is null);
+            }
+            System.out.println("Hello, " + name + ", today is " + day +".);
+        }
+```
+
+You don't need to manually write all those null checks for parameters.
+
+### As an application developer
+
+During development, you can configure Cabe to unconditionally throw `AssertionError` on violations. This can
+be useful for example when you use a framework that silently swallows `NullPointerException` under certain
+conditions, for example when using JavaFX event handlers or `Platform.runLater()`. JavaFX will log those events
+but the application continues to run, so this might go undetected during testing.
+
+You can also enable strict checking for private methods parameters and return values during development
+and then disable the checks for your private code for release versions, making the development version of
+your software exit with an `AssertionError` and doing no checks or throwing `NullPointerException` in the
+release version. This can be useful when you have time critical code where you don't want these additional
+checks to be done at runtime for the release version.
+
+## Doesn't Lombok offer similar functionality?
+
+Yes, AFAIK Lombok has runtime null check injection. Differences are:
+
+- You have less control over the kind of checks (for example, Cabe allows you to use assertions for private methods
+  and throwing NPE for public ones).
+- Lombok does not offer runtime checks for method return values.
+- Lombok does not offer runtime checks for record components, you'd have to explicitly define a record constructor.
+- Using Lombok is controversial since some consider "lomboked" code to not be valid Java anymore but rather using
+  a language based on Java: Depending on what features of Lombok you use, your code might not be compilable by
+  the standard JDK compiler anymore. (This is a rather heated discussion, and I rather not chime in.)
 
 ## Will using Cabe impact performance?
 
@@ -197,7 +302,8 @@ This depends on the configuration used. There are four types of checks. The exam
 
 When developing a library, you can configure different checks for:
 
-- the **public API** of your library so that invalid parameter values are detected when the user of your library calls your
+- the **public API** of your library so that invalid parameter values are detected when the user of your library calls
+  your
   code with disallowed <code>null</code> values for a parameter,
 
 - the **private API** of your library, i.e., code that cannot be directly called by users of your library.
@@ -223,6 +329,18 @@ The predefined configurations are:
 
 Here are some points that you should be aware of when using Cabe.
 
+### Using with Java Modules
+
+When using Cabe in a modular project, make sure your module declaration (`module-info.java`) requires the JSpecify
+annotations:
+
+```java
+module com.example.myapp {
+    requires org.jspecify;
+    // other module declarations
+}
+```
+
 ### Records
 
 Cabe supports Java Records.
@@ -240,6 +358,7 @@ No, Cabe adds the checks by evaluating the record declaration:
         // this will throw an exception "a is null"
         MyRecord r1 = new MyRecord(null, "b");
     }
+
 </code-block>
 
 #### Standard Assertions cannot be generated for Record classes
@@ -247,7 +366,7 @@ No, Cabe adds the checks by evaluating the record declaration:
 Cabe currently cannot inject standard assertions into record classes because of technical restrictions. That is why for
 records, THROW_NPE is used instead of ASSERT. ASSERT_ALWAYS works as it does for other classes.
 
-**Technical background** 
+**Technical background**
 
 Standard assertions use a special boolean flag <code>$assertionsDisabled</code>
 that is initialised by the JVM when the class is loaded to the value obtained by calling
@@ -273,6 +392,7 @@ values contained in an array.
         // no exception will be thrown although null elements are disallowed
         bar(new String[] {"123", null});
     }
+
 </code-block>
 
 ### Generics
@@ -294,6 +414,7 @@ nullable:
             foo("t", null);
         }
     }
+
 </code-block>
 
 If cannot check parameters where the nullability can not be determined at compile time:
@@ -311,6 +432,7 @@ If cannot check parameters where the nullability can not be determined at compil
         // this also does not throw because the nullability can not be determined at compile time of foo() 
         new Generic2&lt;@NonNull String&gt;().foo(null);
     }
+
 </code-block>
 
 ### SpotBugs
@@ -334,155 +456,24 @@ want to use a SpotBugs exclusion file.
 
 ### Using Cabe in your Gradle Build
 
-Cabe can be used either as a standalone program that you can run manually to instrument your class files or as a Gradle
-plugin that runs automatically in your build process. Let's see how it is done with Gradle.
+Read [](cabe-gradle-plugin.md) for Gradle instructions.
 
-To use Cabe in your Gradle build, add the plugin to your build script and configure the plugin:
+### Using Cabe in your Maven Build
 
-<tabs>
-    <tab title="Kotlin DSL">
-        <code-block lang="Kotlin">
-            plugins {
-              id("com.dua3.cabe") version "%PLUGIN_VERSION%"
-            }
-        </code-block>
-    </tab>
-    <tab title="Groovy DSL">
-        <code-block lang="groovy">
-            plugins {
-              id "com.dua3.cabe" version "%PLUGIN_VERSION%"
-            }        
-        </code-block>
-    </tab>
-</tabs>
-
-This will run the Cabe processor in your build. When no configuration is given, a standard configuration is used.
-
-#### Configure the Cabe Task
-
-To configure the instrumentation, you can configure Cabe like this to use one of the predefined configurations:
-
-<tabs>
-    <tab title="Kotlin DSL">
-        <code-block lang="Kotlin">
-            cabe {
-                config.set(Configuration.STANDARD)
-            }
-        </code-block>
-    </tab>
-    <!-- FIXME add Groovy syntax -->
-</tabs>
-
-If you omit the configuration block in your build, the standard configuration will be used.
-
-#### Using different Configurations for Development and Release Builds
-
-You can also automatically select a configuration based on your version string. In this example, strict checking is done
-for snapshot and beta versions whereas a release build will use the standard configuration:
-
-<tabs>
-    <tab title="Kotlin DSL">
-        <code-block lang="Kotlin">
-            val isSnapshot = project.version.toString().toDefaultLowerCase().contains("snapshot")
-            cabe {
-                if (isSnapshot) {
-                    config.set(Configuration.DEVELOPMENT)
-                } else {
-                    config.set(Configuration.STANDARD)
-                }
-            }
-        </code-block>
-    </tab>
-    <!-- FIXME add Groovy syntax -->
-</tabs>
-
-### Defining Custom Configurations
-
-You can define a custom configuration that differs from the provided predefined configurations by providing a
-configuration String:
-
-<code-block lang="Kotlin">
-    cabe {
-        config.set(Configuration.parse("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS"))
-    }
-</code-block>
-
-When using a configuration String, you can use either
-
-- a predefined name: "STANDARD", "DEVELOPMEN", "NOCHECKSS"
-- a single Check to be used public and private API and return values
-- multiple combination of keys ("publicApi", "privateApi", "returnValue") and checks; 
-  in this the remaining will be set to "NO_CHECK"
-
-Examples:
-
-| Configuration String                     | Public API    | Private API   | Return Value  |
-|------------------------------------------|---------------|---------------|---------------|
-| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      |
-| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS |
-| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     |
-| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        |
-| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS |
-| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK      |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     |
-| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      |
-| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        |
-| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      |
-
-You can also use the standard record constructor of <code>Configuration</code>
-
-<code-block lang="Kotlin">
-    cabe {
-        config.set(new Configuration(Check.THROW_NPE, Check.ASSERT, Check.ASSERT_ALWAYS))
-    }
-</code-block>
+Read [](cabe-maven-plugin.md) for Maven instructions.
 
 ### Using as a Cabe as a standalone Command Line Tool
 
-The instrumentation is done by the `ClassPatcher` class. A precompiled runnable Jar that includes all necessary dependencies can be downloaded from
-[Maven Central Repository](https://mvnrepository.com/artifact/com.dua3.cabe/cabe-processor-all/%PROCESSOR_VERSION%) and run using `java -jar`:
-
-```text
-    % curl https://repo1.maven.org/maven2/com/dua3/cabe/cabe-processor-all/%PROCESSOR_VERSION%/cabe-processor-all-%PROCESSOR_VERSION%.jar -o cabe-processor-all.jar
-      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                     Dload  Upload   Total   Spent    Left  Speed
-    100 2955k  100 2955k    0     0   973k      0  0:00:03  0:00:03 --:--:--  973k
-    
-    % java -jar cabe-processor-all.jar --help
-    ClassPatcher
-    ============
-    
-    Add null checks in Java class file byte code.
-    
-    Usage: java -jar <jar-file> -i <input-folder> -o <output-folder> [-c <configuration>] [-cp <classpath>] [-v <verbosity>]
-    
-        <configuration>  : STANDARD|DEVELOPMENT|NO_CHECKS|<configstr> (default: STANDARD)
-    
-                           STANDARD    - use standard assertions for private API methods,
-                                         throw NullPointerException for public API methods
-                           DEVELOPMENT - failed checks will always throw an AssertionError, also checks return values
-                           NO_CHECKS   - do not add any null checks (class files are copied unchanged)
-                           <configstr> - configuration string as described in the documentation
-    
-        <verbosity>      : 0 - show warnings and errors only (default)
-                         : 1 - show basic processing information
-                         : 2 - show detailed information
-                         : 3 - show all information
-```
+Read [](cabe-standalone-processor.md) for instructions on how to use the standalone processor.
 
 ## What Java version is Cabe compatible with?
 
 Cabe needs at least Java 17 to run. The instrumentation should work for class files from Java 11, but I have only
 tested this with versions 17 to 24.
 
-## Is there a Maven Plugin for Cabe?
-
-A Maven plugin was contributed but is still undocumented.
-
 ## Is the Source available?
 
-Sourcecode is available under the [MIT license](https://github.com/xzel23/cabe/blob/main/LICENSE) on the project 
+Sourcecode is available under the [MIT license](https://github.com/xzel23/cabe/blob/main/LICENSE) on the project
 [GitHub page](https://github.com/xzel23/cabe).
 
 ## Where do I report Bugs?
