@@ -208,7 +208,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: [build, build-docs, test-docs]
-    #if: ${{ needs.build.outputs.is_release_version == 'true' }}
+    if: ${{ needs.build.outputs.is_release_version == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Log version information
