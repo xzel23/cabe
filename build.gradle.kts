@@ -19,7 +19,7 @@ extra["ORGANIZATION_NAME"]  = "dua3"
 extra["ORGANIZATION_URL"]   = "https://www.dua3.com"
 /////////////////////////////////////////////////////////////////////////////
 
-val projectVersion = "4-beta"
+val projectVersion = "4-beta2"
 version = projectVersion
 extra["plugin_version"] = projectVersion
 extra["processor_version"] = projectVersion
@@ -317,6 +317,8 @@ jreleaser {
                         stagingRepositories.add("build/staging-deploy")
                         username.set(System.getenv("SONATYPE_USERNAME"))
                         password.set(System.getenv("SONATYPE_PASSWORD"))
+                        connectTimeout.set(300)
+                        readTimeout.set(300)
                     }
                 }
             } else {
@@ -332,6 +334,8 @@ jreleaser {
                         stagingRepositories.add("build/staging-deploy")
                         username.set(System.getenv("SONATYPE_USERNAME"))
                         password.set(System.getenv("SONATYPE_PASSWORD"))
+                        connectTimeout.set(300)
+                        readTimeout.set(300)
                     }
                 }
             }
