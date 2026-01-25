@@ -436,8 +436,30 @@ public class ClassPatcher {
 
         // special case: for record equals, ignore @NonNull annotations except directly on the method parameter
         // see https://github.com/xzel23/cabe/issues/2
-        boolean ignoreNonMethodNonNullAnnotation = ci.isRecord()
-                && mi.methodName().equals("equals") && mi.parameters().size() == 1;
+        boolean isEquals = mi.methodName().equals("equals") && mi.parameters().size() == 1
+                && mi.parameters().get(0).type().equals(Object.class);
+        boolean ignoreNonMethodNonNullAnnotation = ci.isRecord() && isEquals;
+
+        if (isEquals && mi.isPublic() && !mi.isStatic()) {
+            ParameterInfo pi = mi.parameters().get(0);
+            NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
+            NullnessOperator combined = ci.nullnessOperator().andThen(nullnessOperatorParameter);
+            boolean isNullable = (nullnessOperatorParameter == NullnessOperator.UNION_NULL)
+                    || (combined == NullnessOperator.UNION_NULL)
+                    || (combined == NullnessOperator.NO_CHANGE);
+
+            // workaround for https://github.com/xzel23/cabe/issues/2:
+            // if it's a record, we don't care if the parameter is not @Nullable
+            if (ci.isRecord()) {
+                isNullable = true;
+            }
+
+            if (!isNullable) {
+                throw new ClassFileProcessingFailedException(
+                        String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable",
+                                ci.name(), mi.name()));
+            }
+        }
 
         LOG.fine(() -> "instrumenting method " + methodName);
         try (Formatter standardParameterAssertions = new Formatter();
