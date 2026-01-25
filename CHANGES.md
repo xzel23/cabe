@@ -1,3 +1,10 @@
+version 3.4.0
+=============
+
+- Fixed an issue where instrumentation failed when modules with optional dependencies were on the module path. (#22)
+- The hello-maven example now is built when the plugin is now also built using the build.sh script.
+- improve compatibility with Gradle build and configuration caches
+
 version 3.3.0
 =============
 
