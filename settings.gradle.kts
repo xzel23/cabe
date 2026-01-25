@@ -44,6 +44,8 @@ if (System.getProperty("examples") == null) {
     include(
         "examples",
         "examples:hello",
-        "examples:hellofx"
+        "examples:hellofx",
+        "examples:cabe022",
+        "examples:cabe022:app"
     )
 }

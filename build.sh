@@ -40,6 +40,7 @@ cd "`dirname $0`" \
   examples:clean \
   examples:hello:build \
   examples:hellofx:build \
+  examples:cabe022:build \
   ${FLAGS} \
   && echo "compile examples successful" \
 || { echo "ERROR" ; exit 1 ; }
