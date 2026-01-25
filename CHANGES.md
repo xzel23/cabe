@@ -1,6 +1,8 @@
-version 3.4.0
+version 4.0.0
 =============
 
+- Added a check that equals overrides are declared correctly, i.e., the argument must be nullable for the equals() 
+  contract "x.equals(null) must return false" to be fulfilled. 
 - Fixed an issue where instrumentation failed when modules with optional dependencies were on the module path. (#22)
 - The hello-maven example now is built when the plugin is now also built using the build.sh script.
 - improve compatibility with Gradle build and configuration caches
