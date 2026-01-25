@@ -1,7 +1,8 @@
 Cabe [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Language](https://img.shields.io/badge/language-Java-blue.svg?style=flat-square)](https://github.com/topics/java)
 ====
 
-A bytecode instrumentation tool that inserts null checks based on JSpecify annotations.
+Cabe, pronounced Chah-beh (IPA: /ˈtʃa.be/), is a bytecode instrumentation tool that inserts null checks based on 
+<a href="https://jspecify.dev">JSpecify</a> annotations.
 
 ## TLDR
 
