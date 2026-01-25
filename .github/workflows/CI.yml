@@ -36,12 +36,12 @@ jobs:
           VERSION=$(grep -E "val projectVersion = " build.gradle.kts | sed -E 's/.*"(.*)".*/\1/')
           echo "Extracted version: $VERSION"
           
-          # Check if it's a release version (no suffix like -SNAPSHOT, -rc, etc.)
-          if [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "This is a release version"
+          # Check if it's a release or preview version (not ending with -SNAPSHOT)
+          if [[ ! $VERSION =~ -SNAPSHOT$ ]]; then
+            echo "This is a release or preview version"
             echo "is_release_version=true" >> $GITHUB_OUTPUT
           else
-            echo "This is not a release version"
+            echo "This is a snapshot version"
             echo "is_release_version=false" >> $GITHUB_OUTPUT
           fi
           
@@ -112,6 +112,7 @@ jobs:
           retention-days: 7
 
       - name: 'publish build'
+        if: ${{ steps.check-version.outputs.is_release_version == 'true' }}
         run: gradle --no-daemon jreleaserDeploy jreleaserUpload
         env:
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
@@ -122,6 +123,7 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
       - name: 'publish plugin'
+        if: ${{ steps.check-version.outputs.is_release_version == 'true' }}
         run: gradle --no-daemon cabe-gradle-plugin:publishPlugins
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
