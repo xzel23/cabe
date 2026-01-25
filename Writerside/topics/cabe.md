@@ -170,6 +170,18 @@ The <code>@NullMarked</code> annotation can be applied to classes, packages, and
 how to use JSpecify annotations in the <a href="https://jspecify.dev/docs/user-guide/">Nullness User Guide</a>.
 </note>
 
+### The `equals(Object)` contract
+
+According to the Java 
+<a href="https://docs.oracle.com/en/java/javase/21/docs//api/java.base/java/lang/Object.html#equals(java.lang.Object)">
+documentation</a>, "For any non-null reference value `x`, `x.equals(null)` should return `false`."
+
+This means, that the argument passed to `equals(Object)` has to be nullable. Cabe ensures this by flagging an error if:
+- the argument to `equals(Object)` is annotated as  `@NonNull`,
+- or is unannotated in a `@NullMarked` context.
+
+When implementing `equals(Object)` in a `@NullMarked` context, declare the method as `public boolean equals(@Nullable Object other)`.
+
 ## What makes Cabe different from other projects like Nullaway?
 
 NullAway does static analysis and reports possible problems in your code. Cabe instead inserts runtime checks.
@@ -213,7 +225,7 @@ caused it. So you better do it like this:
         }
 ```
 
-Much better. But you know have to remember to change the messages too should you ever change parameter names.
+Much better. But you now have to remember to change the messages too should you ever change parameter names.
 And of course, you have the maintenance cost of always making sure your checks match the method declaration.
 
 Using the Cabe plugin, this code:

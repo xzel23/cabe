@@ -1,5 +1,5 @@
-version 4.0.0
-=============
+version 4
+=========
 
 - Added a check that equals overrides are declared correctly, i.e., the argument must be nullable for the equals() 
   contract "x.equals(null) must return false" to be fulfilled. 
