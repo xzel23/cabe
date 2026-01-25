@@ -4,10 +4,9 @@ import java.lang.module.*;
 import java.lang.module.Configuration;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A custom {@link ClassLoader} that loads classes from specified module paths.
@@ -16,6 +15,7 @@ import java.util.Set;
  * associated modules to facilitate class loading.
  */
 public class ModuleClassLoader extends ClassLoader {
+    private static final Logger LOG = Logger.getLogger(ModuleClassLoader.class.getName());
     private final Map<String, String> packageToModuleName;
     private final Map<String, Path> moduleToPath;
     private final ModuleLayer moduleLayer;
@@ -55,8 +55,25 @@ public class ModuleClassLoader extends ClassLoader {
 
         ModuleLayer parentLayer = ModuleLayer.boot();
 
-        Configuration configuration = parentLayer.configuration()
-                .resolveAndBind(finder, ModuleFinder.of(), moduleToPath.keySet());
+        Configuration configuration;
+        try {
+            // attempt to resolve and bind the modules
+            configuration = parentLayer.configuration()
+                    .resolveAndBind(finder, ModuleFinder.of(), moduleToPath.keySet());
+        } catch (ResolutionException e) {
+            // resolveAndBind() can fail if a module has optional dependencies (requires static)
+            // that are missing from the module path at runtime. Falling back to resolve()
+            // will skip service binding and optional dependency resolution, allowing
+            // the module layer to be created anyway.
+            LOG.log(Level.INFO, "Module resolution failed using resolveAndBind(), falling back to resolve(): {0}", e.getMessage());
+            try {
+                configuration = parentLayer.configuration()
+                        .resolve(finder, ModuleFinder.of(), moduleToPath.keySet());
+            } catch (ResolutionException e2) {
+                LOG.log(Level.WARNING, "Module resolution failed using resolve(): {0}", e2.getMessage());
+                throw e2;
+            }
+        }
 
         ModuleLayer.Controller controller = ModuleLayer.defineModulesWithOneLoader(configuration, List.of(parentLayer), parent);
         moduleLayer = controller.layer();

@@ -3,4 +3,8 @@
     <Match>
         <Bug pattern="DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"/>
     </Match>
+    <Match>
+        <Class name="com.dua3.cabe.processor.ModuleClassLoader"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>
