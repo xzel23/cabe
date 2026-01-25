@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -38,8 +39,10 @@ class ClassPatcherTest {
 
     static Path testDir = TestUtil.buildDir.resolve(ClassPatcherTest.class.getSimpleName());
     static Path testSrcDir = testDir.resolve("src");
+    static Path testSrcFailingDir = testDir.resolve("src-failing");
     static Path testLibDir = TestUtil.resourceDir.resolve("testLib");
     static Path testClassesUnprocessedDir = testDir.resolve("classes-unprocessed");
+    static Path testClassesUnprocessedFailingDir = testDir.resolve("classes-unprocessed-failing");
     static Path testClassesProcessedParameterInfoDir = testDir.resolve("classes-processed-parameterinfo");
     static Path testClassesProcessedInstrumentedDir = testDir.resolve("classes-processed-instrumented");
     static Path testClassesProcessedWithAttributeDir = testDir.resolve("classes-processed-with-attribute");
@@ -70,10 +73,12 @@ class ClassPatcherTest {
         // copy test source files
         LOG.info("copying test sources ...");
         TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testSrc"), testSrcDir);
+        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("testSrcFailing"), testSrcFailingDir);
 
         // compile source files to classes-unprocessed folder
         LOG.info("compiling test sources ...");
         TestUtil.compileSources(testSrcDir, testClassesUnprocessedDir, testLibDir);
+        TestUtil.compileSources(testSrcFailingDir, testClassesUnprocessedFailingDir, testLibDir);
 
         // Load classes into class pool
         LOG.info("loading class files ...");
@@ -264,7 +269,13 @@ class ClassPatcherTest {
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotationsStaticMethods",
             "com.dua3.cabe.processor.test.instrument.api.nullmarked.NullMarkedPackage",
-            "com.dua3.cabe.processor.test.instrument.api.nullunmarked.NullUnmarkedPackage"
+            "com.dua3.cabe.processor.test.instrument.api.nullunmarked.NullUnmarkedPackage",
+            "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsNullable",
+            "com.dua3.cabe.processor.test.instrument.equals.nullunmarked.EqualsNullable",
+            "com.dua3.cabe.processor.test.instrument.equals.nullunmarked.EqualsUnannotated",
+            "com.dua3.cabe.processor.test.instrument.equals.neither.EqualsNullable",
+            "com.dua3.cabe.processor.test.instrument.equals.neither.EqualsUnannotated",
+            "com.dua3.cabe.processor.test.instrument.equals.EqualsIgnored"
     })
     void testInstrumentation(String className) {
         LOG.info("testing correct results of instrumentation: " + className);
@@ -272,10 +283,56 @@ class ClassPatcherTest {
         assertDoesNotThrow(() -> {
             try (var cl = new URLClassLoader(new URL[]{testClassesProcessedInstrumentedDir.toUri().toURL()}, null)) {
                 Class<?> cls = cl.loadClass(className);
-                var test = cls.getDeclaredMethod("test");
-                test.invoke(null);
+                try {
+                    var test = cls.getDeclaredMethod("test");
+                    test.invoke(null);
+                } catch (NoSuchMethodException e) {
+                    LOG.fine("no test method in " + className);
+                }
             }
         }, "Failed to instrument " + className);
+    }
+
+    @ParameterizedTest
+    @Order(5)
+    @ValueSource(strings = {
+            "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsNonNull",
+            "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsUnannotated",
+            "com.dua3.cabe.processor.test.instrument.equals.nullunmarked.EqualsNonNull",
+            "com.dua3.cabe.processor.test.instrument.equals.neither.EqualsNonNull"
+    })
+    void testEqualsCheckFails(String className) {
+        LOG.info("testing that equals check fails for: " + className);
+        Path classFile = testClassesUnprocessedFailingDir.resolve(className.replace('.', '/') + ".class");
+        Path inputDir = testDir.resolve("failed-instrumentation-input").resolve(className);
+        Path outputDir = testDir.resolve("failed-instrumentation-output").resolve(className);
+        
+        assertDoesNotThrow(() -> {
+            Files.createDirectories(inputDir);
+            Files.createDirectories(outputDir);
+            
+            // we need to maintain the package structure for ClassPatcher to correctly identify the class name
+            Path pkgDir = inputDir;
+            String[] parts = className.split("\\.");
+            for (int i = 0; i < parts.length - 1; i++) {
+                pkgDir = pkgDir.resolve(parts[i]);
+            }
+            Files.createDirectories(pkgDir);
+            Files.copy(classFile, pkgDir.resolve(classFile.getFileName()), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            
+            // also copy package-info.class if it exists
+            Path pkgInfoClass = classFile.getParent().resolve("package-info.class");
+            if (Files.exists(pkgInfoClass)) {
+                Files.copy(pkgInfoClass, pkgDir.resolve("package-info.class"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        });
+
+        Collection<Path> classPath = List.of(testLibDir);
+        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
+        
+        assertThrows(ClassFileProcessingFailedException.class, () -> {
+            patcher.processFolder(inputDir, outputDir);
+        }, "Instrumentation should have failed for " + className);
     }
 
     /**
