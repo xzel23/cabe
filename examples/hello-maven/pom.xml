@@ -11,6 +11,7 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <cabe.version>3.4.0-SNAPSHOT</cabe.version>
   </properties>
 
   <dependencies>
@@ -42,7 +43,7 @@
       <plugin>
         <groupId>com.dua3.cabe</groupId>
         <artifactId>cabe-maven-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>${cabe.version}</version>
         <configuration>
           <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
           <verbosity>1</verbosity>

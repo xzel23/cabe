@@ -44,12 +44,12 @@ public class CabeMojo extends AbstractMojo {
    * The input directory for the Cabe processing
    */
   @Parameter(property = "cabe.inputDirectory", defaultValue = "${project.build.outputDirectory}")
-  private Path inputDirectory;
+  private File inputDirectory;
   /**
    * The output directory for the Cabe processing
    */
   @Parameter(property = "cabe.outputDirectory", defaultValue = "${project.build.outputDirectory}")
-  public Path outputDirectory;
+  public File outputDirectory;
   /**
    * The configuration string for the Cabe
    * <ul>

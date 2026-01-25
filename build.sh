@@ -43,6 +43,8 @@ cd "`dirname $0`" \
   examples:cabe022:build \
   ${FLAGS} \
   && echo "compile examples successful" \
+  && (cd examples/hello-maven && JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home mvn -Dcabe.version=${PLUGIN_VERSION} clean package) \
+  && echo "compile maven example successful" \
 || { echo "ERROR" ; exit 1 ; }
 
 echo "SUCCESS"
