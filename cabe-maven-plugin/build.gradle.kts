@@ -4,8 +4,8 @@ import groovy.util.NodeList
 plugins {
     id("java-library")
     id("maven-publish")
-    id("com.github.ben-manes.versions") version "0.50.0"
-    id("de.benediktritter.maven-plugin-development") version "0.4.3"
+    alias(libs.plugins.versions)
+    alias(libs.plugins.maven.plugin.development)
 }
 
 group = "com.dua3.cabe"

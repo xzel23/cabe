@@ -2,8 +2,8 @@ import org.gradle.internal.extensions.stdlib.toDefaultLowerCase
 
 plugins {
     id("java-library")
-    id("org.jreleaser") version "1.19.0"
-    id("com.dorongold.task-tree") version "4.0.1"
+    alias(libs.plugins.jreleaser)
+    alias(libs.plugins.task.tree)
 }
 
 /////////////////////////////////////////////////////////////////////////////

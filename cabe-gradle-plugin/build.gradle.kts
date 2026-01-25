@@ -1,8 +1,8 @@
 plugins {
     `java-gradle-plugin`
     `maven-publish`
-    id("com.gradle.plugin-publish") version "1.2.1"
-    id("com.github.ben-manes.versions") version "0.50.0"
+    alias(libs.plugins.gradle.plugin.publish)
+    alias(libs.plugins.versions)
 }
 
 description = "The Gradle plugin adds null checks based on JSpecify annotations at compile time."
@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jspecify:jspecify:1.0.0")
+    implementation(libs.jspecify)
     var processor_version = rootProject.extra["processor_version"] as String
     implementation("com.dua3.cabe:cabe-processor-all:${processor_version}")
 }
