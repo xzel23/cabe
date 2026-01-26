@@ -70,13 +70,43 @@ public class ModuleClassLoader extends ClassLoader {
                 configuration = parentLayer.configuration()
                         .resolve(finder, ModuleFinder.of(), moduleToPath.keySet());
             } catch (ResolutionException e2) {
-                LOG.log(Level.WARNING, "Module resolution failed using resolve(): {0}", e2.getMessage());
-                throw e2;
+                LOG.log(Level.WARNING, "Module resolution failed using resolve(): {0}. Instrumentation will proceed without a full module layer.", e2.getMessage());
+                configuration = null;
             }
         }
 
-        ModuleLayer.Controller controller = ModuleLayer.defineModulesWithOneLoader(configuration, List.of(parentLayer), parent);
-        moduleLayer = controller.layer();
+        if (configuration != null) {
+            ModuleLayer.Controller controller = ModuleLayer.defineModulesWithOneLoader(configuration, List.of(parentLayer), parent);
+            moduleLayer = controller.layer();
+        } else {
+            moduleLayer = null;
+        }
+    }
+
+    /**
+     * Returns the {@link ModuleLayer} created by this class loader.
+     * @return the module layer, or null if module resolution failed
+     */
+    public ModuleLayer getModuleLayer() {
+        return moduleLayer;
+    }
+
+    /**
+     * Returns the name of the module that contains the given package.
+     * @param packageName the name of the package
+     * @return an {@link Optional} containing the module name, or an empty {@link Optional} if the package is not found
+     */
+    public Optional<String> getModuleNameForPackage(String packageName) {
+        return Optional.ofNullable(packageToModuleName.get(packageName));
+    }
+
+    /**
+     * Returns the path to the given module.
+     * @param moduleName the name of the module
+     * @return an {@link Optional} containing the path to the module, or an empty {@link Optional} if the module is not found
+     */
+    public Optional<Path> getPathForModule(String moduleName) {
+        return Optional.ofNullable(moduleToPath.get(moduleName));
     }
 
     @Override
@@ -92,9 +122,14 @@ public class ModuleClassLoader extends ClassLoader {
         if (moduleName == null) {
             throw new ClassNotFoundException("class " + name + " not found");
         }
-        Module module =
-                moduleLayer.findModule(moduleName)
-                .orElseThrow(() -> new ClassNotFoundException("class " + name + " not found (module " + moduleName + ")"));
-        return module.getClassLoader().loadClass(name);
+
+        if (moduleLayer != null) {
+            Module module =
+                    moduleLayer.findModule(moduleName)
+                    .orElseThrow(() -> new ClassNotFoundException("class " + name + " not found (module " + moduleName + ")"));
+            return module.getClassLoader().loadClass(name);
+        } else {
+            return getParent().loadClass(name);
+        }
     }
 }
