@@ -2,3 +2,4 @@
 **/build
 /regressiontest/*
 **/target/
+gradle.properties
