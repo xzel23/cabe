@@ -55,9 +55,10 @@ To avoid processing class files multiple times, configure the Maven Compiler Plu
     <execution>
       <id>default-compile</id>
       <configuration>
-        <compilerArguments>
-          <d>${project.build.directory}/unprocessed-classes</d>
-        </compilerArguments>
+        <compilerArgs>
+          <arg>-d</arg>
+          <arg>${project.build.directory}/unprocessed-classes</arg>
+        </compilerArgs>
       </configuration>
     </execution>
   </executions>
@@ -211,11 +212,12 @@ Here's a complete example of a Maven project using the Cabe Maven Plugin:
         <executions>
           <execution>
             <id>default-compile</id>
-            <configuration>
-              <compilerArguments>
-                <d>${project.build.directory}/unprocessed-classes</d>
-              </compilerArguments>
-            </configuration>
+              <configuration>
+                  <compilerArgs>
+                      <arg>-d</arg>
+                      <arg>${project.build.directory}/unprocessed-classes</arg>
+                  </compilerArgs>
+              </configuration>
           </execution>
         </executions>
       </plugin>

@@ -81,9 +81,10 @@ dependencies {
     <execution>
       <id>default-compile</id>
       <configuration>
-        <compilerArguments>
-          <d>${project.build.directory}/unprocessed-classes</d>
-        </compilerArguments>
+        <compilerArgs>
+          <arg>-d</arg>
+            <arg>${project.build.directory}/unprocessed-classes</arg>
+        </compilerArgs>
       </configuration>
     </execution>
   </executions>
