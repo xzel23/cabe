@@ -60,8 +60,10 @@ cd "`dirname $0`" \
   examples:cabe022:app:build \
   ${FLAGS} \
   && echo "re-compilation of examples with configuration cache successful" \
-  && (cd examples/hello-maven && JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home mvn -Dcabe.version=${PLUGIN_VERSION} clean package) \
+&& (cd examples/hello-maven && JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home mvn -Dcabe.version=${PLUGIN_VERSION} clean package) \
   && echo "compile maven example successful" \
+&& ./gradlew aggregateJavadoc \
+  && echo "aggregate Javadoc successful" \
 || { echo "ERROR" ; exit 1 ; }
 
 echo "SUCCESS"
