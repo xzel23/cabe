@@ -44,6 +44,22 @@ cd "`dirname $0`" \
   examples:cabe022:app:build \
   ${FLAGS} \
   && echo "compile examples successful" \
+&& ./gradlew --no-daemon --configuration-cache -Dexamples \
+  examples:clean \
+  examples:hello:build \
+  examples:hellofx:build \
+  examples:cabe022:build \
+  examples:cabe022:app:build \
+  ${FLAGS} \
+  && echo "compile examples with configuration cache successful" \
+&& ./gradlew --no-daemon --configuration-cache -Dexamples \
+  examples:clean \
+  examples:hello:build \
+  examples:hellofx:build \
+  examples:cabe022:build \
+  examples:cabe022:app:build \
+  ${FLAGS} \
+  && echo "re-compilation of examples with configuration cache successful" \
   && (cd examples/hello-maven && JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home mvn -Dcabe.version=${PLUGIN_VERSION} clean package) \
   && echo "compile maven example successful" \
 || { echo "ERROR" ; exit 1 ; }
