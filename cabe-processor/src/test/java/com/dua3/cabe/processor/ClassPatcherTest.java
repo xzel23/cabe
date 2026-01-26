@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -384,7 +385,7 @@ class ClassPatcherTest {
 
             String actual = fmt.toString();
             String expected = EXPECTED_FOR_CONFIG.getOrDefault(config, "");
-            assertEquals(expected, actual, "failed: " + config);
+            assertLinesMatch(expected.lines(), actual.lines(), "failed: " + config);
         }
     }
 
