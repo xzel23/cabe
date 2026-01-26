@@ -210,9 +210,7 @@ class ClassPatcherTest {
                     .toList();
             
             for (Path classFile : processedFiles) {
-                String className = TestUtil.getClassName(classFile)
-                        .substring(testClassesProcessedWithAttributeDir.toString().length() + 1)
-                        .replace(File.separatorChar, '.');
+                String className = TestUtil.getClassName(testClassesProcessedWithAttributeDir.relativize(classFile));
                 
                 try {
                     CtClass ctClass = pool.get(className);
@@ -244,9 +242,7 @@ class ClassPatcherTest {
                     .toList();
             
             for (Path classFile : processedFiles) {
-                String className = TestUtil.getClassName(classFile)
-                        .substring(testClassesReprocessedDir.toString().length() + 1)
-                        .replace(File.separatorChar, '.');
+                String className = TestUtil.getClassName(testClassesReprocessedDir.relativize(classFile));
                 
                 try {
                     CtClass ctClass = pool.get(className);
@@ -330,9 +326,10 @@ class ClassPatcherTest {
         Collection<Path> classPath = List.of(testLibDir);
         ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
         
-        assertThrows(ClassFileProcessingFailedException.class, () -> {
-            patcher.processFolder(inputDir, outputDir);
-        }, "Instrumentation should have failed for " + className);
+        assertThrows(ClassFileProcessingFailedException.class,
+                () -> patcher.processFolder(inputDir, outputDir),
+                "Instrumentation should have failed for " + className
+        );
     }
 
     /**
@@ -622,11 +619,11 @@ class ClassPatcherTest {
         String text;
         try (Formatter fmt = new Formatter()) {
             for (boolean assertionsEnabled : new boolean[]{false, true}) {
-                String header = String.format("Testing %s with assertions %s", path, assertionsEnabled);
+                String header = String.format("Testing %s with assertions %s", path.toString().replace(File.separatorChar, '/'), assertionsEnabled);
                 fmt.format("%s%n", header);
                 fmt.format("%s%n", "-".repeat(header.length()));
 
-                String className = path.toString().replaceFirst(".class$", "");
+                String className = TestUtil.getClassName(path);
                 fmt.format("%s", TestUtil.runClass(root, className, assertionsEnabled));
             }
             text = fmt.toString();

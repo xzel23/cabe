@@ -52,7 +52,7 @@ public class RegressionTest {
                 .filter(Files::isRegularFile)
                 .filter(p -> p.getFileName().toString().equals(testName + ".class"))
                 .findFirst().orElseThrow(() -> new IllegalStateException("test class " + testName + " not found"));
-        String mainClass = processedDir.relativize(mainPath).toString().replace(".class", "").replace('/', '.');
+        String mainClass = TestUtil.getClassName(processedDir.relativize(mainPath));
         String result = TestUtil.runClass(processedDir, mainClass, true);
 
         assertEquals("OK", result.strip());

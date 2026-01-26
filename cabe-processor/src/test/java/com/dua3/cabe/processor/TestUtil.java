@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class TestUtil {
@@ -90,9 +89,14 @@ public final class TestUtil {
      * @return the fully qualified class name
      */
     static String getClassName(Path classFile) {
-        return classFile.toString()
-                .replaceFirst("\\.[^.]*$", "")
-                .replace(File.separatorChar, '.');
+        String fileName = classFile.toString();
+
+        if (!fileName.endsWith(".class")) {
+            throw new IllegalStateException("not a class file name: " + fileName);
+        }
+        fileName = fileName.substring(0, fileName.length() - ".class".length());
+
+        return fileName.replace('/', '.').replace('\\', '.');
     }
 
     /**
