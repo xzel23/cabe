@@ -1,3 +1,14 @@
+version 4.0.x
+=============
+
+bugfix updates
+- fix: #22 was only partly resolved
+- fix: configuration cache incompatibilities (#23)
+- fix: instrumentation failure on windows (#24)
+
+To ensure less problems in future updates, the build now also executes extra tests with the configuration cache enabled
+and tests are run on linux, macOS, and Windows.
+
 version 4
 =========
 
