@@ -15,12 +15,35 @@ repositories {
 
 dependencies {
     implementation(libs.jspecify)
-    var processor_version = rootProject.extra["processor_version"] as String
-    implementation("com.dua3.cabe:cabe-processor-all:${processor_version}")
+    implementation(project(path = ":cabe-processor", configuration = "shadow"))
 }
 
-tasks.named("compileJava") {
-    dependsOn(":cabe-processor:publishToMavenLocal")
+// Disable Gradle Module Metadata to ensure the modified POM is used
+tasks.withType<GenerateModuleMetadata> {
+    enabled = false
+}
+
+publishing {
+    publications {
+        withType<MavenPublication> {
+            pom.withXml {
+                val dependenciesNode = asNode().get("dependencies") as? groovy.util.NodeList
+                if (dependenciesNode != null && dependenciesNode.isNotEmpty()) {
+                    val dependencies = dependenciesNode[0] as groovy.util.Node
+                    dependencies.children().forEach {
+                        val dep = it as groovy.util.Node
+                        val artifactIdNode = dep.get("artifactId") as? groovy.util.NodeList
+                        if (artifactIdNode != null && artifactIdNode.isNotEmpty()) {
+                            val artifactId = artifactIdNode[0] as groovy.util.Node
+                            if (artifactId.text() == "cabe-processor") {
+                                artifactId.setValue("cabe-processor-all")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 tasks.named("publishMavenJavaPublicationToMavenLocal") {
