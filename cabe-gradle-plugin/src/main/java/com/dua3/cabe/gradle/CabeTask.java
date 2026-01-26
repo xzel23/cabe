@@ -120,7 +120,7 @@ public abstract class CabeTask extends DefaultTask {
             if (javaExecPath.endsWith("/javac")) {
                 javaExecPath = javaExecPath.substring(0, javaExecPath.length() - 5) + "java";
             } else if (javaExecPath.endsWith("\\javac.exe")) {
-                javaExecPath = javaExecPath.substring(0, javaExecPath.length() - 10) + "java.exe";
+                javaExecPath = javaExecPath.substring(0, javaExecPath.length() - 9) + "java.exe";
             }
             final String javaExec = javaExecPath;
             logger.debug("Java executable: {}", javaExec);
