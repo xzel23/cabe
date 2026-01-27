@@ -19,7 +19,7 @@ extra["ORGANIZATION_NAME"]  = "dua3"
 extra["ORGANIZATION_URL"]   = "https://www.dua3.com"
 /////////////////////////////////////////////////////////////////////////////
 
-val projectVersion = "4.0.3"
+val projectVersion = "4.1-SNAPSHOT"
 version = projectVersion
 extra["plugin_version"] = projectVersion
 extra["processor_version"] = projectVersion
@@ -45,14 +45,13 @@ subprojects {
     project.version = rootProject.version
     
     java {
+        toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         withJavadocJar()
         withSourcesJar()
 
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
-        }
     }
 }
 
