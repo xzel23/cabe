@@ -25,8 +25,6 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        Logger log = project.getLogger();
-
         // check that JavaPlugin is loaded
         if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
             throw new IllegalStateException("the java plugin is required for cabe to work");
@@ -55,6 +53,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
                     cabeTask.getConfig().set(extension.getConfig());
                     cabeTask.getVerbosity().set(extension.getVerbosity());
+                    cabeTask.getStrict().set(extension.getStrict());
 
                     // Set input directory to compileJava's destination directory
                     var compileJavaTaskProvider = project.getTasks().named(compileJavaTaskName, JavaCompile.class);

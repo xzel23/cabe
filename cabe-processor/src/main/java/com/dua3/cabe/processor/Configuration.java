@@ -20,8 +20,30 @@ import java.util.stream.Stream;
  * @param privateApi the validation strategy for private APIs.
  * @param checkReturn the validation strategy for return values.
  */
-public record Configuration(Check publicApi, Check privateApi, Check checkReturn) implements Serializable {
+public record Configuration(Check publicApi, Check privateApi, Check checkReturn, boolean strict) implements Serializable {
     private static final Logger LOG = Logger.getLogger(Configuration.class.getName());
+
+    /**
+     * Constructs a new {@code Configuration} instance with the provided {@code Check} configurations
+     * for public API, private API, and return value handling.
+     *
+     * @param publicApi  the {@code Check} strategy to apply to the public API.
+     * @param privateApi the {@code Check} strategy to apply to the private API.
+     * @param checkReturn the {@code Check} strategy to apply for return values.
+     */
+    public Configuration(Check publicApi, Check privateApi, Check checkReturn) {
+        this(publicApi, privateApi, checkReturn, false);
+    }
+
+    /**
+     * Returns a new {@code Configuration} instance with the specified strictness setting.
+     *
+     * @param strict a boolean value indicating whether the configuration should enforce strict checks.
+     * @return a new {@code Configuration} object updated with the provided strictness setting.
+     */
+    public Configuration withStrict(boolean strict) {
+        return new Configuration(publicApi, privateApi, checkReturn, strict);
+    }
 
     /**
      * When the DEVELOPMENT setting is used, parameters are always checked and for violations an
@@ -55,6 +77,10 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * String constant to define return value checks.
      */
     public static final String RETURN_VALUE = "returnValue";
+    /**
+     * String constant to define strict mode.
+     */
+    public static final String STRICT = "strict";
 
     /**
      * Parses a configuration string and returns a corresponding Configuration object.
@@ -67,38 +93,58 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * @throws IllegalStateException if the configuration string cannot be parsed.
      */
     public static Configuration parse(String configStr) {
-        switch (configStr) {
-            case "STANDARD":
-                return STANDARD;
-            case "DEVELOPMENT":
-                return DEVELOPMENT;
-            case "NO_CHECKS":
-                return NO_CHECKS;
-            default:
+        Configuration base;
+        String remaining;
+        if (configStr.equals("STANDARD") || configStr.startsWith("STANDARD:")) {
+            base = STANDARD;
+            remaining = configStr.substring("STANDARD".length());
+        } else if (configStr.equals("DEVELOPMENT") || configStr.startsWith("DEVELOPMENT:")) {
+            base = DEVELOPMENT;
+            remaining = configStr.substring("DEVELOPMENT".length());
+        } else if (configStr.equals("NO_CHECKS") || configStr.startsWith("NO_CHECKS:")) {
+            base = NO_CHECKS;
+            remaining = configStr.substring("NO_CHECKS".length());
+        } else {
+            base = new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK, false);
+            remaining = configStr;
+        }
+
+        if (remaining.startsWith(":")) {
+            remaining = remaining.substring(1);
+        }
+
+        if (remaining.isEmpty()) {
+            return base;
         }
 
         LOG.fine(() -> "parsing custom configuration: " + configStr);
         Pattern pattern = Pattern.compile("(^(?<singleCheck>\\w+)$)|" +
-                "((publicApi=(?<publicApi>\\w+))|(privateApi=(?<privateApi>\\w+))|(returnValue=(?<returnValue>\\w+)))(:?|$)");
+                "((publicApi=(?<publicApi>\\w+))|(privateApi=(?<privateApi>\\w+))|(returnValue=(?<returnValue>\\w+))|(strict=(?<strict>\\w+)))(:?|$)");
 
-        Matcher matcher = pattern.matcher(configStr);
+        Matcher matcher = pattern.matcher(remaining);
 
         Map<String, Check> checks = new HashMap<>();
+        boolean strict = base.strict();
         while (matcher.find()) {
+            String strictValue = matcher.group(STRICT);
+            if (strictValue != null) {
+                strict = Boolean.parseBoolean(strictValue);
+            }
             Stream.of("singleCheck", PUBLIC_API, PRIVATE_API, RETURN_VALUE)
                             .forEach(group -> checks.compute(group, (k, v) -> updateCheck(k, v, matcher.group(k))));
         }
 
-        if (checks.isEmpty()) {
+        if (checks.isEmpty() && !configStr.contains(STRICT)) {
             throw new IllegalArgumentException("invalid configuration string: '" + configStr + "'");
         }
 
         Optional.ofNullable(checks.get("singleCheck")).ifPresent(c -> {checks.put(PUBLIC_API, c); checks.put(PRIVATE_API, c); checks.put(RETURN_VALUE, c);});
 
         return new Configuration(
-                checks.getOrDefault(PUBLIC_API, Check.NO_CHECK),
-                checks.getOrDefault(PRIVATE_API, Check.NO_CHECK),
-                checks.getOrDefault(RETURN_VALUE, Check.NO_CHECK)
+                checks.getOrDefault(PUBLIC_API, base.publicApi()),
+                checks.getOrDefault(PRIVATE_API, base.privateApi()),
+                checks.getOrDefault(RETURN_VALUE, base.checkReturn()),
+                strict
         );
     }
 
@@ -125,7 +171,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * @return A string in the format "publicApi=&lt;Public-API-Name&gt;:privateApi=&lt;Private-API-Name&gt;".
      */
     public String getConfigString() {
-        return "publicApi=" + publicApi.name() + ":privateApi=" +privateApi.name() + ":returnValue=" + checkReturn.name();
+        return "publicApi=" + publicApi.name() + ":privateApi=" + privateApi.name() + ":returnValue=" + checkReturn.name() + ":strict=" + strict;
     }
 
     /**

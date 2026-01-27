@@ -1,6 +1,7 @@
 package com.dua3.cabe.maven;
 
 import com.dua3.cabe.processor.ClassPatcher;
+import com.dua3.cabe.processor.Configuration;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.Reader;
@@ -63,9 +64,16 @@ public class CabeMojo extends AbstractMojo {
   public String configurationString;
 
   /**
+   * Whether to use strict mode for equals() checks.
+   */
+  @Parameter(property = "cabe.strict", defaultValue = "false")
+  public boolean strict;
+
+  /**
    * Default constructor
    */
   public CabeMojo() {
+    // nothing to do
   }
 
   @Override
@@ -86,13 +94,14 @@ public class CabeMojo extends AbstractMojo {
       getLog().info("Java executable: %s".formatted(javaExec));
 
       int v = Objects.requireNonNullElse(verbosity, 0);
+      String configStr = Configuration.parse(configurationString).withStrict(strict).getConfigString();
       String[] args = {
           javaExec,
           "-classpath", systemClassPath,
           "-jar", jarLocation,
           "-i", inputDirectory.toString(),
           "-o", outputDirectory.toString(),
-          "-c", configurationString,
+          "-c", configStr,
           "-cp", classpath,
           "-v", Integer.toString(v)
       };

@@ -440,6 +440,7 @@ public class ClassPatcher {
                 && mi.parameters().get(0).type().equals(Object.class);
         boolean ignoreNonMethodNonNullAnnotation = ci.isRecord() && isEquals;
 
+        // Enforces nullable parameter for overridden `equals` method
         if (isEquals && mi.isPublic() && !mi.isStatic()) {
             ParameterInfo pi = mi.parameters().get(0);
             NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
@@ -454,10 +455,16 @@ public class ClassPatcher {
                 isNullable = true;
             }
 
+            // Enforces nullable parameter for overridden `equals` method
             if (!isNullable) {
-                throw new ClassFileProcessingFailedException(
-                        String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable",
-                                ci.name(), mi.name()));
+                String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable",
+                        ci.name(), mi.name());
+                if (configuration.strict()) {
+                    throw new ClassFileProcessingFailedException(msg);
+                } else {
+                    LOG.warning(msg + "\nThe parameter will be treated as @Nullable");
+                    ignoreNonMethodNonNullAnnotation = true;
+                }
             }
         }
 

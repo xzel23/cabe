@@ -1,19 +1,15 @@
 package com.dua3.cabe.processor;
 
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.IOException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-public class ConfigurationTest {
+class ConfigurationTest {
     
     record ConfigurationTestData(String configString, Configuration expected) {}
 
@@ -36,13 +32,19 @@ public class ConfigurationTest {
 
                 // multiple API check configuration
                 new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK)),
-                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS))
+                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS)),
+
+                // strict mode configuration
+                new ConfigurationTestData("strict=true", new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
+                new ConfigurationTestData("STANDARD:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, true)),
+                new ConfigurationTestData("publicApi=THROW_NPE:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
+                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS, true))
         );
     }
 
     @ParameterizedTest
     @MethodSource("configurationTestData")
-    public void testParse(ConfigurationTestData t) {
+    void testParse(ConfigurationTestData t) {
         Configuration expected = t.expected();
         Configuration actual = Configuration.parse(t.configString());
         assertEquals(expected, actual);
@@ -52,7 +54,7 @@ public class ConfigurationTest {
 
 
     @Test
-    public void testEqualsAndHashCode() {
+    void testEqualsAndHashCode() {
         Configuration config1 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK);
         Configuration config2 = new Configuration(Configuration.Check.ASSERT, Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK);
         Configuration config3 = new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK);
@@ -63,7 +65,7 @@ public class ConfigurationTest {
         assertEquals(config1.hashCode(), config2.hashCode());
         assertNotEquals(config1.hashCode(), config3.hashCode());
 
-        assertNotEquals(config1, Configuration.STANDARD);
-        assertEquals(config3, Configuration.NO_CHECKS);
+        assertNotEquals(Configuration.STANDARD, config1);
+        assertEquals(Configuration.NO_CHECKS, config3);
     }
 }

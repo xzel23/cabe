@@ -325,11 +325,54 @@ class ClassPatcherTest {
         });
 
         Collection<Path> classPath = List.of(testLibDir);
-        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
+        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT.withStrict(true));
         
         assertThrows(ClassFileProcessingFailedException.class,
                 () -> patcher.processFolder(inputDir, outputDir),
                 "Instrumentation should have failed for " + className
+        );
+    }
+
+    @ParameterizedTest
+    @Order(5)
+    @ValueSource(strings = {
+            "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsNonNull",
+            "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsUnannotated",
+            "com.dua3.cabe.processor.test.instrument.equals.nullunmarked.EqualsNonNull",
+            "com.dua3.cabe.processor.test.instrument.equals.neither.EqualsNonNull"
+    })
+    void testEqualsCheckWarns(String className) {
+        LOG.info("testing that equals check warns for: " + className);
+        Path classFile = testClassesUnprocessedFailingDir.resolve(className.replace('.', '/') + ".class");
+        Path inputDir = testDir.resolve("warn-instrumentation-input").resolve(className);
+        Path outputDir = testDir.resolve("warn-instrumentation-output").resolve(className);
+
+        assertDoesNotThrow(() -> {
+            Files.createDirectories(inputDir);
+            Files.createDirectories(outputDir);
+
+            // we need to maintain the package structure for ClassPatcher to correctly identify the class name
+            Path pkgDir = inputDir;
+            String[] parts = className.split("\\.");
+            for (int i = 0; i < parts.length - 1; i++) {
+                pkgDir = pkgDir.resolve(parts[i]);
+            }
+            Files.createDirectories(pkgDir);
+            Files.copy(classFile, pkgDir.resolve(classFile.getFileName()), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            // also copy package-info.class if it exists
+            Path pkgInfoClass = classFile.getParent().resolve("package-info.class");
+            if (Files.exists(pkgInfoClass)) {
+                Files.copy(pkgInfoClass, pkgDir.resolve("package-info.class"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        });
+
+        Collection<Path> classPath = List.of(testLibDir);
+        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
+
+        assertDoesNotThrow(
+                () -> patcher.processFolder(inputDir, outputDir),
+                "Instrumentation should NOT have failed for " + className
         );
     }
 
@@ -391,8 +434,8 @@ class ClassPatcherTest {
 
     private static final Map<Configuration, String> EXPECTED_FOR_CONFIG = Map.of(
             Configuration.NO_CHECKS, """
-                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK]
-                    ====================================================================================
+                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK, strict=false]
+                    ==================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -447,8 +490,8 @@ class ClassPatcherTest {
                                         
                     """,
             Configuration.DEVELOPMENT, """
-                    Config: Configuration[publicApi=ASSERT_ALWAYS, privateApi=ASSERT_ALWAYS, checkReturn=ASSERT_ALWAYS]
-                    ===================================================================================================
+                    Config: Configuration[publicApi=ASSERT_ALWAYS, privateApi=ASSERT_ALWAYS, checkReturn=ASSERT_ALWAYS, strict=false]
+                    =================================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -503,8 +546,8 @@ class ClassPatcherTest {
                                         
                     """,
             Configuration.STANDARD, """
-                    Config: Configuration[publicApi=THROW_NPE, privateApi=ASSERT, checkReturn=NO_CHECK]
-                    ===================================================================================
+                    Config: Configuration[publicApi=THROW_NPE, privateApi=ASSERT, checkReturn=NO_CHECK, strict=false]
+                    =================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -559,8 +602,8 @@ class ClassPatcherTest {
                                         
                     """,
             Configuration.parse("publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK"), """
-                    Config: Configuration[publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK]
-                    ===================================================================================
+                    Config: Configuration[publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK, strict=false]
+                    =================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
