@@ -182,6 +182,14 @@ This means, that the argument passed to `equals(Object)` has to be nullable. Cab
 
 When implementing `equals(Object)` in a `@NullMarked` context, declare the method as `public boolean equals(@Nullable Object other)`.
 
+By default, Cabe will only print a warning if this contract is violated and automatically treat the argument as nullable.
+If you want to enforce this contract, you can enable **strict mode**. In strict mode, Cabe will throw an error during 
+instrumentation if the `equals(Object)` contract is violated.
+
+<note>
+Strict mode can be enabled in the plugin configuration. See the documentation for the Gradle or Maven plugin for details.
+</note>
+
 ## What makes Cabe different from other projects like Nullaway?
 
 NullAway does static analysis and reports possible problems in your code. Cabe instead inserts runtime checks.

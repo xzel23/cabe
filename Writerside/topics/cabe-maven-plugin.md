@@ -78,6 +78,7 @@ Configure the Cabe plugin to process the unprocessed classes:
     <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
     <verbosity>1</verbosity>
     <configurationString>STANDARD</configurationString>
+    <strict>false</strict>
   </configuration>
   <executions>
     <execution>
@@ -174,6 +175,17 @@ Possible values:
 - **NO_CHECKS**: Do not add any null checks (class files are copied unchanged)
 - **Custom configuration string**: For advanced configuration (see Cabe documentation for details)
 
+### strict
+
+Whether to enable strict mode for `equals(Object)` checks.
+
+```xml
+<strict>true</strict>
+```
+
+Default value is `false`. When set to `true`, instrumentation will fail if the `equals(Object)` contract is violated.
+When set to `false`, a warning will be logged instead.
+
 ## Complete Example
 
 Here's a complete example of a Maven project using the Cabe Maven Plugin:
@@ -229,6 +241,7 @@ Here's a complete example of a Maven project using the Cabe Maven Plugin:
           <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
           <verbosity>1</verbosity>
           <configurationString>STANDARD</configurationString>
+          <strict>false</strict>
         </configuration>
         <executions>
           <execution>

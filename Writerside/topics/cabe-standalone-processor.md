@@ -63,7 +63,7 @@ The Cabe processor supports several configuration modes that control how null ch
 You can define a custom configuration using a configuration string with the following format:
 
 ```
-publicApi=<check>:privateApi=<check>:returnValue=<check>
+publicApi=<check>:privateApi=<check>:returnValue=<check>:strict=<boolean>
 ```
 
 Where `<check>` can be one of:
@@ -86,16 +86,18 @@ For example:
 
 ### Configuration Examples
 
-| Configuration String                     | Public API    | Private API   | Return Value  |
-|------------------------------------------|---------------|---------------|---------------|
-| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      |
-| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS |
-| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     |
-| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        |
-| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      |
-| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        |
-| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      |
+| Configuration String                     | Public API    | Private API   | Return Value  | Strict |
+|------------------------------------------|---------------|---------------|---------------|--------|
+| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
+| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | false  |
+| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     | false  |
+| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        | false  |
+| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      | false  |
+| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        | false  |
+| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      | false  |
+| "STANDARD:strict=true"                   | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
+| "strict=true"                            | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
 
 ## Verbosity Levels
 

@@ -1,3 +1,12 @@
+version 4.1
+============
+
+- Introduced a `strict` mode option to enforce the `equals(Object)` contract. 
+  When enabled, instrumentation will fail if `equals(Object)` is overridden with 
+  a non-nullable parameter. In non-strict mode (default), a warning is logged 
+  and the parameter is automatically treated as nullable.
+
+
 version 4.0.x
 =============
 
