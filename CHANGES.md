@@ -1,3 +1,8 @@
+version 4.1.1 (in development)
+==============================
+
+- Updated dependencies JUnit and Log4J.
+
 version 4.1
 ============
 
