@@ -40,7 +40,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
-    runtimeOnly("org.apache.logging.log4j:log4j-core:2.25.1")
+    runtimeOnly("org.apache.logging.log4j:log4j-core:2.25.3")
 }
 
 javafx {
