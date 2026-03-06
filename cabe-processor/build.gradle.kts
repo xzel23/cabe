@@ -109,6 +109,10 @@ testJdkVersions.forEach { versionInt ->
 
         useJUnitPlatform()
 
+        javaLauncher.set(javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(versionInt))
+        })
+
         filter {
             includeTestsMatching("com.dua3.cabe.processor.ClassPatcherTest")
             includeTestsMatching("com.dua3.cabe.processor.RegressionTest")
