@@ -1,5 +1,6 @@
 package com.dua3.cabe.processor;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -9,11 +10,14 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Formatter;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 record ParameterInfo(int index, String param, String name, Class<?> type, NullnessOperator nullnessOperator, boolean isSynthetic, MethodInfo methodInfo) {
+
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ParameterInfo.class.getName());
 
     enum Reproducer {
         A(null);
@@ -52,10 +56,15 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
         int n = parms.length;
 
         List<ParameterInfo> pi = new ArrayList<>();
+        boolean namePresent = false;
+        boolean nameNotPresent = false;
         for (int i = 0, j = 0; i < n; i++) {
             String symbol = "$" + (1 + i);
             Parameter param = parms[i];
             String name = param.isNamePresent() ? param.getName() : "arg#" + (j + 1);
+
+            namePresent = namePresent || param.isNamePresent();
+            nameNotPresent = nameNotPresent || !param.isNamePresent();
 
             boolean isSynthetic = param.isSynthetic()
                     || (mi.isConstructor() && !ci.isStaticClass() && ci.isInnerClass() && i==0);
@@ -75,7 +84,28 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
             }
         }
 
+        if (namePresent && nameNotPresent) {
+            LOG.warning(() -> getParameterNameWarning(ci, executable, n, parms));
+            for (int i = 0; i < pi.size(); i++) {
+                pi.set(i, pi.get(i).withName("#" + i));
+            }
+        }
+
         return pi;
+    }
+
+    private static @NonNull String getParameterNameWarning(ClassInfo ci, Executable executable, int n, Parameter[] parms) {
+        String msg = "";
+        try (Formatter fmt = new Formatter()) {
+            fmt.format("Inconsistent parameter names detected!%n");
+            fmt.format("Class: %s%n", ci);
+            fmt.format("Method: %s%n", executable);
+            for (int i = 0; i < n; i++) {
+                fmt.format("Parameter %d: namePresent=%b, name=%s%n", i + 1, parms[i].isNamePresent(), parms[i].getName());
+            }
+            msg = fmt.toString();
+        }
+        return msg;
     }
 
     private static NullnessOperator getGenericTypeNullnessOperator(Parameter param) {
@@ -103,5 +133,9 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
                 ", isSynthetic=" + isSynthetic +
                 ", methodInfo=" + methodInfo.name() +
                 '}';
+    }
+
+    ParameterInfo withName(String name) {
+        return new ParameterInfo(index, param, name, type, nullnessOperator, isSynthetic, methodInfo);
     }
 }
