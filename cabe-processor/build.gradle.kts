@@ -34,7 +34,7 @@ dependencies {
     implementation(libs.jspecify)
     implementation("org.javassist:javassist:3.30.2-GA")
 
-    testImplementation(platform("org.junit:junit-bom:5.13.3"))
+    testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
