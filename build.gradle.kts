@@ -399,14 +399,16 @@ tasks.register<Exec>("testMavenExample") {
     dependsOn("publishToMavenLocal")
 }
 
-tasks.register("fullBuild") {
-    group = "lifecycle"
-    description = "Run the complete build suite (replaces build.sh)"
-    
+// Helper task to run all tests in all subprojects
+tasks.register("allTests") {
+    group = "verification"
+    description = "Runs all tests in all subprojects"
+    dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") })
+}
+
+tasks.named("build") {
     dependsOn(
         "updateWritersideVersionList",
-        "clean",
-        "build",
         "allTests",
         ":cabe-processor:shadowJar",
         "publishToMavenLocal",
@@ -416,17 +418,18 @@ tasks.register("fullBuild") {
         "testMavenExample",
         "aggregateJavadoc"
     )
+    mustRunAfter("clean")
+}
+
+tasks.register("fullBuild") {
+    group = "lifecycle"
+    description = "Run the complete build suite (replaces build.sh)"
+    
+    dependsOn("clean", "build")
 
     doLast {
         println("FULL BUILD SUCCESSFUL")
     }
-}
-
-// Helper task to run all tests in all subprojects
-tasks.register("allTests") {
-    group = "verification"
-    description = "Runs all tests in all subprojects"
-    dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") })
 }
 
 jreleaser {
