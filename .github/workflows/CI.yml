@@ -90,8 +90,8 @@ jobs:
             wrapper
             toolchains
 
-      - name: 'Execute Gradle full build'
-        run: ./gradlew --no-daemon --build-cache fullBuild
+      - name: 'Execute Gradle build'
+        run: ./gradlew --no-daemon --build-cache build
         id: build
 
       - name: 'Upload build reports'
@@ -132,7 +132,7 @@ jobs:
             toolchains
 
       - name: 'publish build'
-        run: gradle --no-daemon jreleaserDeploy jreleaserUpload
+        run: ./gradlew --no-daemon jreleaserDeploy jreleaserUpload
         env:
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
           JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
@@ -142,7 +142,7 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
       - name: 'publish plugin'
-        run: gradle --no-daemon cabe-gradle-plugin:publishPlugins
+        run: ./gradlew --no-daemon cabe-gradle-plugin:publishPlugins
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
           GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
