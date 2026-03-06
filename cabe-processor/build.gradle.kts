@@ -76,6 +76,13 @@ tasks.shadowJar {
 tasks.test {
     useJUnitPlatform()
 
+    val testJavaVersion = project.findProperty("testJavaVersion")?.toString()
+    if (testJavaVersion != null) {
+        javaLauncher.set(javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(testJavaVersion.toInt()))
+        })
+    }
+
     doFirst {
         val javaFxPath = configurations.named("testRuntimeClasspath")
             .get()
