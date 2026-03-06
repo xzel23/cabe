@@ -83,6 +83,7 @@ tasks.test {
         })
     }
 
+    systemProperty("cabe.test.build.dir", layout.buildDirectory.dir("regression-test").get().asFile.absolutePath)
     doFirst {
         val javaFxPath = configurations.named("testRuntimeClasspath")
             .get()
@@ -92,6 +93,43 @@ tasks.test {
         if (javaFxPath.isNotEmpty()) {
             systemProperty("org.openjfx.javafxplugin.path", javaFxPath)
         }
+    }
+}
+
+val testJdkVersions = listOf(17, 21, 25)
+testJdkVersions.forEach { versionInt ->
+    val taskName = "testJdk$versionInt"
+    tasks.register<Test>(taskName) {
+        group = "verification"
+        description = "Runs ClassPatcherTest and RegressionTest with JDK $versionInt"
+
+        val testSourceSet = sourceSets["test"]
+        testClassesDirs = testSourceSet.output.classesDirs
+        classpath = testSourceSet.runtimeClasspath
+
+        useJUnitPlatform()
+
+        filter {
+            includeTestsMatching("com.dua3.cabe.processor.ClassPatcherTest")
+            includeTestsMatching("com.dua3.cabe.processor.RegressionTest")
+        }
+
+        systemProperty("cabe.test.build.dir", layout.buildDirectory.dir("regression-$taskName").get().asFile.absolutePath)
+
+        doFirst {
+            val javaFxPath = configurations.named("testRuntimeClasspath")
+                .get()
+                .filter { it.name.contains("javafx") }
+                .joinToString(File.pathSeparator)
+
+            if (javaFxPath.isNotEmpty()) {
+                systemProperty("org.openjfx.javafxplugin.path", javaFxPath)
+            }
+        }
+    }
+
+    tasks.check {
+        dependsOn(taskName)
     }
 }
 

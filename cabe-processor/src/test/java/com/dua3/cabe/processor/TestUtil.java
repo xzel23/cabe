@@ -27,7 +27,7 @@ public final class TestUtil {
 
     static ClassLoader loader;
     static final ClassPool pool = new ClassPool(true);
-    static final Path buildDir = Paths.get(System.getProperty("user.dir")).resolve("build");
+    static final Path buildDir = Paths.get(System.getProperty("cabe.test.build.dir", System.getProperty("user.dir") + File.separator + "build"));
     static final Path resourceDir = Paths.get(System.getProperty("user.dir")).resolve("src/test/resources");
 
     private TestUtil() {}

@@ -403,7 +403,9 @@ tasks.register<Exec>("testMavenExample") {
 tasks.register("allTests") {
     group = "verification"
     description = "Runs all tests in all subprojects"
-    dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") })
+    subprojects.forEach { subproject ->
+        dependsOn(subproject.tasks.withType<Test>())
+    }
 }
 
 tasks.named("build") {

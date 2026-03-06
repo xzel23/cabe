@@ -10,22 +10,11 @@ include(
 pluginManagement {
     plugins {
         kotlin("jvm") version "1.9.22"
-        id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
     }
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver") version "1.0.0"
-}
-
-toolchainManagement {
-    jvm {
-        javaRepositories {
-            repository("foojay") {
-                resolverClass.set(org.gradle.toolchains.foojay.FoojayToolchainResolver::class.java)
-            }
-        }
-    }
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 if (System.getProperty("test") == null) {

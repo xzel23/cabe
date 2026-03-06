@@ -56,9 +56,7 @@ class ClassPatcherTest {
         LOG.info("ClassPatcherTest.setUp()");
 
         // make sure the build and resource directories exist
-        if (!Files.isDirectory(TestUtil.buildDir)) {
-            throw new IllegalStateException("build directory not found: " + TestUtil.buildDir);
-        }
+        Files.createDirectories(TestUtil.buildDir);
         if (!Files.isDirectory(TestUtil.resourceDir)) {
             throw new IllegalStateException("resource directory not found: " + TestUtil.resourceDir);
         }
