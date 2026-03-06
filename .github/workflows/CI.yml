@@ -56,8 +56,10 @@ jobs:
   build:
     needs: check
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        jdk: [17, 21, 25]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -78,6 +80,13 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: 'Set up JDK ${{ matrix.jdk }}'
+        if: matrix.jdk != '17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
       - name: 'Setup Gradle'
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -90,12 +99,19 @@ jobs:
             toolchains
 
       - name: 'Execute Gradle build'
+        if: matrix.jdk == '17'
         run: gradle --no-daemon --build-cache build test publishToMavenLocal
         id: compile
+
+      - name: 'Execute cabe-processor tests'
+        if: matrix.jdk != '17'
+        run: gradle --no-daemon --build-cache cabe-processor:test -PtestJavaVersion=${{ matrix.jdk }}
+        id: test-cross-jdk
 
       # run a first build and test and then a second build and then a clean after successful execution
       # to check files are not locked after executing the gradle task (weird? this is actually a regression test)
       - name: 'Run plugin tests'
+        if: matrix.jdk == '17'
         run: |
           gradle --no-daemon --build-cache -Dtest \
             cabe-gradle-plugin-test:clean \
@@ -107,17 +123,19 @@ jobs:
         id: testplugin
 
       - name: 'Create shadow jar for the cabe processor and publish to Maven local'
+        if: matrix.jdk == '17'
         run: gradle cabe-processor:shadowJar && gradle publishToMavenLocal
         id: createshadowjar
 
       - name: 'Compile examples'
+        if: matrix.jdk == '17'
         run: gradle --no-daemon -Dexamples examples:hello:build examples:hellofx:build
         id: compileexamples
 
       - name: 'Upload build reports'
         uses: actions/upload-artifact@v4
         with:
-          name: build-reports-${{ matrix.os }}
+          name: build-reports-${{ matrix.os }}-${{ matrix.jdk }}
           path: |
             build/reports
             */build/reports
