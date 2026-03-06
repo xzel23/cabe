@@ -16,6 +16,16 @@ repositories {
 dependencies {
     implementation(libs.jspecify)
     implementation(project(path = ":cabe-processor", configuration = "shadow"))
+
+    testImplementation(gradleTestKit())
+    testImplementation(platform("org.junit:junit-bom:6.0.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 // Disable Gradle Module Metadata to ensure the modified POM is used
