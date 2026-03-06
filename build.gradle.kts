@@ -217,6 +217,14 @@ tasks.register("publishToStagingDirectory") {
     dependsOn(subprojects.mapNotNull { it.tasks.findByName("publishToStagingDirectory") })
 }
 
+// Aggregate all subprojects' publishToMavenLocal tasks into a root-level task
+tasks.register("publishToMavenLocal") {
+    group = "publishing"
+    description = "Publish all subprojects' artifacts to local Maven repository"
+
+    dependsOn(subprojects.mapNotNull { it.tasks.findByName("publishToMavenLocal") })
+}
+
 // add a task to create aggregate javadoc in the root projects build/docs/javadoc folder
 tasks.register<Javadoc>("aggregateJavadoc") {
     group = "documentation"
@@ -281,6 +289,144 @@ tasks.named("jreleaserDeploy") {
 
 tasks.named("jreleaserUpload") {
     dependsOn("publishToStagingDirectory", "aggregateJavadoc")
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Full build lifecycle and regression tests (replaces build.sh)
+/////////////////////////////////////////////////////////////////////////////
+
+tasks.register("updateWritersideVersionList") {
+    group = "documentation"
+    val vListFile = file("Writerside/v.list")
+    val processorVersion = rootProject.extra["processor_version"]
+    val pluginVersion = rootProject.extra["plugin_version"]
+
+    inputs.property("processorVersion", processorVersion)
+    inputs.property("pluginVersion", pluginVersion)
+    outputs.file(vListFile)
+
+    doLast {
+        vListFile.writeText("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE vars SYSTEM "https://resources.jetbrains.com/writerside/1.0/vars.dtd">
+            <vars>
+                <var name="product" value="Writerside"/>
+                <var name="PROCESSOR_VERSION" value="$processorVersion"/>
+                <var name="PLUGIN_VERSION" value="$pluginVersion"/>
+            </vars>
+        """.trimIndent() + "\n")
+    }
+}
+
+// Helper function to register a gradlew task
+fun Project.registerGradlewTask(name: String, vararg args: String, block: Exec.() -> Unit = {}) {
+    tasks.register<Exec>(name) {
+        group = "verification"
+        workingDir = projectDir
+        val gradlew = if (System.getProperty("os.name").lowercase().contains("windows")) "gradlew.bat" else "./gradlew"
+        commandLine(gradlew, *args)
+        block()
+    }
+}
+
+registerGradlewTask("testPluginTasks", 
+    "--no-daemon", "-Dtest",
+    "cabe-gradle-plugin-test:clean",
+    "cabe-gradle-plugin-test:test-gradle-plugin:run",
+    "cabe-gradle-plugin-test:test-gradle-plugin-modular:run",
+    "--stacktrace"
+) {
+    dependsOn("publishToMavenLocal")
+}
+
+registerGradlewTask("testPluginBuild", 
+    "--no-daemon", "-Dtest", "cabe-gradle-plugin-test:build", "--stacktrace"
+) {
+    dependsOn("testPluginTasks")
+}
+
+registerGradlewTask("testPluginClean", 
+    "--no-daemon", "-Dtest", "cabe-gradle-plugin-test:clean", "--stacktrace"
+) {
+    dependsOn("testPluginBuild")
+}
+
+registerGradlewTask("testExamplesFirstRun", 
+    "--no-daemon", "-Dexamples",
+    "examples:clean",
+    "examples:hello:build",
+    "examples:hellofx:build",
+    "examples:cabe022:build",
+    "examples:cabe022:app:build",
+    "--stacktrace"
+) {
+    dependsOn("publishToMavenLocal")
+}
+
+registerGradlewTask("testExamplesConfigCacheClean", 
+    "--no-daemon", "--configuration-cache", "-Dexamples", "examples:clean", "--stacktrace"
+) {
+    dependsOn("testExamplesFirstRun")
+}
+
+registerGradlewTask("testExamplesConfigCacheRun1", 
+    "--no-daemon", "--configuration-cache", "-Dexamples",
+    "examples:hello:build",
+    "examples:hellofx:build",
+    "examples:cabe022:build",
+    "examples:cabe022:app:build",
+    "--stacktrace"
+) {
+    dependsOn("testExamplesConfigCacheClean")
+}
+
+registerGradlewTask("testExamplesConfigCacheRun2", 
+    "--no-daemon", "--configuration-cache", "-Dexamples",
+    "examples:hello:build",
+    "examples:hellofx:build",
+    "examples:cabe022:build",
+    "examples:cabe022:app:build",
+    "--stacktrace"
+) {
+    dependsOn("testExamplesConfigCacheRun1")
+}
+
+tasks.register<Exec>("testMavenExample") {
+    group = "verification"
+    workingDir = file("examples/hello-maven")
+    val pluginVersion = rootProject.extra["plugin_version"]
+    commandLine("mvn", "-Dcabe.version=$pluginVersion", "clean", "package")
+    dependsOn("publishToMavenLocal")
+}
+
+tasks.register("fullBuild") {
+    group = "lifecycle"
+    description = "Run the complete build suite (replaces build.sh)"
+    
+    dependsOn(
+        "updateWritersideVersionList",
+        "clean",
+        "build",
+        "allTests",
+        ":cabe-processor:shadowJar",
+        "publishToMavenLocal",
+        "publishToStagingDirectory",
+        "testPluginClean", 
+        "testExamplesConfigCacheRun2", 
+        "testMavenExample",
+        "aggregateJavadoc"
+    )
+
+    doLast {
+        println("FULL BUILD SUCCESSFUL")
+    }
+}
+
+// Helper task to run all tests in all subprojects
+tasks.register("allTests") {
+    group = "verification"
+    description = "Runs all tests in all subprojects"
+    dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") })
 }
 
 jreleaser {
