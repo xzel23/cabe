@@ -200,7 +200,9 @@ public final class TestUtil {
      */
     public static String runClass(Path dir, String className, boolean assertionsEnabled) throws IOException, InterruptedException {
         List<String> command = new ArrayList<>();
-        command.add("java");
+        String javaHome = System.getProperty("java.home");
+        String javaExecutable = javaHome + File.separator + "bin" + File.separator + "java";
+        command.add(javaExecutable);
         command.add(assertionsEnabled ? "-ea" : "-da");
 
         // Add JavaFX modules to the module path for tests
