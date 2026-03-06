@@ -79,11 +79,6 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: 'Set up Maven'
-        uses: stax/setup-maven@v4.1.0
-        with:
-          maven-version: '3.9.9'
-
       - name: 'Setup Gradle'
         uses: gradle/actions/setup-gradle@v5
         with:
