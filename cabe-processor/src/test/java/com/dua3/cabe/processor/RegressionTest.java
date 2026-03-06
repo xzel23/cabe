@@ -48,10 +48,13 @@ public class RegressionTest {
 
         // run test
         LOG.info("running test ...");
-        Path mainPath = Files.walk(processedDir)
-                .filter(Files::isRegularFile)
-                .filter(p -> p.getFileName().toString().equals(testName + ".class"))
-                .findFirst().orElseThrow(() -> new IllegalStateException("test class " + testName + " not found"));
+        Path mainPath;
+        try (Stream<Path> pathStream = Files.walk(processedDir)) {
+            mainPath = pathStream
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().equals(testName + ".class"))
+                    .findFirst().orElseThrow(() -> new IllegalStateException("test class " + testName + " not found"));
+        }
         String mainClass = TestUtil.getClassName(processedDir.relativize(mainPath));
         String result = TestUtil.runClass(processedDir, mainClass, true);
 
