@@ -24,7 +24,7 @@ jobs:
       gradle_version: ${{ steps.gradle-version.outputs.gradle_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract version and check if it's a release version
         id: check-version
@@ -68,13 +68,13 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       # Setup JDK 17 for build
       - name: 'Set up JDK 17'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -82,13 +82,13 @@ jobs:
 
       - name: 'Set up JDK ${{ matrix.jdk }}'
         if: matrix.jdk != '17'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
 
       - name: 'Setup Gradle'
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: ${{ needs.check.outputs.gradle_version }}
           gradle-home-cache-includes: |
@@ -133,7 +133,7 @@ jobs:
         id: compileexamples
 
       - name: 'Upload build reports'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-reports-${{ matrix.os }}-${{ matrix.jdk }}
           path: |
@@ -147,19 +147,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: 'Set up JDK 17'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
 
       - name: 'Setup Gradle'
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: ${{ needs.check.outputs.gradle_version }}
           gradle-home-cache-includes: |
@@ -193,7 +193,7 @@ jobs:
       artifact: ${{ steps.define-ids.outputs.artifact }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -225,7 +225,7 @@ jobs:
           docker-version: ${{ env.DOCKER_VERSION }}
 
       - name: Save artifact with build results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs
           path: |
@@ -239,7 +239,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: docs
           path: artifacts
@@ -276,7 +276,7 @@ jobs:
           echo "Deploying documentation to GitHub Pages because this is a final release version."
       
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: docs
           path: artifacts
@@ -285,10 +285,10 @@ jobs:
         run: unzip -O UTF-8 -qq "artifacts/${{ needs.build-docs.outputs.artifact }}" -d dir
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Package and upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dir
 
