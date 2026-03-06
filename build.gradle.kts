@@ -395,7 +395,8 @@ tasks.register<Exec>("testMavenExample") {
     group = "verification"
     workingDir = file("examples/hello-maven")
     val pluginVersion = rootProject.extra["plugin_version"]
-    commandLine("mvn", "-Dcabe.version=$pluginVersion", "clean", "package")
+    val mvn = if (System.getProperty("os.name").lowercase().contains("windows")) "mvn.cmd" else "mvn"
+    commandLine(mvn, "-Dcabe.version=$pluginVersion", "clean", "package")
     dependsOn("publishToMavenLocal")
 }
 
