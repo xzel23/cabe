@@ -40,13 +40,15 @@ jobs:
           V_LOWER=$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')
           IS_DEV=false
           for marker in snapshot alpha beta rc; do
-            if [[ "$V_LOWER" == *"-$marker"* || "$V_LOWER" == *"."$marker"* ]]; then
-              IS_DEV=true
-              break
-            fi
+            case "$V_LOWER" in
+              *"-${marker}"*|*".${marker}"*)
+                IS_DEV=true
+                break
+                ;;
+            esac
           done
 
-          if [[ "$IS_DEV" == "false" || "$GITHUB_REF_TYPE" == "tag" ]]; then
+          if [[ "$IS_DEV" == "false" ]] || [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             echo "This is a release or preview version"
             echo "is_release_version=true" >> $GITHUB_OUTPUT
           else
