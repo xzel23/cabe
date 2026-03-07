@@ -53,7 +53,6 @@ public class CabeGradlePlugin implements Plugin<Project> {
 
                     cabeTask.getConfig().set(extension.getConfig());
                     cabeTask.getVerbosity().set(extension.getVerbosity());
-                    cabeTask.getStrict().set(extension.getStrict());
 
                     // Set input directory to compileJava's destination directory
                     var compileJavaTaskProvider = project.getTasks().named(compileJavaTaskName, JavaCompile.class);

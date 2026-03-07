@@ -15,7 +15,6 @@ public class CabeExtension {
 
     private final Property<Configuration> config;
     private final Property<Integer> verbosity;
-    private final Property<Boolean> strict;
 
     /**
      * Construct a new instance of the extension.
@@ -31,9 +30,6 @@ public class CabeExtension {
 
         // get value of config
         config = objectFactory.property(Configuration.class).value(Configuration.STANDARD);
-
-        // get value of strict
-        strict = objectFactory.property(Boolean.class).value(false);
 
         project.getLogger().info("{} instance creation success", CabeExtension.class.getSimpleName());
     }
@@ -72,23 +68,5 @@ public class CabeExtension {
      */
     public void setVerbosity(int verbosity) {
         this.verbosity.set(verbosity);
-    }
-
-    /**
-     * Retrieves the strict property for the Cabe plugin.
-     *
-     * @return the strict property as a Property object of type Boolean
-     */
-    public Property<Boolean> getStrict() {
-        return strict;
-    }
-
-    /**
-     * Sets the strict property for the Cabe plugin.
-     *
-     * @param strict the strict mode to set
-     */
-    public void setStrict(boolean strict) {
-        this.strict.set(strict);
     }
 }

@@ -78,7 +78,6 @@ Configure the Cabe plugin to process the unprocessed classes:
     <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
     <verbosity>1</verbosity>
     <configurationString>STANDARD</configurationString>
-    <strict>false</strict>
   </configuration>
   <executions>
     <execution>
@@ -170,21 +169,10 @@ The configuration mode for Cabe processing.
 ```
 
 Possible values:
-- **STANDARD**: Use standard assertions for private API methods, throw NullPointerException for public API methods (default)
-- **DEVELOPMENT**: Failed checks will always throw an AssertionError, also checks return values
-- **NO_CHECKS**: Do not add any null checks (class files are copied unchanged)
+- **STANDARD**: Use standard assertions for private API methods, throw NullPointerException for public API methods (default, strict)
+- **DEVELOPMENT**: Failed checks will always throw an AssertionError, also checks return values (strict)
+- **NO_CHECKS**: Do not add any null checks (class files are copied unchanged, strict)
 - **Custom configuration string**: For advanced configuration (see Cabe documentation for details)
-
-### strict
-
-Whether to enable strict mode for `equals(Object)` checks.
-
-```xml
-<strict>true</strict>
-```
-
-Default value is `false`. When set to `true`, instrumentation will fail if the `equals(Object)` contract is violated.
-When set to `false`, a warning will be logged instead.
 
 ## Complete Example
 
@@ -241,7 +229,6 @@ Here's a complete example of a Maven project using the Cabe Maven Plugin:
           <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
           <verbosity>1</verbosity>
           <configurationString>STANDARD</configurationString>
-          <strict>false</strict>
         </configuration>
         <executions>
           <execution>

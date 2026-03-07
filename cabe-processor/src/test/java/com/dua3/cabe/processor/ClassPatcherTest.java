@@ -366,7 +366,7 @@ class ClassPatcherTest {
         });
 
         Collection<Path> classPath = List.of(testLibDir);
-        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT);
+        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT.withStrict(false));
 
         assertDoesNotThrow(
                 () -> patcher.processFolder(inputDir, outputDir),
@@ -388,7 +388,7 @@ class ClassPatcherTest {
             "NO_CHECKS",
             "DEVELOPMENT",
             "STANDARD",
-            "publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK"
+            "publicApi=THROW_IAE:privateApi=ASSERT:returnValue=NO_CHECK"
     })
     @Order(5)
     void testConfiguration(String configName) throws IOException, ClassFileProcessingFailedException {
@@ -432,8 +432,8 @@ class ClassPatcherTest {
 
     private static final Map<Configuration, String> EXPECTED_FOR_CONFIG = Map.of(
             Configuration.NO_CHECKS, """
-                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK, strict=false]
-                    ==================================================================================================
+                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK, strict=true]
+                    =================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -488,8 +488,8 @@ class ClassPatcherTest {
                                         
                     """,
             Configuration.DEVELOPMENT, """
-                    Config: Configuration[publicApi=ASSERT_ALWAYS, privateApi=ASSERT_ALWAYS, checkReturn=ASSERT_ALWAYS, strict=false]
-                    =================================================================================================================
+                    Config: Configuration[publicApi=ASSERT_ALWAYS, privateApi=ASSERT_ALWAYS, checkReturn=ASSERT_ALWAYS, strict=true]
+                    ================================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -544,8 +544,8 @@ class ClassPatcherTest {
                                         
                     """,
             Configuration.STANDARD, """
-                    Config: Configuration[publicApi=THROW_NPE, privateApi=ASSERT, checkReturn=NO_CHECK, strict=false]
-                    =================================================================================================
+                    Config: Configuration[publicApi=THROW_NPE, privateApi=ASSERT, checkReturn=NO_CHECK, strict=true]
+                    ================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
@@ -599,9 +599,9 @@ class ClassPatcherTest {
                     publicNonNullDefault: java.lang.NullPointerException
                                         
                     """,
-            Configuration.parse("publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK"), """
-                    Config: Configuration[publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK, strict=false]
-                    =================================================================================================
+            Configuration.parse("publicApi=THROW_IAE:privateApi=ASSERT:returnValue=NO_CHECK"), """
+                    Config: Configuration[publicApi=THROW_IAE, privateApi=ASSERT, checkReturn=NO_CHECK, strict=true]
+                    ================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false

@@ -64,7 +64,6 @@ cabe {
     // Use com.dua3.cabe.processor.Configuration
     config.set(com.dua3.cabe.processor.Configuration.STANDARD) // or DEVELOPMENT, NO_CHECKS
     verbosity.set(1) // 0-3, where 0 is minimal logging and 3 is verbose
-    strict.set(false) // enable strict mode for equals() checks
 }
 ```
 
@@ -133,19 +132,6 @@ Possible values:
 - **1**: Show basic processing information
 - **2**: Show detailed information
 - **3**: Show all information
-
-### strict
-
-Whether to enable strict mode for `equals(Object)` checks.
-
-```kotlin
-cabe {
-    strict.set(true)
-}
-```
-
-Default value is `false`. When set to `true`, instrumentation will fail if the `equals(Object)` contract is violated.
-When set to `false`, a warning will be logged instead.
 
 ## Complete Example
 
@@ -226,18 +212,18 @@ Examples:
 
 | Configuration String                     | Public API    | Private API   | Return Value  | Strict |
 |------------------------------------------|---------------|---------------|---------------|--------|
-| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
-| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | false  |
-| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     | false  |
-| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        | false  |
-| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | false  |
-| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
-| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      | false  |
-| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        | false  |
-| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      | false  |
-| "STANDARD:strict=true"                   | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
-| "strict=true"                            | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
+| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
+| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
+| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     | true   |
+| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        | true   |
+| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
+| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
+| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      | true   |
+| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        | true   |
+| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      | true   |
+| "STANDARD:strict=false"                  | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
+| "strict=false"                           | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
 
 You can also use the standard record constructor of <code>Configuration</code>
 

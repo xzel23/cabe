@@ -38,7 +38,12 @@ class ConfigurationTest {
                 new ConfigurationTestData("strict=true", new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
                 new ConfigurationTestData("STANDARD:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, true)),
                 new ConfigurationTestData("publicApi=THROW_NPE:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
-                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS, true))
+                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS:strict=true", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS, true)),
+
+                // strict=false tests
+                new ConfigurationTestData("strict=false", new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, false)),
+                new ConfigurationTestData("STANDARD:strict=false", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, false)),
+                new ConfigurationTestData("ASSERT:strict=false", new Configuration(Configuration.Check.ASSERT, Configuration.Check.ASSERT, Configuration.Check.ASSERT, false))
         );
     }
 

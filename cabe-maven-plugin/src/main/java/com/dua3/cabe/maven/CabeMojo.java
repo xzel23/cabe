@@ -64,12 +64,6 @@ public class CabeMojo extends AbstractMojo {
   public String configurationString;
 
   /**
-   * Whether to use strict mode for equals() checks.
-   */
-  @Parameter(property = "cabe.strict", defaultValue = "false")
-  public boolean strict;
-
-  /**
    * Default constructor
    */
   public CabeMojo() {
@@ -94,7 +88,7 @@ public class CabeMojo extends AbstractMojo {
       getLog().info("Java executable: %s".formatted(javaExec));
 
       int v = Objects.requireNonNullElse(verbosity, 0);
-      String configStr = Configuration.parse(configurationString).withStrict(strict).getConfigString();
+      String configStr = Configuration.parse(configurationString).getConfigString();
       String[] args = {
           javaExec,
           "-classpath", systemClassPath,

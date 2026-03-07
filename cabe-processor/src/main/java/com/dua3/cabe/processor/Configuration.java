@@ -32,7 +32,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * @param checkReturn the {@code Check} strategy to apply for return values.
      */
     public Configuration(Check publicApi, Check privateApi, Check checkReturn) {
-        this(publicApi, privateApi, checkReturn, false);
+        this(publicApi, privateApi, checkReturn, true);
     }
 
     /**
@@ -105,7 +105,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
             base = NO_CHECKS;
             remaining = configStr.substring("NO_CHECKS".length());
         } else {
-            base = new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK, false);
+            base = new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK, true);
             remaining = configStr;
         }
 
@@ -118,8 +118,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
         }
 
         LOG.fine(() -> "parsing custom configuration: " + configStr);
-        Pattern pattern = Pattern.compile("(^(?<singleCheck>\\w+)$)|" +
-                "((publicApi=(?<publicApi>\\w+))|(privateApi=(?<privateApi>\\w+))|(returnValue=(?<returnValue>\\w+))|(strict=(?<strict>\\w+)))(:?|$)");
+        Pattern pattern = Pattern.compile("((publicApi=(?<publicApi>\\w+))|(privateApi=(?<privateApi>\\w+))|(returnValue=(?<returnValue>\\w+))|(strict=(?<strict>\\w+))|(?<singleCheck>\\w+))(:?|$)");
 
         Matcher matcher = pattern.matcher(remaining);
 

@@ -1,6 +1,22 @@
 version 4.2.0 ( in delevopment)
 ===============================
 
+### Breaking Changes
+
+- Configurations now default to 'strict' mode. That means that code that overrides `Object.equals(Object)`
+  in a `@NullMarked` context and does not annotate the argument as  `@Nullable` will be rejected.
+  This ensures that code does not violate that
+  ["for any non-null reference value x, x.equals(null) should return false"]
+  (https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)).
+  
+  This can be disabled by configuring non-strict mode using `wtihStrict(false)`:
+  ```kotlin
+  cabe {
+    // Use com.dua3.cabe.processor.Configuration
+    config.set(com.dua3.cabe.processor.Configuration.STANDARD).wtihStrict(false)
+  }
+  ```
+
 ### Fixes
 
 - Fixed a bug where parameter names were incorrect in the presence of long and double parameters. (issue #25)
@@ -14,6 +30,8 @@ version 4.2.0 ( in delevopment)
     - Gradle configuration cache compatibility (Gradle 8.14+) only: 8.14, 9.0, 9.4, and the version
       the build was started with.
     - JDK version compatibility: JDK versions 17, 21, and 25
+- The configuration parser now supports directly setting strict mode (e.g., `ASSERT:strict=false`),
+  strict mode defaults to `true`.
 
 ### Other changes
 
@@ -21,7 +39,7 @@ version 4.2.0 ( in delevopment)
   the artifacts.
 - Updated the Gradle wrapper and dependencies to current versions.
 - Updated the GitHub Actions workflow.
-- Small fixes and improvements.
+- Refactored the internal handling of strict mode in the extension
 
 version 4.1
 ============

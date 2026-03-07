@@ -182,12 +182,12 @@ This means, that the argument passed to `equals(Object)` has to be nullable. Cab
 
 When implementing `equals(Object)` in a `@NullMarked` context, declare the method as `public boolean equals(@Nullable Object other)`.
 
-By default, Cabe will only print a warning if this contract is violated and automatically treat the argument as nullable.
-If you want to enforce this contract, you can enable **strict mode**. In strict mode, Cabe will throw an error during 
-instrumentation if the `equals(Object)` contract is violated.
+By default, Cabe will flag an error if this contract is violated.
+If you want to relax this contract, you can disable **strict mode** by using a custom configuration string.
+In non-strict mode, Cabe will only print a warning if the `equals(Object)` contract is violated.
 
 <note>
-Strict mode can be enabled in the plugin configuration. See the documentation for the Gradle or Maven plugin for details.
+Strict mode is enabled by default in all predefined configurations. To disable it, use a custom configuration string (e.g., "STANDARD:strict=false").
 </note>
 
 ## What makes Cabe different from other projects like Nullaway?
@@ -300,7 +300,7 @@ different configurations.
   assertions that can be enabled or disabled at runtime. Standard assertions are usually optimized out by the JIT
   compiler when assertions are disabled. There may still be a minor impact due to increased class file size.
 
-- You can also disable all checks by using the <code>NO_CHECK</code> configuration and there will be no performance
+- You can also disable all checks by using the <code>NO_CHECKS</code> configuration and there will be no performance
   hit at all. Be aware that you might trade correctness to speed in this case as invalid inputs will not be detected.
 
 When in doubt, profile your application when compiled using the different settings.
@@ -339,11 +339,11 @@ and for parts of your private API, standard assertions are used that can be enab
 
 The predefined configurations are:
 
-| Name        | Public API    | Private API   | Return Values |
-|-------------|---------------|---------------|---------------|
-| DEVELOPMENT | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS |
-| STANDARD    | THROW_NPE     | ASSERT        | NO_CHECK      |
-| NO_CHECK    | NO_CHECK      | NO_CHECK      | NO_CHECK      |
+| Name        | Public API    | Private API   | Return Values | Strict |
+|-------------|---------------|---------------|---------------|--------|
+| DEVELOPMENT | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
+| STANDARD    | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
+| NO_CHECKS  | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
 
 ## Things to note
 

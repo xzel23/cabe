@@ -50,14 +50,6 @@ public abstract class CabeTask extends DefaultTask {
     public abstract Property<Integer> getVerbosity();
 
     /**
-     * Retrieves the strict property for the Cabe plugin.
-     *
-     * @return the strict property as a Property object of type Boolean
-     */
-    @Input
-    public abstract Property<Boolean> getStrict();
-
-    /**
      * Retrieves the input directory containing the class files to be instrumented.
      *
      * @return the input directory as a DirectoryProperty object
@@ -146,7 +138,7 @@ public abstract class CabeTask extends DefaultTask {
                         jarLocation,
                         "-i", inputDir.toString(),
                         "-o", outputDir.toString(),
-                        "-c", getConfig().getOrElse(Configuration.STANDARD).withStrict(getStrict().getOrElse(false)).getConfigString(),
+                        "-c", getConfig().getOrElse(Configuration.STANDARD).getConfigString(),
                         "-cp", cp,
                         "-v", Integer.toString(v)
                 ));
