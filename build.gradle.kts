@@ -298,8 +298,8 @@ tasks.named("jreleaserUpload") {
 tasks.register("updateWritersideVersionList") {
     group = "documentation"
     val vListFile = file("Writerside/v.list")
-    val processorVersion = rootProject.extra["processor_version"]
-    val pluginVersion = rootProject.extra["plugin_version"]
+    val processorVersion = rootProject.extra["processor_version"].toString()
+    val pluginVersion = rootProject.extra["plugin_version"].toString()
 
     inputs.property("processorVersion", processorVersion)
     inputs.property("pluginVersion", pluginVersion)

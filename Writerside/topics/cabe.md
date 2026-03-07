@@ -172,15 +172,17 @@ how to use JSpecify annotations in the <a href="https://jspecify.dev/docs/user-g
 
 ### The `equals(Object)` contract
 
-According to the Java 
+According to the Java
 <a href="https://docs.oracle.com/en/java/javase/21/docs//api/java.base/java/lang/Object.html#equals(java.lang.Object)">
 documentation</a>, "For any non-null reference value `x`, `x.equals(null)` should return `false`."
 
 This means, that the argument passed to `equals(Object)` has to be nullable. Cabe ensures this by flagging an error if:
+
 - the argument to `equals(Object)` is annotated as  `@NonNull`,
 - or is unannotated in a `@NullMarked` context.
 
-When implementing `equals(Object)` in a `@NullMarked` context, declare the method as `public boolean equals(@Nullable Object other)`.
+When implementing `equals(Object)` in a `@NullMarked` context, declare the method as
+`public boolean equals(@Nullable Object other)`.
 
 By default, Cabe will flag an error if this contract is violated.
 If you want to relax this contract, you can disable **strict mode** by using a custom configuration string.
