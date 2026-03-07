@@ -143,7 +143,7 @@ tasks.register<Javadoc>("javadocAll") {
     description = "Generates aggregated Javadoc for all subprojects"
     source = sourceSets["main"].allJava
     classpath = sourceSets["main"].runtimeClasspath
-    setDestinationDir(file("${reporting.baseDirectory.asFile.get()}/javadocAll"))
+    setDestinationDir(reporting.baseDirectory.dir("javadocAll").get().asFile)
 }
 
 tasks.register<Jar>("javadocAllJar") {
@@ -158,7 +158,7 @@ tasks.register<Copy>("sourcesAll") {
     group = "documentation"
     description = "Copies all source files into a single directory"
     from(sourceSets["main"].allSource)
-    into(reporting.file("sourcesAll"))
+    into(reporting.baseDirectory.dir("sourcesAll"))
 }
 
 tasks.register<Jar>("sourcesAllJar") {
