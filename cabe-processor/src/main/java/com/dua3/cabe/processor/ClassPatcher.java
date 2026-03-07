@@ -462,7 +462,7 @@ public class ClassPatcher {
                 if (configuration.strict()) {
                     throw new ClassFileProcessingFailedException(msg);
                 } else {
-                    LOG.warning(msg + "\nThe parameter will be treated as @Nullable");
+                    LOG.warning(() -> msg + "\nThe parameter will be treated as @Nullable");
                     ignoreNonMethodNonNullAnnotation = true;
                 }
             }
@@ -655,75 +655,28 @@ public class ClassPatcher {
                 .replace(File.separatorChar, '.');
     }
 
-    private static final Pattern PATTERN_SYNTHETIC_PARAMETER_NAMES = Pattern.compile("this(\\$\\d+)?");
-
     private static Map<String, String> getCtParameterNames(MethodInfo mi, CtBehavior ctBehaviour) {
-        ClassInfo ci = mi.classInfo();
-
-        int n = mi.parameters().size();
-        int syntheticParameterCount = 0;
-        int extraSyntheticParameters = 0;
-        int parameterOffset = 0;
-        boolean isEnumConstructor = ci.isEnum() && mi.isConstructor();
-        if (isEnumConstructor) {
-            extraSyntheticParameters += 2;
-            parameterOffset += 1;
-            n -= 2;
-        }
-        if (mi.isConstructor() && ci.isInnerClass() && !ci.isStaticClass()) {
-            extraSyntheticParameters += 1;
-            n--;
-        }
-
         var methodInfo = ctBehaviour.getMethodInfo();
         var ca = methodInfo.getCodeAttribute();
         if (ca == null) {
             return Collections.emptyMap();
         }
         var lva = (LocalVariableAttribute) ca.getAttribute(LocalVariableAttribute.tag);
+        if (lva == null) {
+            return Collections.emptyMap();
+        }
 
         Map<String, String> parameterNames = new HashMap<>();
-        // i is the global index, k is the number of non-synthetic parameters that have been added
-        for (int i = 0, j = 0, k = 0; i < syntheticParameterCount || extraSyntheticParameters > 0 || k < n; i++) {
-            String param = "_";
-            String name = getParameterName(lva, syntheticParameterCount + extraSyntheticParameters, i, parameterOffset);
-
-            boolean isSynthetic = i < syntheticParameterCount + extraSyntheticParameters;
-
-            if (name != null && !isSynthetic && PATTERN_SYNTHETIC_PARAMETER_NAMES.matcher(name).matches()) {
-                syntheticParameterCount++;
-            } else if (extraSyntheticParameters > 0) {
-                syntheticParameterCount++;
-                extraSyntheticParameters--;
-                j++;
-            } else {
-                param = "$" + (k + j + 1);
-                k++;
+        int slot = mi.isStatic() ? 0 : 1;
+        for (ParameterInfo pi : mi.parameters()) {
+            for (int j = 0; j < lva.tableLength(); j++) {
+                if (lva.index(j) == slot) {
+                    parameterNames.put(pi.param(), lva.variableName(j));
+                    break;
+                }
             }
-
-            if (name != null) {
-                parameterNames.put(param, name);
-            }
+            slot += (pi.type() == long.class || pi.type() == double.class) ? 2 : 1;
         }
         return parameterNames;
-    }
-
-    /**
-     * Retrieves the name of a parameter in a method.
-     *
-     * @param lva the LocalVariableAttribute representing the method's local variables
-     * @param i   the index of the parameter to retrieve the name for
-     * @return the name of the parameter at the specified index
-     */
-    private static String getParameterName(LocalVariableAttribute lva, int syntheticParameterCount, int i, int offset) {
-        if (i < syntheticParameterCount) {
-            return null;
-        }
-        for (int j = 0; j < lva.tableLength(); j++) {
-            if (lva.index(j) == i + offset) {
-                return lva.variableName(j);
-            }
-        }
-        return null;
     }
 }
