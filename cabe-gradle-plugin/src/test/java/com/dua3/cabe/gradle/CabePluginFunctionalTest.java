@@ -41,7 +41,7 @@ class CabePluginFunctionalTest {
         assertTrue(result.getOutput().contains("BUILD SUCCESSFUL"));
     }
 
-    @ParameterizedTest(name = "Compatible with Gradle {0}")
+    @ParameterizedTest(name = "Compatible with configuration cache in Gradle {0}")
     @ValueSource(strings = {"8.14", "9.0", "9.4.0", "current"})
     void testPluginCompatibilityWithConfigurationCache(String gradleVersion) throws IOException {
         setupProject();
