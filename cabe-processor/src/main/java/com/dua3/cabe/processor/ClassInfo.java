@@ -14,10 +14,9 @@ import java.util.regex.Pattern;
  */
 record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boolean isInterface, boolean isEnum,
                  boolean isRecord, boolean isDerived, boolean isAnonymousClass, boolean isPublicApi,
-                 boolean isGenerated,
                  NullnessOperator nullnessOperator,
                  String assertionsDisabledFlagName, List<MethodInfo> methods, Class<?> cls) {
-    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassInfo.class.getName());
+
     private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-z0-9]*");
     private static final Pattern PATTERN_ANONYMOUS_CLASS_SUFFIX = Pattern.compile(".*\\$\\d+");
 
@@ -45,7 +44,6 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isDerived = cls.getSuperclass() != null && !cls.getSuperclass().getName().equals(Object.class.getName()) && !isEnum && !isRecord;
         NullnessOperator nullnessOperator = Util.getClassNullnessOperator(cls);
         boolean isPublicApi = Modifier.isPublic(modifiers) || Util.hasPublicApiAncestor(cls);
-        boolean isGenerated = Util.isGenerated(cls.getAnnotations());
         String assertionsDisabledFlagName = Util.getAssertionsDisabledFlagName(cls);
 
         List<MethodInfo> methods = new ArrayList<>();
@@ -60,7 +58,6 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                 isDerived,
                 isAnonymousClass,
                 isPublicApi,
-                isGenerated,
                 nullnessOperator,
                 assertionsDisabledFlagName,
                 methods,

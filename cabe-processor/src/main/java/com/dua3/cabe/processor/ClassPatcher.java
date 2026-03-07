@@ -9,7 +9,6 @@ import javassist.CtField;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
-import javassist.bytecode.AnnotationsAttribute;
 import javassist.bytecode.LocalVariableAttribute;
 
 import java.io.File;
@@ -441,6 +440,34 @@ public class ClassPatcher {
                 && mi.parameters().get(0).type().equals(Object.class);
         boolean ignoreNonMethodNonNullAnnotation = ci.isRecord() && isEquals;
 
+        // Enforces nullable parameter for overridden `equals` method
+        if (isEquals && mi.isPublic() && !mi.isStatic()) {
+            ParameterInfo pi = mi.parameters().get(0);
+            NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
+            NullnessOperator combined = ci.nullnessOperator().andThen(nullnessOperatorParameter);
+            boolean isNullable = (nullnessOperatorParameter == NullnessOperator.UNION_NULL)
+                    || (combined == NullnessOperator.UNION_NULL)
+                    || (combined == NullnessOperator.NO_CHANGE);
+
+            // workaround for https://github.com/xzel23/cabe/issues/2:
+            // if it's a record, we don't care if the parameter is not @Nullable
+            if (ci.isRecord()) {
+                isNullable = true;
+            }
+
+            // Enforces nullable parameter for overridden `equals` method
+            if (!isNullable) {
+                String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable",
+                        ci.name(), mi.name());
+                if (configuration.strict()) {
+                    throw new ClassFileProcessingFailedException(msg);
+                } else {
+                    LOG.warning(() -> msg + "\nThe parameter will be treated as @Nullable");
+                    ignoreNonMethodNonNullAnnotation = true;
+                }
+            }
+        }
+
         LOG.fine(() -> "instrumenting method " + methodName);
         try (Formatter standardParameterAssertions = new Formatter();
              Formatter otherParameterChecks = new Formatter();
@@ -449,42 +476,6 @@ public class ClassPatcher {
 
             CtClass ctClass = classPool.getCtClass(ci.name());
             CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
-
-            boolean isGenerated = ci.isGenerated() || mi.isGenerated()
-                    || Util.isGenerated((AnnotationsAttribute) ctClass.getClassFile().getAttribute(AnnotationsAttribute.visibleTag))
-                    || Util.isGenerated((AnnotationsAttribute) ctClass.getClassFile().getAttribute(AnnotationsAttribute.invisibleTag))
-                    || Util.isGenerated((AnnotationsAttribute) ctBehavior.getMethodInfo().getAttribute(AnnotationsAttribute.visibleTag))
-                    || Util.isGenerated((AnnotationsAttribute) ctBehavior.getMethodInfo().getAttribute(AnnotationsAttribute.invisibleTag));
-
-            // Enforces nullable parameter for overridden `equals` method
-            if (isEquals && mi.isPublic() && !mi.isStatic()) {
-                ParameterInfo pi = mi.parameters().get(0);
-                NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
-                NullnessOperator combined = ci.nullnessOperator().andThen(nullnessOperatorParameter);
-                boolean isNullable = (nullnessOperatorParameter == NullnessOperator.UNION_NULL)
-                        || (combined == NullnessOperator.UNION_NULL)
-                        || (combined == NullnessOperator.NO_CHANGE);
-
-                // workaround for https://github.com/xzel23/cabe/issues/2:
-                // if it's a record, we don't care if the parameter is not @Nullable
-                if (ci.isRecord()) {
-                    isNullable = true;
-                }
-
-                // Enforces nullable parameter for overridden `equals` method
-                if (!isNullable) {
-                    String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable",
-                            ci.name(), mi.name());
-                    boolean isStrict = configuration.strict() && !isGenerated;
-                    if (isStrict) {
-                        throw new ClassFileProcessingFailedException(msg);
-                    } else {
-                        LOG.warning(() -> msg + "\nThe parameter will be treated as @Nullable");
-                        ignoreNonMethodNonNullAnnotation = true;
-                    }
-                }
-            }
-
             Map<String,String> parameterNames = getCtParameterNames(mi, ctBehavior);
 
             // create assertion code for parameters

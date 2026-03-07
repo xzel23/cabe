@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 record MethodInfo(String name, String fullMethodName, boolean isConstructor, boolean isCanonicalRecordConstructor, boolean isMethod,
                   boolean isAbstract, boolean isStatic,
                   boolean isPublic, boolean isSynthetic, boolean isBridge, boolean isNative,
-                  boolean isGenerated,
                   List<ParameterInfo> parameters, ClassInfo classInfo,
                   boolean hasPrimitiveReturnType, NullnessOperator resultNullness,
                   Executable method) {
@@ -38,7 +37,6 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
         boolean isSynthetic = executable.isSynthetic();
         boolean isBridge = isMethod && ((Method) executable).isBridge();
         boolean isNative = Modifier.isNative(modifiers);
-        boolean isGenerated = Util.isGenerated(executable.getAnnotations());
 
         List<ParameterInfo> parameters = new ArrayList<>();
 
@@ -58,7 +56,6 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
                 isSynthetic,
                 isBridge,
                 isNative,
-                isGenerated,
                 parameters,
                 ci,
                 hasPrimitiveResult,

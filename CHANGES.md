@@ -32,8 +32,6 @@ version 4.2.0 ( in delevopment)
     - JDK version compatibility: JDK versions 17, 21, and 25
 - The configuration parser now supports directly setting strict mode (e.g., `ASSERT:strict=false`),
   strict mode defaults to `true`.
-- The processor now automatically uses non-strict mode for code annotated with `@Generated` 
-  (either `javax.annotation.processing.Generated` or `javax.annotation.Generated`).
 
 ### Other changes
 

@@ -377,44 +377,6 @@ class ClassPatcherTest {
         );
     }
 
-    @Test
-    @Order(5)
-    void testGeneratedContextOverridesStrict() {
-        String className = "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsNonNullGenerated";
-        LOG.info("testing that generated context overrides strict mode for: " + className);
-        Path inputDir = testDir.resolve("generated-strict-input").resolve(className);
-        Path outputDir = testDir.resolve("generated-strict-output").resolve(className);
-
-        assertDoesNotThrow(() -> {
-            Files.createDirectories(inputDir);
-            Files.createDirectories(outputDir);
-
-            Path pkgDir = inputDir;
-            String[] parts = className.split("\\.");
-            for (int i = 0; i < parts.length - 1; i++) {
-                pkgDir = pkgDir.resolve(parts[i]);
-            }
-            Files.createDirectories(pkgDir);
-            Path classFile = testClassesUnprocessedDir.resolve(className.replace('.', '/') + ".class");
-            Files.copy(classFile, pkgDir.resolve(classFile.getFileName()), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-            // also copy the annotation class
-            Path annotDir = inputDir.resolve("javax/annotation");
-            Files.createDirectories(annotDir);
-            Files.copy(testClassesUnprocessedDir.resolve("javax/annotation/Generated.class"),
-                    annotDir.resolve("Generated.class"),
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        });
-
-        Collection<Path> classPath = List.of(testLibDir);
-        ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT.withStrict(true));
-
-        assertDoesNotThrow(
-                () -> patcher.processFolder(inputDir, outputDir),
-                "Instrumentation should NOT have failed for generated class " + className + " even with strict=true"
-        );
-    }
-
     /**
      * Test generating null checks for different configurations. This test also makes sure that null checks for
      * {@link Configuration.Check#ASSERT} are work the same as standard assertions i.e., can be en-/disabled using the
