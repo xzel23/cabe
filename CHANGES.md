@@ -40,6 +40,7 @@ version 4.2.0 ( in delevopment)
 - Updated the Gradle wrapper and dependencies to current versions.
 - Updated the GitHub Actions workflow.
 - Refactored the internal handling of strict mode in the extension
+- Streamlined the release process.
 
 version 4.1
 ============
