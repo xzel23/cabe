@@ -106,7 +106,7 @@ jobs:
           retention-days: 7
 
   publish:
-    needs: [check, build]
+    needs: [check, build, test-docs]
     if: ${{ github.event_name != 'pull_request' && (needs.check.outputs.is_release_version == 'true' || github.ref_type == 'tag') }}
     runs-on: ubuntu-latest
     steps:
