@@ -1,7 +1,27 @@
-version 4.1.1 (in development)
-==============================
+version 4.2.0 ( in delevopment)
+===============================
 
+### Fixes
+
+- Fixed a bug where parameter names were incorrect in the presence of long and double parameters. (issue #25)
+- Fixed a bug when building the Maven plugin on Windows.
 - Updated dependencies JUnit and Log4J.
+
+### Features
+
+- Added compatibility tests to the build:
+    - Gradle version compatibility: 8.6, 8.14, 9.0, 9.4, and the version the build was started with.
+    - Gradle configuration cache compatibility (Gradle 8.14+) only: 8.14, 9.0, 9.4, and the version
+      the build was started with.
+    - JDK version compatibility: JDK versions 17, 21, and 25
+
+### Other changes
+
+- Refactored the build from using a shell script to control build and test executions before eventually releasing
+  the artifacts.
+- Updated the Gradle wrapper and dependencies to current versions.
+- Updated the GitHub Actions workflow.
+- Small fixes and improvements.
 
 version 4.1
 ============
