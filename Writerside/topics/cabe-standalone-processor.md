@@ -100,6 +100,14 @@ For example:
 | "strict=true"                            | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
 | "strict=false"                           | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
 
+<note>
+Cabe automatically uses non-strict mode for code annotated with <code>@Generated</code> (either 
+<code>javax.annotation.processing.Generated</code> or <code>javax.annotation.Generated</code>). This is useful 
+for code generators that might not correctly handle nullability annotations when overriding <code>equals(Object)</code>.
+In non-strict mode, Cabe will only print a warning if the <code>equals(Object)</code> contract is violated instead 
+of failing the build.
+</note>
+
 ## Verbosity Levels
 
 The `-v` parameter controls the amount of information displayed during processing:

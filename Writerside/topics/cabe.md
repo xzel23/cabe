@@ -188,6 +188,10 @@ By default, Cabe will flag an error if this contract is violated.
 If you want to relax this contract, you can disable **strict mode** by using a custom configuration string.
 In non-strict mode, Cabe will only print a warning if the `equals(Object)` contract is violated.
 
+Cabe also automatically uses non-strict mode for code annotated with `@Generated` (either 
+`javax.annotation.processing.Generated` or `javax.annotation.Generated`). This is useful for code generators that 
+might not correctly handle nullability annotations when overriding `equals(Object)`.
+
 <note>
 Strict mode is enabled by default in all predefined configurations (except **NO_CHECKS**).
 To disable it, use a custom configuration string (e.g., "STANDARD:strict=false").

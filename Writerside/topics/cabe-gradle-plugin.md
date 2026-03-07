@@ -225,6 +225,14 @@ Examples:
 | "STANDARD:strict=false"                  | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
 | "strict=false"                           | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
 
+<note>
+Cabe automatically uses non-strict mode for code annotated with <code>@Generated</code> (either 
+<code>javax.annotation.processing.Generated</code> or <code>javax.annotation.Generated</code>). This is useful 
+for code generators that might not correctly handle nullability annotations when overriding <code>equals(Object)</code>.
+In non-strict mode, Cabe will only print a warning if the <code>equals(Object)</code> contract is violated instead 
+of failing the build.
+</note>
+
 You can also use the standard record constructor of <code>Configuration</code>
 
 <code-block lang="Kotlin">

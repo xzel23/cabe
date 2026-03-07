@@ -63,13 +63,22 @@ public final class Util {
         }
     }
 
-    private static boolean isAnnotationPresent(Annotation[] annotations, Class<?> annotation) {
+    private static boolean isAnnotationPresent(Annotation[] annotations, String annotationName) {
         for (Annotation a: annotations) {
-            if (a.annotationType().getName().equals(annotation.getName())) {
+            if (a.annotationType().getName().equals(annotationName)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean isAnnotationPresent(Annotation[] annotations, Class<?> annotation) {
+        return isAnnotationPresent(annotations, annotation.getName());
+    }
+
+    public static boolean isGenerated(Annotation[] annotations) {
+        return isAnnotationPresent(annotations, "javax.annotation.processing.Generated")
+                || isAnnotationPresent(annotations, "javax.annotation.Generated");
     }
 
     /**
@@ -209,7 +218,16 @@ public final class Util {
         return NullnessOperator.NO_CHANGE;
     }
 
+    private static boolean isAnnotationPresent(javassist.bytecode.AnnotationsAttribute attribute, String annotationName) {
+        return attribute != null && attribute.getAnnotation(annotationName) != null;
+    }
+
     private static boolean isAnnotationPresent(javassist.bytecode.AnnotationsAttribute attribute, Class<?> annotationClass) {
-        return attribute != null && attribute.getAnnotation(annotationClass.getName()) != null;
+        return isAnnotationPresent(attribute, annotationClass.getName());
+    }
+
+    public static boolean isGenerated(javassist.bytecode.AnnotationsAttribute attribute) {
+        return isAnnotationPresent(attribute, "javax.annotation.processing.Generated")
+                || isAnnotationPresent(attribute, "javax.annotation.Generated");
     }
 }
