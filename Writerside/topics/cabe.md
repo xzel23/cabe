@@ -184,13 +184,13 @@ This means, that the argument passed to `equals(Object)` has to be nullable. Cab
 When implementing `equals(Object)` in a `@NullMarked` context, declare the method as
 `public boolean equals(@Nullable Object other)`.
 
-By default, Cabe will flag an error if this contract is violated.
-If you want to relax this contract, you can disable **strict mode** by using a custom configuration string.
-In non-strict mode, Cabe will only print a warning if the `equals(Object)` contract is violated.
+By default, Cabe will only log a warning if this contract is violated.
+If you want to enforce this contract, you can enable **strict mode** by using a custom configuration string.
+In strict mode, Cabe will fail the instrumentation if the `equals(Object)` contract is violated.
 
 <note>
-Strict mode is enabled by default in all predefined configurations (except **NO_CHECKS**).
-To disable it, use a custom configuration string (e.g., "STANDARD:strict=false").
+Strict mode is disabled by default in all predefined configurations.
+To enable it, use a custom configuration string (e.g., "STANDARD:strict=true").
 </note>
 
 ## What makes Cabe different from other projects like Nullaway?
@@ -344,8 +344,8 @@ The predefined configurations are:
 
 | Name        | Public API    | Private API   | Return Values | Strict |
 |-------------|---------------|---------------|---------------|--------|
-| DEVELOPMENT | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
-| STANDARD    | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
+| DEVELOPMENT | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | false  |
+| STANDARD    | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
 | NO_CHECKS   | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
 
 ## Things to note

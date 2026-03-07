@@ -212,18 +212,18 @@ Examples:
 
 | Configuration String                     | Public API    | Private API   | Return Value  | Strict |
 |------------------------------------------|---------------|---------------|---------------|--------|
-| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
-| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
+| "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
+| "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | false  |
 | "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
-| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     | true   |
-| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        | true   |
-| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
-| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
-| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      | true   |
-| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        | true   |
-| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      | true   |
-| "STANDARD:strict=false"                  | THROW_NPE     | ASSERT        | NO_CHECK      | false  |
-| "strict=false"                           | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
+| "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     | false  |
+| "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        | false  |
+| "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | false  |
+| "NO_CHECK"                               | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
+| "publicApi=THROW_NPE"                    | THROW_NPE     | NO_CHECK      | NO_CHECK      | false  |
+| "publicApi=THROW_NPE:returnValue=ASSERT" | THROW_NPE     | NO_CHECK      | ASSERT        | false  |
+| "publicApi=THROW_IAE:privateApi=ASSERT"  | THROW_IAE     | ASSERT        | NO_CHECK      | false  |
+| "STANDARD:strict=true"                   | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
+| "strict=true"                            | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
 
 You can also use the standard record constructor of <code>Configuration</code>
 

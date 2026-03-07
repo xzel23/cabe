@@ -32,7 +32,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
      * @param checkReturn the {@code Check} strategy to apply for return values.
      */
     public Configuration(Check publicApi, Check privateApi, Check checkReturn) {
-        this(publicApi, privateApi, checkReturn, true);
+        this(publicApi, privateApi, checkReturn, false);
     }
 
     /**
@@ -105,7 +105,7 @@ public record Configuration(Check publicApi, Check privateApi, Check checkReturn
             base = NO_CHECKS;
             remaining = configStr.substring("NO_CHECKS".length());
         } else {
-            base = new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK, true);
+            base = new Configuration(Check.NO_CHECK, Check.NO_CHECK, Check.NO_CHECK, false);
             remaining = configStr;
         }
 

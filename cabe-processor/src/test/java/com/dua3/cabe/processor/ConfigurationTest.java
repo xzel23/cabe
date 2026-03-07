@@ -21,19 +21,19 @@ class ConfigurationTest {
                 new ConfigurationTestData("NO_CHECKS",     Configuration.NO_CHECKS),
 
                 // single check configurations
-                new ConfigurationTestData("ASSERT",        new Configuration(Configuration.Check.ASSERT, Configuration.Check.ASSERT, Configuration.Check.ASSERT, true)),
-                new ConfigurationTestData("ASSERT_ALWAYS", new Configuration(Configuration.Check.ASSERT_ALWAYS, Configuration.Check.ASSERT_ALWAYS, Configuration.Check.ASSERT_ALWAYS, true)),
-                new ConfigurationTestData("THROW_NPE",     new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.THROW_NPE, Configuration.Check.THROW_NPE, true)),
-                new ConfigurationTestData("NO_CHECK",      new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
+                new ConfigurationTestData("ASSERT",        new Configuration(Configuration.Check.ASSERT, Configuration.Check.ASSERT, Configuration.Check.ASSERT, false)),
+                new ConfigurationTestData("ASSERT_ALWAYS", new Configuration(Configuration.Check.ASSERT_ALWAYS, Configuration.Check.ASSERT_ALWAYS, Configuration.Check.ASSERT_ALWAYS, false)),
+                new ConfigurationTestData("THROW_NPE",     new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.THROW_NPE, Configuration.Check.THROW_NPE, false)),
+                new ConfigurationTestData("NO_CHECK",      new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, false)),
 
                 // single API check configuration
-                new ConfigurationTestData("publicApi=THROW_NPE",       new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
-                new ConfigurationTestData("privateApi=ASSERT",         new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, true)),
-                new ConfigurationTestData("returnValue=ASSERT_ALWAYS", new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.ASSERT_ALWAYS, true)),
+                new ConfigurationTestData("publicApi=THROW_NPE",       new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, false)),
+                new ConfigurationTestData("privateApi=ASSERT",         new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, false)),
+                new ConfigurationTestData("returnValue=ASSERT_ALWAYS", new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.ASSERT_ALWAYS, false)),
 
                 // multiple API check configuration
-                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, true)),
-                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS, true)),
+                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.NO_CHECK, false)),
+                new ConfigurationTestData("publicApi=THROW_NPE:privateApi=ASSERT:returnValue=ASSERT_ALWAYS", new Configuration(Configuration.Check.THROW_NPE, Configuration.Check.ASSERT, Configuration.Check.ASSERT_ALWAYS, false)),
 
                 // strict mode configuration
                 new ConfigurationTestData("strict=true", new Configuration(Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, Configuration.Check.NO_CHECK, true)),
