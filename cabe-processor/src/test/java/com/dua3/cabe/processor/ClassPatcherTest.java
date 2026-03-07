@@ -328,10 +328,19 @@ class ClassPatcherTest {
         Collection<Path> classPath = List.of(testLibDir);
         ClassPatcher patcher = new ClassPatcher(classPath, Configuration.DEVELOPMENT.withStrict(true));
         
-        assertThrows(ClassFileProcessingFailedException.class,
+        var ex = assertThrows(ClassFileProcessingFailedException.class,
                 () -> patcher.processFolder(inputDir, outputDir),
                 "Instrumentation should have failed for " + className
         );
+
+        String message = ex.getMessage();
+        Throwable cause = ex.getCause();
+        if (cause != null) {
+            message = cause.getMessage();
+        }
+        
+        assertTrue(message.contains("overrides Object.equals(Object) but the parameter is not @Nullable"), "Unexpected error message: " + message);
+        assertTrue(message.matches(".* \\(\\w+\\.java:\\d+\\)$"), "Error message should contain location in format (FileName.java:LineNumber): " + message);
     }
 
     @ParameterizedTest

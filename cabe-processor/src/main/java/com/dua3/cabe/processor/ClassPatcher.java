@@ -457,8 +457,24 @@ public class ClassPatcher {
 
             // Enforces nullable parameter for overridden `equals` method
             if (!isNullable) {
-                String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable",
-                        ci.name(), mi.name());
+                String location = "";
+                try {
+                    CtClass ctClass = classPool.getCtClass(ci.name());
+                    CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
+                    String fileName = ctClass.getClassFile().getSourceFile();
+                    int lineNumber = ctBehavior.getMethodInfo().getLineNumber(0);
+                    if (fileName != null && lineNumber != -1) {
+                        location = String.format(" (%s:%d)", fileName, lineNumber);
+                    } else if (fileName != null) {
+                        location = String.format(" (%s)", fileName);
+                    }
+                } catch (Exception e) {
+                    LOG.log(Level.FINE, e, () -> "could not determine location for " + ci.name() + "." + mi.name());
+                }
+
+                String finalLocation = location;
+                String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable%s",
+                        ci.name(), mi.name(), finalLocation);
                 if (configuration.strict()) {
                     throw new ClassFileProcessingFailedException(msg);
                 } else {
