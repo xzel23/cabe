@@ -214,7 +214,7 @@ Examples:
 |------------------------------------------|---------------|---------------|---------------|--------|
 | "STANDARD"                               | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
 | "DEVELOPMENT"                            | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
-| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
+| "NO_CHECKS"                              | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
 | "THROW_NPE"                              | THROW_NPE     | THROW_NPE     | THROW_NPE     | true   |
 | "ASSERT"                                 | ASSERT        | ASSERT        | ASSERT        | true   |
 | "ASSERT_ALWAYS"                          | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |

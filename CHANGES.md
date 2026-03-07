@@ -9,11 +9,11 @@ version 4.2.0 ( in delevopment)
   ["for any non-null reference value x, x.equals(null) should return false"]
   (https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)).
   
-  This can be disabled by configuring non-strict mode using `wtihStrict(false)`:
+  This can be disabled by configuring non-strict mode using `withStrict(false)`:
   ```kotlin
   cabe {
     // Use com.dua3.cabe.processor.Configuration
-    config.set(com.dua3.cabe.processor.Configuration.STANDARD).wtihStrict(false)
+    config.set(com.dua3.cabe.processor.Configuration.STANDARD).withStrict(false)
   }
   ```
 

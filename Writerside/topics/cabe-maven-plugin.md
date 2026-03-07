@@ -171,7 +171,7 @@ The configuration mode for Cabe processing.
 Possible values:
 - **STANDARD**: Use standard assertions for private API methods, throw NullPointerException for public API methods (default, strict)
 - **DEVELOPMENT**: Failed checks will always throw an AssertionError, also checks return values (strict)
-- **NO_CHECKS**: Do not add any null checks (class files are copied unchanged, strict)
+- **NO_CHECKS**: Do not add any null checks (class files are copied unchanged)
 - **Custom configuration string**: For advanced configuration (see Cabe documentation for details)
 
 ## Complete Example

@@ -189,7 +189,8 @@ If you want to relax this contract, you can disable **strict mode** by using a c
 In non-strict mode, Cabe will only print a warning if the `equals(Object)` contract is violated.
 
 <note>
-Strict mode is enabled by default in all predefined configurations. To disable it, use a custom configuration string (e.g., "STANDARD:strict=false").
+Strict mode is enabled by default in all predefined configurations (except **NO_CHECKS**).
+To disable it, use a custom configuration string (e.g., "STANDARD:strict=false").
 </note>
 
 ## What makes Cabe different from other projects like Nullaway?
@@ -345,7 +346,7 @@ The predefined configurations are:
 |-------------|---------------|---------------|---------------|--------|
 | DEVELOPMENT | ASSERT_ALWAYS | ASSERT_ALWAYS | ASSERT_ALWAYS | true   |
 | STANDARD    | THROW_NPE     | ASSERT        | NO_CHECK      | true   |
-| NO_CHECKS  | NO_CHECK      | NO_CHECK      | NO_CHECK      | true   |
+| NO_CHECKS   | NO_CHECK      | NO_CHECK      | NO_CHECK      | false  |
 
 ## Things to note
 

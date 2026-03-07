@@ -432,8 +432,8 @@ class ClassPatcherTest {
 
     private static final Map<Configuration, String> EXPECTED_FOR_CONFIG = Map.of(
             Configuration.NO_CHECKS, """
-                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK, strict=true]
-                    =================================================================================================
+                    Config: Configuration[publicApi=NO_CHECK, privateApi=NO_CHECK, checkReturn=NO_CHECK, strict=false]
+                    ==================================================================================================
                     Testing com/dua3/cabe/processor/test/config/TestClass.class with assertions false
                     ---------------------------------------------------------------------------------
                     assertions enabled  : false
