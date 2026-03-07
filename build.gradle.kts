@@ -30,7 +30,7 @@ fun isDevelopmentVersion(versionString: String): Boolean {
     return markers.any { marker -> v.contains("-$marker") || v.contains(".$marker") }
 }
 
-val isReleaseVersion = !isDevelopmentVersion(projectVersion)
+val isReleaseVersion = project.hasProperty("release") || !isDevelopmentVersion(projectVersion)
 
 // Make isReleaseVersion available as an extra property for subprojects
 extra["isReleaseVersion"] = isReleaseVersion
