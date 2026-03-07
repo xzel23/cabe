@@ -201,7 +201,7 @@ public final class TestUtil {
     public static String runClass(Path dir, String className, boolean assertionsEnabled) throws IOException, InterruptedException {
         List<String> command = new ArrayList<>();
         String javaHome = System.getProperty("java.home");
-        String javaExecutable = javaHome + File.separator + "bin" + File.separator + "java";
+        String javaExecutable = javaHome + File.separator + "bin" + File.separator + (System.getProperty("os.name").toLowerCase().contains("win") ? "java.exe" : "java");
         command.add(javaExecutable);
         command.add(assertionsEnabled ? "-ea" : "-da");
 

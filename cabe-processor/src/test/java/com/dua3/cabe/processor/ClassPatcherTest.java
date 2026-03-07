@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ClassPatcherTest {
     private static final Logger LOG = Logger.getLogger(ClassPatcherTest.class.getName());
 
-    static Path testDir = TestUtil.buildDir.resolve(ClassPatcherTest.class.getSimpleName());
+    static Path testDir = TestUtil.buildDir.resolve(ClassPatcherTest.class.getSimpleName().replace(':', '-'));
     static Path testSrcDir = testDir.resolve("src");
     static Path testSrcFailingDir = testDir.resolve("src-failing");
     static Path testLibDir = TestUtil.resourceDir.resolve("testLib");

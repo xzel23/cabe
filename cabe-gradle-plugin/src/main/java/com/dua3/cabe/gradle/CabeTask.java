@@ -117,12 +117,16 @@ public abstract class CabeTask extends DefaultTask {
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
 
             String javaExecPath = getJavaExecutable().getAsFile().get().getAbsolutePath();
-            if (javaExecPath.endsWith("/javac")) {
-                javaExecPath = javaExecPath.substring(0, javaExecPath.length() - 5) + "java";
-            } else if (javaExecPath.endsWith("\\javac.exe")) {
-                javaExecPath = javaExecPath.substring(0, javaExecPath.length() - 9) + "java.exe";
+            File javaExecFile = new File(javaExecPath);
+            String javaExecName = javaExecFile.getName();
+            String javaExec;
+            if (javaExecName.equals("javac")) {
+                javaExec = new File(javaExecFile.getParentFile(), "java").getAbsolutePath();
+            } else if (javaExecName.equalsIgnoreCase("javac.exe")) {
+                javaExec = new File(javaExecFile.getParentFile(), "java.exe").getAbsolutePath();
+            } else {
+                javaExec = javaExecPath;
             }
-            final String javaExec = javaExecPath;
             logger.debug("Java executable: {}", javaExec);
 
             String cp = getClasspath().getFiles().stream()
