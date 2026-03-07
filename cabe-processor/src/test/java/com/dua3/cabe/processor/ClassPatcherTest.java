@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ClassPatcherTest {
     private static final Logger LOG = Logger.getLogger(ClassPatcherTest.class.getName());
 
-    static Path testDir = TestUtil.buildDir.resolve(ClassPatcherTest.class.getSimpleName().replace(':', '-'));
+    static Path testDir = TestUtil.buildDir.resolve(sanitizeFileName(ClassPatcherTest.class.getSimpleName()));
     static Path testSrcDir = testDir.resolve("src");
     static Path testSrcFailingDir = testDir.resolve("src-failing");
     static Path testLibDir = TestUtil.resourceDir.resolve("testLib");
@@ -50,6 +50,9 @@ class ClassPatcherTest {
     static Path testClassesReprocessedDir = testDir.resolve("classes-reprocessed");
     static List<Path> classFiles = new ArrayList<>();
 
+    private static String sanitizeFileName(String s) {
+        return s.replaceAll("[<>:\"/\\\\|?*\\x00-\\x1F]|^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$|[. ]+$", "_");
+    }
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -395,8 +398,8 @@ class ClassPatcherTest {
         Configuration config = Configuration.parse(configName);
 
         // create directories
-        Path unprocessedDir = testDir.resolve("classes-unprocessed-" + configName);
-        Path processedDir = testDir.resolve("classes-processed-" + configName);
+        Path unprocessedDir = testDir.resolve(sanitizeFileName("classes-unprocessed-" + configName));
+        Path processedDir = testDir.resolve(sanitizeFileName("classes-processed-" + configName));
 
         // copy sources
         TestUtil.copyRecursive(
