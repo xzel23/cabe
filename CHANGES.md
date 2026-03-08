@@ -1,5 +1,5 @@
-version 4.2.0 ( in delevopment)
-===============================
+version 4.2.0
+=============
 
 ### Fixes
 
@@ -16,6 +16,7 @@ version 4.2.0 ( in delevopment)
     - JDK version compatibility: JDK versions 17, 21, and 25
 - The configuration parser now supports directly setting strict mode (e.g., `ASSERT:strict=true`),
   strict mode defaults to `false`.
+- The warning about a strict mode violation now contains the source location of the offending code.
 
 ### Other changes
 
