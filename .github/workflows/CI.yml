@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  id-token: write
-  pages: write
+  contents: read
 
 env:
   INSTANCE: 'Writerside/cabe'
@@ -121,6 +119,8 @@ jobs:
     needs: [check, build, test-docs]
     if: ${{ github.event_name != 'pull_request' && github.ref_type == 'tag' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -246,6 +246,10 @@ jobs:
     needs: [check, build, build-docs, test-docs]
     if: ${{ github.ref_type == 'tag' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Log version information
         run: |
