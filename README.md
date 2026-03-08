@@ -128,20 +128,20 @@ dependencies {
 
 ## Building from Source
 
-To build Cabe from source, use the provided `build.sh` script:
+To build Cabe from source, use the provided `build` Gradle task:
 
 ```bash
-./build.sh
+./gradlew build
 ```
 
-This script automatically:
+This task automatically:
 1. Builds the project
 2. Runs processor and plugin tests
 3. Publishes artifacts to the local Maven repository
 4. Tests the Gradle plugin
 5. Builds example projects
 
-The script ensures that all components work correctly together and is the recommended way to build the project.
+The `build` task ensures that all components work correctly together and is the recommended way to build the project.
 
 ## Documentation
 

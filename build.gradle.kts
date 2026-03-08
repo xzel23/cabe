@@ -10,8 +10,8 @@ plugins {
 extra["GROUP"]              = "com.dua3.cabe"
 extra["SCM"]                = "https://github.com/xzel23/cabe.git"
 extra["INCEPTION_YEAR"]     = "2021"
-extra["LICENSE_NAME"]       = "Apache License 2.0"
-extra["LICENSE_URL"]        = "https://www.apache.org/licenses/LICENSE-2.0"
+extra["LICENSE_NAME"]       = "MIT License"
+extra["LICENSE_URL"]        = "https://opensource.org/licenses/MIT"
 extra["DEVELOPER_ID"]       = "axh"
 extra["DEVELOPER_NAME"]     = "Axel Howind"
 extra["DEVELOPER_EMAIL"]    = "axh@dua3.com"
@@ -52,6 +52,15 @@ subprojects {
         withJavadocJar()
         withSourcesJar()
 
+    }
+}
+
+tasks.register("printVersion") {
+    group = "other"
+    description = "Prints the project version"
+
+    doLast {
+        println(project.version)
     }
 }
 
@@ -422,17 +431,6 @@ tasks.named("build") {
         "aggregateJavadoc"
     )
     mustRunAfter("clean")
-}
-
-tasks.register("fullBuild") {
-    group = "lifecycle"
-    description = "Run the complete build suite (replaces build.sh)"
-    
-    dependsOn("clean", "build")
-
-    doLast {
-        println("FULL BUILD SUCCESSFUL")
-    }
 }
 
 jreleaser {
