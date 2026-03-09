@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@SuppressWarnings({"java:S106", "java:S1192"})
 public class ParameterAnnotations {
 
     public static void test() {

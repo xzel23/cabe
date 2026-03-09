@@ -69,23 +69,29 @@ class CabePluginFunctionalTest {
             "rootProject.name = 'test-project'");
 
         // Create build.gradle
-        writeFile(testProjectDir.resolve("build.gradle").toFile(), 
-            "plugins {\n" +
-            "    id 'java'\n" +
-            "    id 'com.dua3.cabe'\n" +
-            "}\n" +
-            "repositories { mavenCentral() }\n" +
-            "dependencies { implementation 'org.jspecify:jspecify:1.0.0' }");
+        writeFile(testProjectDir.resolve("build.gradle").toFile(),
+                """
+                        plugins {
+                            id 'java'
+                            id 'com.dua3.cabe'
+                        }
+                        repositories { mavenCentral() }
+                        dependencies { implementation 'org.jspecify:jspecify:1.0.0' }
+                        """
+        );
 
         // Create a dummy Java file
         Path javaDir = testProjectDir.resolve("src/main/java/com/example");
         Files.createDirectories(javaDir);
-        writeFile(javaDir.resolve("Test.java").toFile(), 
-            "package com.example;\n" +
-            "import org.jspecify.annotations.*;\n" +
-            "@NullMarked public class Test {\n" +
-            "    public void hello(String name) {}\n" +
-            "}");
+        writeFile(javaDir.resolve("Test.java").toFile(),
+                """
+                        package com.example;
+                        import org.jspecify.annotations.*;
+                        @NullMarked public class Test {
+                            public void hello(String name) {}
+                        }
+                        """
+        );
     }
 
     private void writeFile(File destination, String content) throws IOException {
