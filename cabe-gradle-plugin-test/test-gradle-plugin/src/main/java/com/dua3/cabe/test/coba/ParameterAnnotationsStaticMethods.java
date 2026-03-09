@@ -126,17 +126,7 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
-            String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
-            System.err.println(msg);
-            throw new IllegalStateException(msg);
-        }
-
-        if (!Objects.equals(result, expectedResult)) {
-            String msg = String.format("expected result: %s%nactual: %s%n", expectedResult, result);
-            System.err.println(msg);
-            throw new IllegalStateException(msg);
-        }
+        assessResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
     }
 
     /**
@@ -161,7 +151,21 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        assesResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
+        assessResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
+    }
+
+    private static void assessResult(@Nullable String expectedResult, @Nullable String expectedExceptionMesssage, String assertionMessage, String result) {
+        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+            String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
+        }
+
+        if (!Objects.equals(result, expectedResult)) {
+            String msg = String.format("expected result: %s%nactual: %s%n", expectedResult, result);
+            System.err.println(msg);
+            throw new IllegalStateException(msg);
+        }
     }
 
     public record Pair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {
