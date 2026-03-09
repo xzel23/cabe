@@ -1,3 +1,9 @@
+version 4.2.1 (in development)
+=============
+
+- Fixed a possible DOS caused by a backtracking regex.
+- Cleaned up test files to reduce reported warnings during build.
+
 version 4.2.0
 =============
 
