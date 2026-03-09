@@ -125,7 +125,7 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        assesResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
+        assessResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
     }
 
     /**
@@ -150,10 +150,10 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        assesResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
+        assessResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
     }
 
-    private static void assesResult(@Nullable String expectedResult, @Nullable String expectedExceptionMesssage, String assertionMessage, String result) {
+    private static void assessResult(@Nullable String expectedResult, @Nullable String expectedExceptionMesssage, String assertionMessage, String result) {
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
