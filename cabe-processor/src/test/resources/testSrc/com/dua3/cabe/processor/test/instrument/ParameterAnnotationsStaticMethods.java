@@ -53,7 +53,7 @@ public class ParameterAnnotationsStaticMethods {
 
         // record parameter
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
-        check(() -> new NonNullRecord(null, "b").toString(), null, "assertion failed: (a|arg#1) is null");
+        checkRecord(() -> new NonNullRecord(null, "b").toString(), null, "assertion failed: (a|arg#1) is null");
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
@@ -125,6 +125,35 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
+        assesResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
+    }
+
+    /**
+     * Checks the result of a task and compares it to expected values.
+     * <p>
+     * This method is a specialized overload for records: as standard assertions cannot be
+     * injected into record classes unless the class already uses assertions, this method
+     * checks for both AssertionError and NullPointerException being thrown.
+     *
+     * @param task the task to execute
+     * @param expectedResult the expected result
+     * @param expectedExceptionMesssage the expected exception message
+     */
+    private static void checkRecord(Supplier<String> task, @Nullable String expectedResult, @Nullable String expectedExceptionMesssage) {
+        String assertionMessage = null;
+        String result = null;
+        try {
+            result = task.get();
+        } catch (NullPointerException npe) {
+            assertionMessage = npe.getMessage();
+        } catch (AssertionError ae) {
+            assertionMessage = "assertion failed: " + ae.getMessage();
+        }
+
+        assesResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
+    }
+
+    private static void assesResult(@Nullable String expectedResult, @Nullable String expectedExceptionMesssage, String assertionMessage, String result) {
         if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);

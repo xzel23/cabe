@@ -54,12 +54,12 @@ public class ParameterAnnotationsStaticMethods {
 
         // record parameter
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
-        // FIXME check(() -> new NonNullRecord(null, "b").toString(), null, "assertion failed: a is null");
+        checkRecord(() -> new NonNullRecord(null, "b").toString(), null, "assertion failed: a is null");
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
-        // FIXME check(() -> new B(null, " world!").toString(), null, "assertion failed: a is null");
-// FIXME       check(() -> new B("hello", null).toString(), null, "assertion failed: b is null");
+        check(() -> new B(null, " world!").toString(), null, "assertion failed: a is null");
+        check(() -> new B("hello", null).toString(), null, "assertion failed: b is null");
     }
 
     private static String unannotatedArgument(String arg) {
@@ -137,6 +137,31 @@ public class ParameterAnnotationsStaticMethods {
             System.err.println(msg);
             throw new IllegalStateException(msg);
         }
+    }
+
+    /**
+     * Checks the result of a task and compares it to expected values.
+     * <p>
+     * This method is a specialized overload for records: as standard assertions cannot be
+     * injected into record classes unless the class already uses assertions, this method
+     * checks for both AssertionError and NullPointerException being thrown.
+     *
+     * @param task the task to execute
+     * @param expectedResult the expected result
+     * @param expectedExceptionMesssage the expected exception message
+     */
+    private static void checkRecord(Supplier<String> task, @Nullable String expectedResult, @Nullable String expectedExceptionMesssage) {
+        String assertionMessage = null;
+        String result = null;
+        try {
+            result = task.get();
+        } catch (NullPointerException npe) {
+            assertionMessage = npe.getMessage();
+        } catch (AssertionError ae) {
+            assertionMessage = "assertion failed: " + ae.getMessage();
+        }
+
+        assesResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
     }
 
     public record Pair<T1, T2>(@Nullable T1 first, @Nullable T2 second) {

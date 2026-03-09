@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-@SuppressWarnings({"java:S106", "java:S1192", "java:s1612", "java:s1700"})
+@SuppressWarnings({"java:S106", "java:S1192", "java:S1700"})
 public class NullUnmarkedPackage {
 
     public static void test() {
