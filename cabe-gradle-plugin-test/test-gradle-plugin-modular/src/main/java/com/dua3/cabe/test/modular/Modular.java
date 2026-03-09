@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 
+@SuppressWarnings({"java:S106", "java:S1192"})
 public class Modular {
 
     public static void main(String[] args) {
@@ -40,7 +41,8 @@ public class Modular {
         } catch (AssertionError ae) {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
-        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            String msg = String.format("expected: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
+            String msg = String.format("expected: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);
         }

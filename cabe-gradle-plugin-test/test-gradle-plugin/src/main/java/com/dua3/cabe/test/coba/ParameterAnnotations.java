@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@SuppressWarnings({"java:S106", "java:S1192"})
 public class ParameterAnnotations {
 
     public static void test() {
@@ -160,7 +161,7 @@ public class ParameterAnnotations {
             assertionMessage = "npe: " + npe.getMessage();
         }
 
-        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
+        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
             String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);
@@ -197,6 +198,7 @@ public class ParameterAnnotations {
             this.b = b;
         }
 
+        @Override
         public String toString() {
             return super.toString() + b;
         }
