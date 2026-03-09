@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-@SuppressWarnings({"java:S106", "java:S1192", "java:s1612", "java:s1700"})
+@SuppressWarnings({"java:S106", "java:S1192", "java:S1612", "java:S1700"})
 public class ParameterAnnotationsStaticMethods {
 
     public static void test() {
@@ -54,7 +54,7 @@ public class ParameterAnnotationsStaticMethods {
 
         // record parameter
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
-        checkRecord(() -> new NonNullRecord(null, "b").toString(), null, "assertion failed: a is null");
+        checkRecord(() -> new NonNullRecord(null, "b").toString(), null, "a is null");
 
         // check that annotated arguments to constructors work
         assert new B("hello", " world!").toString().equals("hello world!");
@@ -145,10 +145,8 @@ public class ParameterAnnotationsStaticMethods {
         String result = null;
         try {
             result = task.get();
-        } catch (NullPointerException npe) {
-            assertionMessage = npe.getMessage();
-        } catch (AssertionError ae) {
-            assertionMessage = "assertion failed: " + ae.getMessage();
+        } catch (AssertionError | NullPointerException e) {
+            assertionMessage = e.getMessage();
         }
 
         assessResult(expectedResult, expectedExceptionMesssage, assertionMessage, result);
@@ -197,6 +195,7 @@ public class ParameterAnnotationsStaticMethods {
             this.b = b;
         }
 
+        @Override
         public String toString() {
             return super.toString() + b;
         }
