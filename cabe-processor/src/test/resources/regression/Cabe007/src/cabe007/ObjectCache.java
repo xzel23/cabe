@@ -1,6 +1,6 @@
-package cabe7;
+package cabe007;
 
-import cabe7.Cache.ReferenceType;
+import cabe007.Cache.ReferenceType;
 import java.util.function.Function;
 
 public class ObjectCache {

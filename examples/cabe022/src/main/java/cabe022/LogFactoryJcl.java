@@ -33,9 +33,7 @@ public final class LogFactoryJcl extends LogFactory {
     /**
      * Constructor.
      */
-    public LogFactoryJcl() {
-        // nothing to do
-    }
+    public LogFactoryJcl() { /* nothing to do */ }
 
     @Override
     public @Nullable Object getAttribute(String name) {
@@ -58,14 +56,11 @@ public final class LogFactoryJcl extends LogFactory {
     }
 
     @Override
-    public void release() {
-    }
+    public void release() { /* nothing to do */ }
 
     @Override
-    public void removeAttribute(String name) {
-    }
+    public void removeAttribute(String name) { /* nothing to do */ }
 
     @Override
-    public void setAttribute(String name, @Nullable Object value) {
-    }
+    public void setAttribute(String name, @Nullable Object value) { /* nothing to do */ }
 }

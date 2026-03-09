@@ -1,4 +1,4 @@
-package cabe11;
+package cabe011;
 
 public interface InputControl<T> {
 }

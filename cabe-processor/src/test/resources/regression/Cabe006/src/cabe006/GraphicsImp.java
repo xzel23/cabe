@@ -1,4 +1,4 @@
-package cabe6;
+package cabe006;
 
 public class GraphicsImp implements Graphics {
 
@@ -8,5 +8,5 @@ public class GraphicsImp implements Graphics {
     }
 
     @Override
-    public void close() {}
+    public void close() { /* nothing to do */ }
 }

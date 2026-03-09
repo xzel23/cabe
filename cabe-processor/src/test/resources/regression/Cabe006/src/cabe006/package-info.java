@@ -1,4 +1,4 @@
 @NullMarked
-package cabe6;
+package cabe006;
 
 import org.jspecify.annotations.NullMarked;

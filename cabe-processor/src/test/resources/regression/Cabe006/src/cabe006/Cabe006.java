@@ -1,4 +1,4 @@
-package cabe6;
+package cabe006;
 
 /*
  * Testing Cabe#6: Instrumentation error / method not found

@@ -1,4 +1,4 @@
-package cabe7;
+package cabe007;
 
 /*
  * Testing Cabe#7: Instrumentation error / constructor not found

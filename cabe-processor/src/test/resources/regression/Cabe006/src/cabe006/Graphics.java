@@ -1,4 +1,4 @@
-package cabe6;
+package cabe006;
 
 import java.util.ArrayList;
 import java.util.Arrays;
