@@ -17,7 +17,9 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
                  NullnessOperator nullnessOperator,
                  String assertionsDisabledFlagName, List<MethodInfo> methods, Class<?> cls) {
 
-    private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile("^([_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-z0-9]*");
+    private static final Pattern PATTERN_INNER_CLASS_NAME = Pattern.compile(
+            "^(?>[_$a-zA-Z][_$a-zA-Z0-9]*\\.)*[_$a-zA-Z][_$a-zA-Z0-9]*\\$[_$a-zA-Z0-9]*"
+    );
     private static final Pattern PATTERN_ANONYMOUS_CLASS_SUFFIX = Pattern.compile(".*\\$\\d+");
 
     @Override
