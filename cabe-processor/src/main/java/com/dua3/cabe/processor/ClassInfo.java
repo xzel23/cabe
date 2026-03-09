@@ -43,6 +43,7 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
         boolean isInterface = Modifier.isInterface(modifiers);
         boolean isEnum = cls.isEnum();
         boolean isRecord = cls.isRecord();
+        @SuppressWarnings("java:S1872") // DO NOT COMPARE CLASSES! The object trees are disjunct, they use unrelated class loaders
         boolean isDerived = cls.getSuperclass() != null && !cls.getSuperclass().getName().equals(Object.class.getName()) && !isEnum && !isRecord;
         NullnessOperator nullnessOperator = Util.getClassNullnessOperator(cls);
         boolean isPublicApi = Modifier.isPublic(modifiers) || Util.hasPublicApiAncestor(cls);

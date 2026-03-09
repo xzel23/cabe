@@ -63,8 +63,10 @@ public final class Util {
         }
     }
 
+    @SuppressWarnings("java:S1872")
     private static boolean isAnnotationPresent(Annotation[] annotations, Class<?> annotation) {
         for (Annotation a: annotations) {
+            // DO NOT COMPARE CLASSES! The object trees are disjunct, they use unrelated class loaders.
             if (a.annotationType().getName().equals(annotation.getName())) {
                 return true;
             }
@@ -111,8 +113,11 @@ public final class Util {
      * @param cls the TypeDescription to check
      * @return true if the given class or any of its superclasses have a public API ancestor, false otherwise
      */
+    @SuppressWarnings("java:S1872")
     public static boolean hasPublicApiAncestor(Class<?> cls) {
         for (Class<?> superClass = cls.getSuperclass(); superClass != null; superClass = superClass.getSuperclass()) {
+            // DO NOT COMPARE CLASSES! The object trees are disjunct, they use unrelated class loaders.
+            assert superClass.getName().equals(Object.class.getName()) == Objects.equals(superClass, Object.class);
             if (superClass.getName().equals(Object.class.getName())) {
                 break;
             }
