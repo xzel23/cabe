@@ -125,7 +125,7 @@ public class ParameterAnnotationsStaticMethods {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
+        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {            System.err.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             String msg = String.format("expected exception: %s%nactual: %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);
@@ -167,6 +167,7 @@ public class ParameterAnnotationsStaticMethods {
             this.b = b;
         }
 
+        @Override
         public String toString() {
             return super.toString() + b;
         }

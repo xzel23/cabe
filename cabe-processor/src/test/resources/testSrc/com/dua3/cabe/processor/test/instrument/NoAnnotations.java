@@ -1,7 +1,6 @@
 package com.dua3.cabe.processor.test.instrument;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class NoAnnotations {
@@ -30,7 +29,7 @@ public class NoAnnotations {
             assertionMessage = "assertion failed: " + ae.getMessage();
         }
 
-        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
+        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
             String msg = String.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);

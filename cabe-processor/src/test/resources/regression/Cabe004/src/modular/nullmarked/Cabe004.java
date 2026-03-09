@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 /*
  * Testing Cabe#4: @NullMarked annotation on module has no effect
  */
+@SuppressWarnings({"java:S106", "java:S1192", "java:s1612", "java:s1700"})
 public class Cabe004 {
 
     public static void main(String[] args) {
@@ -151,7 +152,7 @@ public class Cabe004 {
             assertionMessage = "npe: " + e.getMessage();
         }
 
-        if (assertionMessage != expectedExceptionMesssage && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
+        if (!Objects.equals(assertionMessage, expectedExceptionMesssage) && !String.valueOf(assertionMessage).matches(String.valueOf(expectedExceptionMesssage))) {
             String msg = String.format("expected exception: %s%nactual:   %s%n", expectedExceptionMesssage, assertionMessage);
             System.err.println(msg);
             throw new IllegalStateException(msg);
