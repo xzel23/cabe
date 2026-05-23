@@ -70,7 +70,7 @@ public class ModuleClassLoader extends ClassLoader {
                 configuration = parentLayer.configuration()
                         .resolve(finder, ModuleFinder.of(), moduleToPath.keySet());
             } catch (ResolutionException e2) {
-                LOG.log(Level.WARNING, "Module resolution failed using resolve(): {0}. Instrumentation will proceed without a full module layer.", e2.getMessage());
+                LOG.log(Level.INFO, "Module resolution failed using resolve(): {0}. Instrumentation will proceed without a full module layer.", e2.getMessage());
                 configuration = null;
             }
         }
