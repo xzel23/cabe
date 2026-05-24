@@ -442,11 +442,10 @@ public class ClassPatcher {
             return ;
         }
 
-        // special case: for record equals, ignore @NonNull annotations except directly on the method parameter
-        // see https://github.com/xzel23/cabe/issues/2
+        // special case: for equals(Object), ignore @NonNull annotations except directly on the method parameter
         boolean isEquals = mi.methodName().equals("equals") && mi.parameters().size() == 1
                 && mi.parameters().get(0).type().equals(Object.class);
-        boolean ignoreNonMethodNonNullAnnotation = ci.isRecord() && isEquals;
+        boolean ignoreNonMethodNonNullAnnotation = isEquals;
 
         // Enforces nullable parameter for overridden `equals` method
         if (isEquals && mi.isPublic() && !mi.isStatic()) {
@@ -458,8 +457,9 @@ public class ClassPatcher {
                     || (combined == NullnessOperator.NO_CHANGE);
 
             // workaround for https://github.com/xzel23/cabe/issues/2:
-            // if it's a record, we don't care if the parameter is not @Nullable
-            if (ci.isRecord()) {
+            // if it's a record or enum, we don't care if the parameter is not @Nullable because equals() is usually
+            // auto-generated
+            if (ci.isRecord() || ci.isEnum()) {
                 isNullable = true;
             }
 

@@ -184,13 +184,18 @@ This means, that the argument passed to `equals(Object)` has to be nullable. Cab
 When implementing `equals(Object)` in a `@NullMarked` context, declare the method as
 `public boolean equals(@Nullable Object other)`.
 
-By default, Cabe will only log a warning if this contract is violated.
+By default, Cabe will only log a diagnostic when this contract is violated.
 If you want to enforce this contract, you can enable **strict mode** by using a custom configuration string.
 In strict mode, Cabe will fail the instrumentation if the `equals(Object)` contract is violated.
 
 <note>
 Strict mode is disabled by default in all predefined configurations.
 To enable it, use a custom configuration string (e.g., "STANDARD:strict=true").
+</note>
+
+<note>
+Strict mode might be incompatible with automatic code generation tools that do not automatically add the
+formally required `@Nullable` annotation when `equals(Object)` is declared in a `@NullMarked` context.
 </note>
 
 ## What makes Cabe different from other projects like Nullaway?
@@ -383,22 +388,6 @@ No, Cabe adds the checks by evaluating the record declaration:
     }
 
 </code-block>
-
-#### Standard Assertions cannot be generated for Record classes
-
-Cabe currently cannot inject standard assertions into record classes because of technical restrictions. That is why for
-records, THROW_NPE is used instead of ASSERT. ASSERT_ALWAYS works as it does for other classes.
-
-**Technical background**
-
-Standard assertions use a special boolean flag <code>$assertionsDisabled</code>
-that is initialised by the JVM when the class is loaded to the value obtained by calling
-<code>Class.getDesiredAssertionStatus()</code>.
-
-For classes that do not contain any assertions
-in their source code, this flag is not present in the class file and has to be injected into the byte code.
-the initialisation is then done in a static initializer block. This does not work for records and results in an
-<code>InvalidClassFileException</code>.
 
 ### Arrays
 
