@@ -266,6 +266,7 @@ class ClassPatcherTest {
             "com.dua3.cabe.processor.test.instrument.NoAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotations",
             "com.dua3.cabe.processor.test.instrument.ParameterAnnotationsStaticMethods",
+            "com.dua3.cabe.processor.test.instrument.LambdaBootstrap",
             "com.dua3.cabe.processor.test.instrument.api.nullmarked.NullMarkedPackage",
             "com.dua3.cabe.processor.test.instrument.api.nullunmarked.NullUnmarkedPackage",
             "com.dua3.cabe.processor.test.instrument.equals.nullmarked.EqualsNullable",

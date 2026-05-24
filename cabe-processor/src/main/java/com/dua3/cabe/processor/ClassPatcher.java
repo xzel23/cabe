@@ -12,6 +12,8 @@ import javassist.bytecode.AccessFlag;
 import javassist.bytecode.LocalVariableAttribute;
 
 import java.io.File;
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -361,8 +363,14 @@ public class ClassPatcher {
 
                 // Write the class file
                 LOG.fine(() -> "writing class file: " + classFile);
-                Files.createDirectories(outputFolder.resolve(inputFolder.relativize(classFile.getParent())));
-                ctClass.writeFile(outputFolder.toString());
+                Path target = outputFolder.resolve(inputFolder.relativize(classFile));
+                Path parent = target.getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+                try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(target)))) {
+                    ctClass.getClassFile().write(out);
+                }
 
                 LOG.fine(() -> "instrumenting class file successful: " + classFile);
             } finally {
