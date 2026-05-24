@@ -1,8 +1,20 @@
-version 4.2.1 (in development)
+version 4.2.1
 =============
 
+### Fixes
+
 - Fixed a possible DOS caused by a backtracking regex.
+
+### Updates
+
+- update Gradle wrapper to 9.5.0
+### Other changes
+
+- completed Gradle versions catalog
 - Cleaned up test files to reduce reported warnings during build.
+- Reduced the level of diagnostic messages from warning to info for missing @Nullable annotation
+  when overriding ´Object.equals(Object)´  and when a referenced class on the module path is not
+  found (i.e., in the case of optional dependencies)
 
 version 4.2.0
 =============

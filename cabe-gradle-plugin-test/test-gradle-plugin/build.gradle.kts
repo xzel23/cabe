@@ -18,7 +18,7 @@ plugins {
 apply(plugin = "com.dua3.cabe")
 
 dependencies {
-    implementation("org.jspecify:jspecify:1.0.0")
+    implementation(libs.jspecify)
 }
 
 configure<CabeExtension> {

@@ -32,19 +32,15 @@ repositories {
 
 dependencies {
     implementation(libs.jspecify)
-    implementation("org.javassist:javassist:3.30.2-GA")
+    implementation(libs.javassist)
 
-    testImplementation(platform("org.junit:junit-bom:6.0.3"))
-    testImplementation("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine")
-    testImplementation("org.junit.jupiter:junit-jupiter-api")
-    testImplementation("org.junit.jupiter:junit-jupiter-params")
-    runtimeOnly("org.apache.logging.log4j:log4j-core:2.25.3")
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.bundles.junit)
+    runtimeOnly(libs.log4j.core)
 }
 
 javafx {
-    version = "17"
+    version = libs.versions.javafx.get()
     modules = listOf("javafx.controls")
     configuration = "testImplementation"
 }

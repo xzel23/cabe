@@ -23,6 +23,6 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jspecify:jspecify:1.0.0")
-    compileOnly("commons-logging:commons-logging:1.3.5")
+    implementation(libs.jspecify)
+    compileOnly(libs.commons.logging)
 }

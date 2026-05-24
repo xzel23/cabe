@@ -14,7 +14,7 @@ buildscript {
 plugins {
     id("java")
     id("application")
-    id("org.openjfx.javafxplugin") version "0.1.0"
+    alias(libs.plugins.javafxplugin)
 }
 
 apply(plugin = "com.dua3.cabe")
@@ -25,12 +25,12 @@ repositories {
 }
 
 javafx {
-    version = "17"
+    version = libs.versions.javafx.get()
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 dependencies {
-    implementation("org.jspecify:jspecify:1.0.0")
+    implementation(libs.jspecify)
 }
 /*
 cabe {

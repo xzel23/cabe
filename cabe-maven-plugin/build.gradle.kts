@@ -19,9 +19,9 @@ dependencies {
         builtBy(":cabe-processor:shadowJar")
     })
 
-    compileOnlyApi("org.apache.maven:maven-plugin-api:3.9.9")
-    compileOnlyApi("org.apache.maven.plugin-tools:maven-plugin-annotations:3.15.1")
-    compileOnlyApi("org.apache.maven:maven-core:3.9.9")
+    compileOnlyApi(libs.maven.plugin.api)
+    compileOnlyApi(libs.maven.plugin.annotations)
+    compileOnlyApi(libs.maven.core)
 }
 
 // Disable Gradle Module Metadata to ensure the modified POM is used
