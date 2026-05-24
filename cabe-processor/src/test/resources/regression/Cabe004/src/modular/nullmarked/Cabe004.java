@@ -62,7 +62,7 @@ public class Cabe004 {
         check(() -> Pair.of("A", 1).toString(), "Pair[first=A, second=1]", null);
         check(() -> new NullablePair("A", 1).toString(), "NullablePair[first=A, second=1]", null);
         check(() -> new NullablePair("A", null).toString(), "NullablePair[first=A, second=null]", null);
-        check(() -> new NullablePair(null, 1).toString(), null, "npe: first is null");
+        check(() -> new NullablePair(null, 1).toString(), null, "assertion failed: first is null");
 
         // primitive argument
         check(() -> primitiveArgument(1), "hello 1", null);

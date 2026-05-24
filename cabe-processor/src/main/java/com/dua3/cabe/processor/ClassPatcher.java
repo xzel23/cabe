@@ -606,12 +606,7 @@ public class ClassPatcher {
      *         private API check, or adjusted if the class is a record
      */
     private Configuration.Check getCheck(ClassInfo ci, MethodInfo mi) {
-        Configuration.Check check = ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
-        if (ci.isRecord() && check == Configuration.Check.ASSERT) { // issue: https://github.com/xzel23/cabe/issues/1
-            LOG.info("cannot use assert in record " + ci.name() + " using THROW_NPE instead / https://github.com/xzel23/cabe/issues/1");
-            check = Configuration.Check.THROW_NPE;
-        }
-        return check;
+        return ci.isPublicApi() && mi.isPublic() ? configuration.publicApi() : configuration.privateApi();
     }
 
     /**
