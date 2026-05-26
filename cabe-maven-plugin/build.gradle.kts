@@ -1,7 +1,6 @@
 plugins {
     id("java-library")
     id("maven-publish")
-    alias(libs.plugins.versions)
     alias(libs.plugins.maven.plugin.development)
 }
 

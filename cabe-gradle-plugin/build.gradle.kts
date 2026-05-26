@@ -2,7 +2,6 @@ plugins {
     `java-gradle-plugin`
     `maven-publish`
     alias(libs.plugins.gradle.plugin.publish)
-    alias(libs.plugins.versions)
 }
 
 description = "The Gradle plugin adds null checks based on JSpecify annotations at compile time."

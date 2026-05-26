@@ -4,6 +4,7 @@ plugins {
     id("java-library")
     alias(libs.plugins.jreleaser)
     alias(libs.plugins.task.tree)
+    alias(libs.plugins.versions) apply false
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -40,6 +41,7 @@ subprojects {
     apply(plugin = "java")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
+    apply(plugin = "com.github.ben-manes.versions")
     
     // Set version for all subprojects
     project.version = rootProject.version
