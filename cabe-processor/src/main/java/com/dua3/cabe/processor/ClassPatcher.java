@@ -444,53 +444,11 @@ public class ClassPatcher {
         }
 
         // special case: for equals(Object), ignore @NonNull annotations except directly on the method parameter
-        boolean isEquals = mi.methodName().equals("equals") && mi.parameters().size() == 1
-                && mi.parameters().get(0).type().equals(Object.class);
-        boolean ignoreNonMethodNonNullAnnotation = isEquals;
+        boolean isEquals = isEquals(mi);
 
         // Enforces nullable parameter for overridden `equals` method
-        if (isEquals && mi.isPublic() && !mi.isStatic()) {
-            ParameterInfo pi = mi.parameters().get(0);
-            NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
-            NullnessOperator combined = ci.nullnessOperator().andThen(nullnessOperatorParameter);
-            boolean isNullable = (nullnessOperatorParameter == NullnessOperator.UNION_NULL)
-                    || (combined == NullnessOperator.UNION_NULL)
-                    || (combined == NullnessOperator.NO_CHANGE);
-
-            // workaround for https://github.com/xzel23/cabe/issues/2:
-            // if it's a record or enum, we don't care if the parameter is not @Nullable because equals() is usually
-            // auto-generated
-            if (ci.isRecord() || ci.isEnum()) {
-                isNullable = true;
-            }
-
-            // Enforces nullable parameter for overridden `equals` method
-            if (!isNullable) {
-                String location = "";
-                try {
-                    CtClass ctClass = classPool.getCtClass(ci.name());
-                    CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
-                    String fileName = ctClass.getClassFile().getSourceFile();
-                    int lineNumber = ctBehavior.getMethodInfo().getLineNumber(0);
-                    if (fileName != null && lineNumber != -1) {
-                        location = String.format(" (%s:%d)", fileName, lineNumber);
-                    } else if (fileName != null) {
-                        location = String.format(" (%s)", fileName);
-                    }
-                } catch (Exception e) {
-                    LOG.log(Level.FINE, e, () -> "could not determine location for " + ci.name() + "." + mi.name());
-                }
-
-                String finalLocation = location;
-                String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable%s",
-                        ci.name(), mi.name(), finalLocation);
-                if (configuration.strict()) {
-                    throw new ClassFileProcessingFailedException(msg);
-                } else {
-                    LOG.warning(() -> msg + "\nThe parameter will be treated as @Nullable");
-                    ignoreNonMethodNonNullAnnotation = true;
-                }
-            }
+        if (isEquals) {
+            handleEqualsSpecialCases(ci, mi);
         }
 
         LOG.fine(() -> "instrumenting method " + methodName);
@@ -515,7 +473,7 @@ public class ClassPatcher {
 
                 NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
                 boolean isNonNull = (nullnessOperatorParameter == NullnessOperator.MINUS_NULL)
-                        || (!ignoreNonMethodNonNullAnnotation && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
+                        || (!isEquals && ci.nullnessOperator().andThen(nullnessOperatorParameter) == NullnessOperator.MINUS_NULL);
 
                 if (isNonNull) {
                     Configuration.Check check = getCheck(ci, mi);
@@ -576,6 +534,75 @@ public class ClassPatcher {
         } catch (RuntimeException e) {
             throw new ClassFileProcessingFailedException("exception while instrumenting method '" + methodName + "'", e);
         }
+    }
+
+    /**
+     * Handles special cases for the `equals` method in a class, ensuring that the parameter
+     * of the overridden `equals` method is marked as nullable when required.
+     * This method also accounts for specific scenarios such as records and enums where
+     * the `equals` method is typically auto-generated and less strict enforcement is needed.
+     *
+     * @param ci The class information for the class being processed. This provides details
+     *           about the class, including its name, type, and nullness operator.
+     * @param mi The method information for the method being processed. This includes
+     *           details about the method such as its name, visibility, and parameters.
+     * @throws ClassFileProcessingFailedException If the parameter of the overridden
+     *         `equals` method is not nullable and strict mode is enabled in the configuration.
+     */
+    private void handleEqualsSpecialCases(ClassInfo ci, MethodInfo mi) throws ClassFileProcessingFailedException {
+        if (mi.isPublic() && !mi.isStatic()) {
+            // Enforces nullable parameter for overridden `equals` method
+            ParameterInfo pi = mi.parameters().get(0);
+            NullnessOperator nullnessOperatorParameter = pi.nullnessOperator();
+            NullnessOperator combined = ci.nullnessOperator().andThen(nullnessOperatorParameter);
+            boolean isNullable = (nullnessOperatorParameter == NullnessOperator.UNION_NULL)
+                    || (combined == NullnessOperator.UNION_NULL)
+                    || (combined == NullnessOperator.NO_CHANGE);
+
+            // workaround for https://github.com/xzel23/cabe/issues/2:
+            // if it's a record or enum, we don't care if the parameter is not @Nullable because equals() is usually
+            // auto-generated
+            if (ci.isRecord() || ci.isEnum()) {
+                isNullable = true;
+            }
+            if (!isNullable) {
+                String location = "";
+                try {
+                    CtClass ctClass = classPool.getCtClass(ci.name());
+                    CtBehavior ctBehavior = getCtBehaviour(ctClass, mi);
+                    String fileName = ctClass.getClassFile().getSourceFile();
+                    int lineNumber = ctBehavior.getMethodInfo().getLineNumber(0);
+                    if (fileName != null && lineNumber != -1) {
+                        location = String.format(" (%s:%d)", fileName, lineNumber);
+                    } else if (fileName != null) {
+                        location = String.format(" (%s)", fileName);
+                    }
+                } catch (Exception e) {
+                    LOG.log(Level.FINE, e, () -> "could not determine location for " + ci.name() + "." + mi.name());
+                }
+
+                String finalLocation = location;
+                String msg = String.format("Method %s.%s overrides Object.equals(Object) but the parameter is not @Nullable%s",
+                        ci.name(), mi.name(), finalLocation);
+                if (configuration.strict()) {
+                    throw new ClassFileProcessingFailedException(msg);
+                } else {
+                    LOG.warning(() -> msg + "\nThe parameter will be treated as @Nullable");
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines whether the given method matches the signature of the standard {@code equals(Object)} method.
+     *
+     * @param mi the {@code MethodInfo} object representing the method to analyze
+     * @return {@code true} if the method's name is {@code "equals"}, it has one parameter of type {@code Object},
+     *         and matches the signature of the standard {@code equals(Object)} method; {@code false} otherwise
+     */
+    private static boolean isEquals(MethodInfo mi) {
+        return mi.methodName().equals("equals") && mi.parameters().size() == 1
+                && mi.parameters().get(0).type().equals(Object.class);
     }
 
     /**
