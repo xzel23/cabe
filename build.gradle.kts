@@ -42,7 +42,11 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "com.github.ben-manes.versions")
-    
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     // Set version for all subprojects
     project.version = rootProject.version
     
