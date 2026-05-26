@@ -55,6 +55,7 @@ public class ClassPatcher {
      *
      * @param args an array of command-line arguments
      */
+    @SuppressWarnings("java:S106")
     public static void main(String[] args) {
         Logger rootLogger = Logger.getLogger("");
         Handler consoleHandler = null;

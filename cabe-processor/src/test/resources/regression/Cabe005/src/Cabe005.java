@@ -1,6 +1,7 @@
 /*
  * Testing Cabe#5: instrumentation fails on abstract methods
  */
+@SuppressWarnings("java:S1220")
 public class Cabe005 {
     public static void main(String[] args) {
         SomeClass instance = new SomeClass();

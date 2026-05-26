@@ -3,6 +3,7 @@
  *
  * Test succeeds if no exception is thrown when class is loaded and method called successfully.
  */
+@SuppressWarnings("java:S1220")
 public class Cabe018 {
     public static void main(String[] args) {
         try {

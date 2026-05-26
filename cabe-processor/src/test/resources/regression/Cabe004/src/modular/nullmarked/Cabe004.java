@@ -183,6 +183,7 @@ public class Cabe004 {
             this.s = s;
         }
 
+        @Override
         public String toString() {
             return s;
         }
@@ -196,6 +197,7 @@ public class Cabe004 {
             this.b = b;
         }
 
+        @Override
         public String toString() {
             return super.toString() + b;
         }
@@ -210,6 +212,7 @@ public class Cabe004 {
         WITH_INITIALISER_1(1, "one"),
         WITH_INITIALISER_2(2, null);
 
+        @SuppressWarnings("java:S1172")
         F(int i, @NonNull String txt) {
             // nop
         }

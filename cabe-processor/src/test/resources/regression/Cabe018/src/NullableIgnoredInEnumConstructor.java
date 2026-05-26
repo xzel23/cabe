@@ -2,6 +2,7 @@ import java.util.Optional;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+@SuppressWarnings("java:S1220")
 @NullMarked
 public class NullableIgnoredInEnumConstructor {
     public enum AsymmetricAlgorithm {

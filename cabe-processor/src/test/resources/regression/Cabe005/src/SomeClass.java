@@ -1,5 +1,6 @@
 import org.jspecify.annotations.NullMarked;
 
+@SuppressWarnings("java:S1220")
 @NullMarked
 public class SomeClass extends AbstractClass implements SomeInterface {
     @Override
