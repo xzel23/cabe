@@ -20,6 +20,7 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.apiguardian)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
