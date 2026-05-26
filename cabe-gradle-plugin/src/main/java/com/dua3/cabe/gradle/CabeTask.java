@@ -117,16 +117,7 @@ public abstract class CabeTask extends DefaultTask {
             String jarLocation = Paths.get(ClassPatcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
 
             String javaExecPath = getJavaExecutable().getAsFile().get().getAbsolutePath();
-            File javaExecFile = new File(javaExecPath);
-            String javaExecName = javaExecFile.getName();
-            String javaExec;
-            if (javaExecName.equals("javac")) {
-                javaExec = new File(javaExecFile.getParentFile(), "java").getAbsolutePath();
-            } else if (javaExecName.equalsIgnoreCase("javac.exe")) {
-                javaExec = new File(javaExecFile.getParentFile(), "java.exe").getAbsolutePath();
-            } else {
-                javaExec = javaExecPath;
-            }
+            String javaExec = getJavaExec(javaExecPath);
             logger.debug("Java executable: {}", javaExec);
 
             String cp = getClasspath().getFiles().stream()
@@ -151,5 +142,27 @@ public abstract class CabeTask extends DefaultTask {
         } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Determines and returns the path of the Java executable based on the provided path to a Java tool.
+     * If the input path refers to the `javac` executable, it adjusts the path to point to the corresponding `java` executable.
+     *
+     * @param javaExecPath the path to the Java tool (e.g., `javac` or `java`). This is used to determine
+     *                     the appropriate path for the Java executable.
+     * @return the path to the Java executable, adjusted if necessary based on the input path.
+     */
+    private static String getJavaExec(String javaExecPath) {
+        File javaExecFile = new File(javaExecPath);
+        String javaExecName = javaExecFile.getName();
+        String javaExec;
+        if (javaExecName.equals("javac")) {
+            javaExec = new File(javaExecFile.getParentFile(), "java").getAbsolutePath();
+        } else if (javaExecName.equalsIgnoreCase("javac.exe")) {
+            javaExec = new File(javaExecFile.getParentFile(), "java.exe").getAbsolutePath();
+        } else {
+            javaExec = javaExecPath;
+        }
+        return javaExec;
     }
 }
