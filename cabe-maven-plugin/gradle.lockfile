@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :cabe-maven-plugin:dependencies --write-locks
 aopalliance:aopalliance:1.0=compileClasspath
 com.google.guava:failureaccess:1.0.2=compileClasspath
 com.google.guava:guava:33.2.1-jre=compileClasspath

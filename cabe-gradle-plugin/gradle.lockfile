@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :cabe-gradle-plugin:dependencies --write-locks
 org.apiguardian:apiguardian-api:1.1.2=testCompileClasspath,testRuntimeClasspath
 org.jspecify:jspecify:1.0.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.jupiter:junit-jupiter-api:6.1.0=testCompileClasspath,testRuntimeClasspath
