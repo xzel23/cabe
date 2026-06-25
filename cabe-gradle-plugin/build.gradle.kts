@@ -5,7 +5,7 @@ plugins {
 }
 
 description = "The Gradle plugin adds null checks based on JSpecify annotations at compile time."
-version = project.findProperty("plugin_version") as String? ?: project.version
+version = rootProject.extra["plugin_version"] as String
 
 repositories {
     mavenLocal()

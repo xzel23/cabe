@@ -5,7 +5,7 @@ openjfx-plugin = "0.1.0"
 jreleaser-plugin = "1.19.0"
 kotlin-plugin = "1.9.22"
 maven-plugin-annotations = "3.15.1"
-maven-plugin-development-plugin = "0.4.3"
+maven-plugin-development-plugin = "1.0.3"
 shadow-plugin = "9.4.1"
 spotbugs-plugin = "6.5.5"
 task-tree-plugin = "4.0.1"
@@ -47,7 +47,7 @@ gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradl
 javafxplugin = { id = "org.openjfx.javafxplugin", version.ref = "openjfx-plugin" }
 jreleaser = { id = "org.jreleaser", version.ref = "jreleaser-plugin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-plugin" }
-maven-plugin-development = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven-plugin-development-plugin" }
+maven-plugin-development = { id = "org.gradlex.maven-plugin-development", version.ref = "maven-plugin-development-plugin" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow-plugin" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs-plugin" }
 task-tree = { id = "com.dorongold.task-tree", version.ref = "task-tree-plugin" }

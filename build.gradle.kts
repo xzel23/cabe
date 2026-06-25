@@ -177,7 +177,7 @@ subprojects {
     }
 
     // Task to publish to staging directory per subproject
-    val publishToStagingDirectory by tasks.registering {
+    val publishToStagingDirectory = tasks.register("publishToStagingDirectory") {
         group = "publishing"
         description = "Publish artifacts to root staging directory for JReleaser"
 

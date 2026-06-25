@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.dua3.cabe"
-version = project.findProperty("plugin_version") as String? ?: project.version
+version = rootProject.extra["plugin_version"] as String
 description = "A plugin that adds assertions for annotated method parameters at compile time."
 
 repositories {
@@ -14,9 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation(files("../cabe-processor/build/libs/cabe-processor-${rootProject.version}-all.jar") {
-        builtBy(":cabe-processor:shadowJar")
-    })
+    implementation(project(path = ":cabe-processor", configuration = "shadow"))
 
     compileOnlyApi(libs.maven.plugin.api)
     compileOnlyApi(libs.maven.plugin.annotations)
@@ -33,18 +31,19 @@ publishing {
         named<MavenPublication>("mavenJava") {
             pom.withXml {
                 val dependenciesNode = asNode().get("dependencies") as? groovy.util.NodeList
-                val dependencies = if (dependenciesNode != null && dependenciesNode.isNotEmpty()) {
-                    dependenciesNode[0] as groovy.util.Node
-                } else {
-                    asNode().appendNode("dependencies")
+                if (dependenciesNode != null && dependenciesNode.isNotEmpty()) {
+                    val dependencies = dependenciesNode[0] as groovy.util.Node
+                    dependencies.children().forEach {
+                        val dep = it as groovy.util.Node
+                        val artifactIdNode = dep.get("artifactId") as? groovy.util.NodeList
+                        if (artifactIdNode != null && artifactIdNode.isNotEmpty()) {
+                            val artifactId = artifactIdNode[0] as groovy.util.Node
+                            if (artifactId.text() == "cabe-processor") {
+                                artifactId.setValue("cabe-processor-all")
+                            }
+                        }
+                    }
                 }
-
-                // Add cabe-processor-all dependency manually as it is included via files()
-                val dep = dependencies.appendNode("dependency")
-                dep.appendNode("groupId", "com.dua3.cabe")
-                dep.appendNode("artifactId", "cabe-processor-all")
-                dep.appendNode("version", project.version.toString())
-                dep.appendNode("scope", "runtime")
             }
         }
     }
