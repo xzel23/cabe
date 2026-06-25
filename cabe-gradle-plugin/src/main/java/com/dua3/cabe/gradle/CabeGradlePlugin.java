@@ -2,7 +2,6 @@ package com.dua3.cabe.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSet;
@@ -10,6 +9,7 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.jvm.toolchain.JavaCompiler;
 
 /**
  * The Gradle plugin class for Cabe.
@@ -66,7 +66,7 @@ public class CabeGradlePlugin implements Plugin<Project> {
                     cabeTask.getClasspath().from(sourceSet.getRuntimeClasspath());
 
                     // Set Java executable
-                    cabeTask.getJavaExecutable().set(compileJavaTaskProvider.flatMap(c -> c.getJavaCompiler().map(jc -> jc.getExecutablePath())));
+                    cabeTask.getJavaExecutable().set(compileJavaTaskProvider.flatMap(c -> c.getJavaCompiler().map(JavaCompiler::getExecutablePath)));
 
                     cabeTask.dependsOn(compileJavaTaskProvider);
                 });

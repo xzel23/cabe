@@ -80,18 +80,20 @@ public final class Util {
      * @param cls the {@link Class} to search for the assertion flag field
      * @return the fully qualified name of the assertion flag field, or null if not found
      */
+    @SuppressWarnings("rawtypes")
     public static String getAssertionsDisabledFlagName(Class<?> cls) {
-        for (Class<?> currentClass = cls; currentClass != null; currentClass = currentClass.getDeclaringClass()) {
-            // does the current class or one of its nested classes contain the flag?
-            Field flag = Stream.concat(Stream.of(currentClass), Arrays.stream(currentClass.getDeclaredClasses()))
-                    .map(Util::getAssertionsDisabledField)
-                    .filter(Objects::nonNull)
-                    .findFirst().orElse(null);
-            if (flag != null) {
-                return flag.getDeclaringClass().getTypeName() + "." + flag.getName();
-            }
-        }
-        return null;
+        // does the current class or one of its nested classes contain the flag?
+        return Stream.iterate((Class) cls, Objects::nonNull, Class::getDeclaringClass)
+                .map(currentClass -> Stream.concat(Stream.of(currentClass), Arrays.stream(currentClass.getDeclaredClasses()))
+                                .map(Util::getAssertionsDisabledField)
+                                .filter(Objects::nonNull)
+                                .findFirst()
+                                .map(flag -> flag.getDeclaringClass().getTypeName() + "." + flag.getName())
+                                .orElse(null)
+                )
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -103,7 +105,7 @@ public final class Util {
     public static Field getAssertionsDisabledField(Class<?> cls) {
         return Arrays.stream(cls.getDeclaredFields())
                 .filter(f -> f.getName().equals("$assertionsDisabled"))
-                .filter(f -> f.getDeclaringClass().equals(cls)) // filter fields declared in superclasses
+                .filter(f -> f.getDeclaringClass() == cls) // filter fields declared in superclasses
                 .findFirst().orElse(null);
     }
 
@@ -116,9 +118,11 @@ public final class Util {
     @SuppressWarnings("java:S1872")
     public static boolean hasPublicApiAncestor(Class<?> cls) {
         for (Class<?> superClass = cls.getSuperclass(); superClass != null; superClass = superClass.getSuperclass()) {
+            String superClassName = superClass.getName();
+            assert superClassName.equals(Object.class.getName()) == (superClass == Object.class);
+
             // DO NOT COMPARE CLASSES! The object trees are disjunct, they use unrelated class loaders.
-            assert superClass.getName().equals(Object.class.getName()) == Objects.equals(superClass, Object.class);
-            if (superClass.getName().equals(Object.class.getName())) {
+            if (superClassName.equals(Object.class.getName())) {
                 break;
             }
             if (Modifier.isPublic(superClass.getModifiers())) {

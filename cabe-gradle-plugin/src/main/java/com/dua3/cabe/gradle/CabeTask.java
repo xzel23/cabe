@@ -138,7 +138,6 @@ public abstract class CabeTask extends DefaultTask {
                         "-v", Integer.toString(v)
                 ));
             });
-
         } catch (Exception e) {
             throw new GradleException("An error occurred while instrumenting classes: " + e.getMessage(), e);
         }

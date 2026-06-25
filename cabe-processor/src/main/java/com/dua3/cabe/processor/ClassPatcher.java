@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 public class ClassPatcher {
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
+    private static final Pattern PATTERN_CANONICAL_CLASSNAME = Pattern.compile("\\$(\\D)");
 
     /**
      * This method is the entry point of the application.
@@ -58,14 +59,10 @@ public class ClassPatcher {
     @SuppressWarnings("java:S106")
     public static void main(String[] args) {
         Logger rootLogger = Logger.getLogger("");
-        Handler consoleHandler = null;
-
-        for (Handler handler : rootLogger.getHandlers()) {
-            if (handler instanceof ConsoleHandler) {
-                consoleHandler = handler;
-                break;
-            }
-        }
+        Handler consoleHandler = Arrays.stream(rootLogger.getHandlers())
+                .filter(ConsoleHandler.class::isInstance)
+                .findFirst()
+                .orElse(null);
 
         if (consoleHandler == null) {
             consoleHandler = new ConsoleHandler();
@@ -602,7 +599,7 @@ public class ClassPatcher {
      */
     private static boolean isEquals(MethodInfo mi) {
         return mi.methodName().equals("equals") && mi.parameters().size() == 1
-                && mi.parameters().get(0).type().equals(Object.class);
+                && mi.parameters().get(0).type() == Object.class;
     }
 
     /**
@@ -688,7 +685,7 @@ public class ClassPatcher {
      * @return the canonical class name as a String
      */
     private static String getCanonicalClassName(CtClass ctClass) {
-        return ctClass.getName().replaceAll("\\$(\\D)", ".$1");
+        return PATTERN_CANONICAL_CLASSNAME.matcher(ctClass.getName()).replaceAll(".$1");
     }
 
     /**

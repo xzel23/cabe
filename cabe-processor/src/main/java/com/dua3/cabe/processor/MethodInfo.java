@@ -1,5 +1,7 @@
 package com.dua3.cabe.processor;
 
+import org.jspecify.annotations.NonNull;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
@@ -98,7 +100,7 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
             }
             for (int i = 0; i < parameterTypes.length; i++) {
                 Class<?> fieldType = declaringClass.getDeclaredFields()[i].getType();
-                if (!fieldType.equals(parameterTypes[i].getType())) {
+                if (fieldType != parameterTypes[i].getType()) {
                     return false;
                 }
             }
@@ -120,7 +122,7 @@ record MethodInfo(String name, String fullMethodName, boolean isConstructor, boo
     }
 
     @Override
-    public String toString() {
+    public @NonNull String toString() {
         return "MethodInfo{" +
                 "name='" + name + '\'' +
                 ", fullMethodName='" + fullMethodName + '\'' +

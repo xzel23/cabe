@@ -19,6 +19,9 @@ import java.util.stream.Stream;
  * @param publicApi  the validation strategy for public APIs.
  * @param privateApi the validation strategy for private APIs.
  * @param checkReturn the validation strategy for return values.
+ * @param strict whether the configuration should enforce strict checks (for example, fail on argument to
+ *               {@code equals(Object)} being declared as {@code @NonNull} or not annotated as {@code @Nullable}
+ *               in a {@code @NullMarked} context.
  */
 public record Configuration(Check publicApi, Check privateApi, Check checkReturn, boolean strict) implements Serializable {
     private static final Logger LOG = Logger.getLogger(Configuration.class.getName());

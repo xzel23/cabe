@@ -3,6 +3,7 @@ package com.dua3.cabe.processor;
 import javassist.CtClass;
 import javassist.bytecode.AttributeInfo;
 import javassist.bytecode.ClassFile;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
@@ -50,7 +51,7 @@ public class CabeAttribute {
      * @param ctClass the class to get the processor version from
      * @return the processor version, or null if the attribute is not present or does not contain a valid processor version
      */
-    public static String getProcessorVersion(CtClass ctClass) {
+    public static @Nullable String getProcessorVersion(CtClass ctClass) {
         ClassFile classFile = ctClass.getClassFile();
         AttributeInfo attribute = classFile.getAttribute(ATTRIBUTE_NAME);
         if (attribute == null) {

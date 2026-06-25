@@ -95,7 +95,6 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
     }
 
     private static @NonNull String getParameterNameWarning(ClassInfo ci, Executable executable, int n, Parameter[] parms) {
-        String msg = "";
         try (Formatter fmt = new Formatter()) {
             fmt.format("Inconsistent parameter names detected!%n");
             fmt.format("Class: %s%n", ci);
@@ -103,9 +102,8 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
             for (int i = 0; i < n; i++) {
                 fmt.format("Parameter %d: namePresent=%b, name=%s%n", i + 1, parms[i].isNamePresent(), parms[i].getName());
             }
-            msg = fmt.toString();
+            return fmt.toString();
         }
-        return msg;
     }
 
     private static NullnessOperator getGenericTypeNullnessOperator(Parameter param) {
@@ -124,7 +122,7 @@ record ParameterInfo(int index, String param, String name, Class<?> type, Nullne
     }
 
     @Override
-    public String toString() {
+    public @NonNull String toString() {
         return "ParameterInfo{" +
                 "param='" + param + '\'' +
                 ", name='" + name + '\'' +
