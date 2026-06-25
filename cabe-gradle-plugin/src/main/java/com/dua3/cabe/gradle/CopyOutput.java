@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 /**
  * This class is responsible for copies the output of a Reader to a specified Consumer
- * and stores the first 10 lines to be printed later using {@code }toString()}.
+ * and stores the first 10 lines to be printed later using {@code toString()}.
  */
 class CopyOutput implements AutoCloseable {
     public static final int MAX_LINES = 10;

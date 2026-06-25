@@ -17,7 +17,7 @@ version 4.3.0
 - Added all dependencies to the Gradle versions catalog.
 - Cleaned up test files to reduce reported warnings during build.
 - Reduced the level of diagnostic messages from warning to info for missing @Nullable annotation
-  when overriding ´Object.equals(Object)´  and when a referenced class on the module path is not
+  when overriding ´Object.equals(Object)´ and when a referenced class on the module path is not
   found (i.e., in the case of optional dependencies).
 
 version 4.2.0
@@ -64,9 +64,9 @@ version 4.0.x
 bugfix updates
 - fix: #22 was only partly resolved
 - fix: configuration cache incompatibilities (#23)
-- fix: instrumentation failure on windows (#24)
+- fix: instrumentation failure on Windows (#24)
 
-To ensure less problems in future updates, the build now also executes extra tests with the configuration cache enabled
+To ensure fewer problems in future updates, the build now also executes extra tests with the configuration cache enabled
 and tests are run on linux, macOS, and Windows.
 
 version 4
@@ -92,7 +92,7 @@ version 3.2.0
 
 - make the cabe task cacheable
 - dependency updates
-- ~~should be commpatible with upcoming Gradle 9 (tested with RC 3)~~
+- ~~should be compatible with upcoming Gradle 9 (tested with RC 3)~~
   
   __Version 3.2.0 is unfortunately not fully compatible with Gradle 9!__
 

@@ -62,7 +62,7 @@ public enum NullnessOperator {
     /**
      * Combines this {@code NullnessOperator} with another.
      *
-     * <p>Use this method when applying nullness operators in bottom to top order, i.e.,
+     * <p>Use this method when applying nullness operators in bottom-to-top order, i.e.,
      * {@code moduleNullness.andThen(packageNullness).andThen(classNullness)}.
      *
      * @param other the other {@code NullnessOperator} to combine with this one

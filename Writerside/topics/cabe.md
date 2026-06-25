@@ -3,10 +3,9 @@
 Cabe is a Java byte code instrumentation tool that inserts checks based on JSpecify annotations into your class files.
 
 According to the [Fail-Fast Principle](https://www.martinfowler.com/ieeeSoftware/failFast.pdf), all invalid input should
-be detected and reported early. Cabe helps you
-doing this by automatically checking method and constructor parameters.
+be detected and reported early. Cabe helps you do this by automatically checking method and constructor parameters.
 
-Cabe also helps you during develompment by checking return values of methods.
+Cabe also helps you during development by checking return values of methods.
 
 <tldr>
 <strong>TLDR</strong>
@@ -119,7 +118,7 @@ Exception running application hellofx.HelloFX
 
 The stacktrace indicates an error happened inside a JavaFX method, two methods down in the stack, our method
 <code>loadImage()</code> appears. When we now open our IDE and look at the actual code, it becomes apparent that the 
-real problem lies in <code>getResourceAsStream()</code> returning <code>null</code> and not a valid streeam.
+real problem lies in <code>getResourceAsStream()</code> returning <code>null</code> and not a valid stream.
 
 Now what happens if Cabe is used? We will get this stacktrace:
 
@@ -160,7 +159,7 @@ This is of course a rather trivial example, but it shows how Cabe can simplify y
 
 <tip>
 If you look at the HelloFX source code, you might notice that the method return value was not even marked as
-<code>@NonNull</code>. Instead the class was marked as <code>@NullMarked</code>. This basically means that unless
+<code>@NonNull</code>. Instead, the class was marked as <code>@NullMarked</code>. This basically means that unless
 something is explicitly marked as <code>@Nullable</code>, everything inside that class is implicitly treated
 as if it were annotated as <code>@NonNull</code>.
 </tip>
@@ -409,8 +408,8 @@ values contained in an array.
 
 ### Generics
 
-Cabe will detect violations for generic parameters when it can be determined at compile time that a type is non
-nullable:
+Cabe will detect violations for generic parameters when it can be determined at compile time that a type is
+non-nullable:
 
 <code-block lang="Java">
     @NullMarked
@@ -429,7 +428,7 @@ nullable:
 
 </code-block>
 
-If cannot check parameters where the nullability can not be determined at compile time:
+If Cabe cannot check parameters where the nullability cannot be determined at compile time:
 
 <code-block lang="Java">
     @NullUnmarked

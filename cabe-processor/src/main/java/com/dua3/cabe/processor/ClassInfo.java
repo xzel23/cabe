@@ -28,10 +28,10 @@ record ClassInfo(String name, boolean isInnerClass, boolean isStaticClass, boole
     }
 
     /**
-     * Generates a {@link ClassInfo} object for the specified class.
+     * Generates a {@code ClassInfo} object for the specified class.
      *
      * @param cls the class
-     * @return a {@link ClassInfo} object representing the specified class
+     * @return a {@code ClassInfo} object representing the specified class
      */
     public static ClassInfo forClass(Class<?> cls) {
         String className = cls.getName();

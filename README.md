@@ -6,8 +6,8 @@ Cabe, pronounced Chah-beh (IPA: /ˈtʃa.be/), is a bytecode instrumentation tool
 
 ## TLDR
 
-Add this to the Gradle build file of your project that uses JSpecify annotations to add automatic null-checks to the public API of your project and assertion based
-null checks to the private API:
+Add this to the Gradle build file of your project that uses JSpecify annotations to add automatic null-checks to the
+public API of your project and assertion-based null checks to the private API:
 
 ```kotlin
 plugins {
