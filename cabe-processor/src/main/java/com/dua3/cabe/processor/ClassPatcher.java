@@ -46,7 +46,7 @@ import java.util.stream.Stream;
  * on method parameters. It collects information about the class file, including package information and
  * parameter annotations, and modifies the class file by injecting the necessary code.
  */
-public class ClassPatcher {
+public final class ClassPatcher {
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ClassPatcher.class.getName());
     private static final Pattern PATTERN_CANONICAL_CLASSNAME = Pattern.compile("\\$(\\D)");
