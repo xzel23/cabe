@@ -10,6 +10,6 @@
             /**
              * The processor version string.
              */
-            public static final String PROCESSOR_VERSION = "4.3.1-SNAPSHOT";
+            public static final String PROCESSOR_VERSION = "4.4.0-rc";
         }
     

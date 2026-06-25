@@ -20,7 +20,7 @@ extra["ORGANIZATION_NAME"]  = "dua3"
 extra["ORGANIZATION_URL"]   = "https://www.dua3.com"
 /////////////////////////////////////////////////////////////////////////////
 
-val projectVersion = "4.3.1-SNAPSHOT"
+val projectVersion = "4.4.0-rc"
 version = projectVersion
 extra["plugin_version"] = projectVersion
 extra["processor_version"] = projectVersion
