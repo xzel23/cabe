@@ -1,3 +1,9 @@
+version 4.4.0
+=============
+
+- fix Gradle 9.6+ configuration cache incompatibilities
+- fix Gradle 10 deprecation warnings
+
 version 4.3.0
 =============
 
