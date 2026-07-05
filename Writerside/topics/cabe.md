@@ -327,7 +327,17 @@ This depends on the configuration used. There are four types of checks. The exam
 
 ## Public vs Private API
 
-When developing a library, you can configure different checks for:
+Methods in Cabe are either part of the **public API** or the **private API** of your project.
+When you develop a library, the public API includes code that can be directly called by users of your library,
+while the private API includes code that cannot be directly called by users of your library.
+
+A **class** is treated as **public API** if it is declared public itself or if it inherits from a public superclass
+(excluding Object). Otherwise, the class is treated as **private API**.
+
+For a **method** to be part of the public API, the following conditions must both be fulfilled:
+The method is declared `public` and belongs to a class that is part of the public API.
+
+You can configure different checks for:
 
 - the **public API** of your library so that invalid parameter values are detected when the user of your library calls
   your
