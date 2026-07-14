@@ -20,7 +20,7 @@ extra["ORGANIZATION_NAME"]  = "dua3"
 extra["ORGANIZATION_URL"]   = "https://www.dua3.com"
 /////////////////////////////////////////////////////////////////////////////
 
-val projectVersion = "4.5.0-SNAPSHOT"
+val projectVersion = "4.5.0-rc"
 version = projectVersion
 extra["plugin_version"] = projectVersion
 extra["processor_version"] = projectVersion
@@ -312,6 +312,7 @@ tasks.named("jreleaserUpload") {
 
 tasks.register("updateWritersideVersionList") {
     group = "documentation"
+    description = "Updates Writerside/v.list with the current processor and plugin versions."
     val vListFile = file("Writerside/v.list")
     val processorVersion = rootProject.extra["processor_version"].toString()
     val pluginVersion = rootProject.extra["plugin_version"].toString()
@@ -333,10 +334,10 @@ tasks.register("updateWritersideVersionList") {
     }
 }
 
-// Helper function to register a gradlew task
 fun Project.registerGradlewTask(name: String, vararg args: String, block: Exec.() -> Unit = {}) {
     tasks.register<Exec>(name) {
         group = "verification"
+        description = "Runs Gradle Wrapper with arguments: ${args.joinToString(" ")}"
         workingDir = projectDir
         val gradlew = if (System.getProperty("os.name").lowercase().contains("windows")) "gradlew.bat" else "./gradlew"
         commandLine(gradlew, *args)
@@ -408,6 +409,7 @@ registerGradlewTask("testExamplesConfigCacheRun2",
 
 tasks.register<Exec>("testMavenExample") {
     group = "verification"
+    description = "Builds the Maven hello-world example."
     workingDir = file("examples/hello-maven")
     val pluginVersion = rootProject.extra["plugin_version"]
     val mvn = if (System.getProperty("os.name").lowercase().contains("windows")) "mvn.cmd" else "mvn"
