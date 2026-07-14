@@ -81,6 +81,10 @@ tasks.test {
 
     systemProperty("cabe.test.build.dir", layout.buildDirectory.dir("regression-test").get().asFile.absolutePath)
     doFirst {
+        systemProperty("cabe.test.java21.home", javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }.get().metadata.installationPath.asFile.absolutePath)
+
         val javaFxPath = configurations.named("testRuntimeClasspath")
             .get()
             .filter { it.name.contains("javafx") }
@@ -117,6 +121,10 @@ testJdkVersions.forEach { versionInt ->
         systemProperty("cabe.test.build.dir", layout.buildDirectory.dir("regression-$taskName").get().asFile.absolutePath)
 
         doFirst {
+            systemProperty("cabe.test.java21.home", javaToolchains.launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }.get().metadata.installationPath.asFile.absolutePath)
+
             val javaFxPath = configurations.named("testRuntimeClasspath")
                 .get()
                 .filter { it.name.contains("javafx") }

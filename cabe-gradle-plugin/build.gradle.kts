@@ -26,6 +26,12 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    val compatibilityTest = providers.systemProperty("cabe.gradle.compatibilityTest").orElse("false")
+    inputs.property("cabe.gradle.compatibilityTest", compatibilityTest)
+    doFirst {
+        systemProperty("cabe.gradle.compatibilityTest", compatibilityTest.get())
+    }
 }
 
 // Disable Gradle Module Metadata to ensure the modified POM is used
