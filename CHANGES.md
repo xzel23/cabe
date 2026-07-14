@@ -1,3 +1,11 @@
+version 4.5.0
+=============
+
+- fix: instrumented classfiles should retain the uninstrumented classfile version
+- add tests
+- improve local build performance
+- update dependencies
+
 version 4.4.0
 =============
 
