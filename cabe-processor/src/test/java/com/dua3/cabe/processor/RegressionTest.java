@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -19,7 +20,7 @@ public class RegressionTest {
         return Files.list(TestUtil.resourceDir.resolve("regression"))
                     .filter(Files::isDirectory)
                     .sorted()
-                    .map(dir -> Arguments.of(dir.getFileName().toString(), dir));
+                    .map(dir -> Arguments.of(Objects.requireNonNull(dir.getFileName(), "invalid path: " + dir).toString(), dir));
     }
 
     @ParameterizedTest(name = "regression: {0}")
@@ -52,7 +53,7 @@ public class RegressionTest {
         try (Stream<Path> pathStream = Files.walk(processedDir)) {
             mainPath = pathStream
                     .filter(Files::isRegularFile)
-                    .filter(p -> p.getFileName().toString().equals(testName + ".class"))
+                    .filter(p -> String.valueOf(p.getFileName()).equals(testName + ".class"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("test class " + testName + " not found"));
         }
         String mainClass = TestUtil.getClassName(processedDir.relativize(mainPath));

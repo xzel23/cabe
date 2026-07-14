@@ -358,7 +358,7 @@ class ClassPatcherTest {
             Files.copy(classFile, pkgDir.resolve(classFile.getFileName()), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             
             // also copy package-info.class if it exists
-            Path pkgInfoClass = classFile.getParent().resolve("package-info.class");
+            Path pkgInfoClass = TestUtil.getParentOrThrow(classFile).resolve("package-info.class");
             if (Files.exists(pkgInfoClass)) {
                 Files.copy(pkgInfoClass, pkgDir.resolve("package-info.class"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
@@ -410,7 +410,7 @@ class ClassPatcherTest {
             Files.copy(classFile, pkgDir.resolve(classFile.getFileName()), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
             // also copy package-info.class if it exists
-            Path pkgInfoClass = classFile.getParent().resolve("package-info.class");
+            Path pkgInfoClass = TestUtil.getParentOrThrow(classFile).resolve("package-info.class");
             if (Files.exists(pkgInfoClass)) {
                 Files.copy(pkgInfoClass, pkgDir.resolve("package-info.class"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }

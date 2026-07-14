@@ -267,7 +267,7 @@ public final class ClassPatcher {
                 try (Stream<Path> paths = Files.walk(inputFolder)) {
                     classFiles = paths
                             .filter(Files::isRegularFile)
-                            .filter(f -> f.getFileName().toString().endsWith(".class"))
+                            .filter(f -> String.valueOf(f.getFileName()).endsWith(".class"))
                             .toList();
                 }
 

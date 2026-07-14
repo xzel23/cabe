@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -201,7 +202,7 @@ public final class TestUtil {
         try (Stream<Path> paths = Files.walk(dir)) {
             return paths
                     .filter(Files::isRegularFile)
-                    .filter(f -> f.getFileName().toString().endsWith(".class"))
+                    .filter(f -> String.valueOf(f.getFileName()).endsWith(".class"))
                     .map(dir::relativize)
                     .toList();
         }
@@ -388,5 +389,17 @@ public final class TestUtil {
 
     private static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
+    }
+
+    /**
+     * Retrieves the parent path of the given {@code path}.
+     * If the parent path is {@code null}, an exception is thrown with a descriptive error message.
+     *
+     * @param path the path whose parent is to be retrieved; must not be {@code null}.
+     * @return the parent path of the given {@code path}; never {@code null}.
+     * @throws NullPointerException if the given {@code path} is {@code null} or its parent path is {@code null}.
+     */
+    static Path getParentOrThrow(Path path) {
+        return Objects.requireNonNull(path.getParent(), "parent path must not be null: " + path);
     }
 }
