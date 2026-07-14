@@ -17,7 +17,7 @@ javafx = "17"
 javassist = "3.32.0-GA"
 jspecify = "1.0.0"
 junit = "6.1.2"
-log4j = "2.26.0"
+log4j = "2.26.1"
 maven = "3.9.9"
 
 [libraries]
