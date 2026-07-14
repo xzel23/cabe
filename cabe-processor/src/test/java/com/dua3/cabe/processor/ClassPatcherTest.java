@@ -8,6 +8,8 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.condition.EnabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClassPatcherTest {
@@ -258,6 +261,41 @@ class ClassPatcherTest {
                 }
             }
         }
+    }
+
+    @Test
+    @Order(5)
+    @EnabledForJreRange(min = JRE.JAVA_25)
+    void testInstrumentedClassRetainsJava21ClassFileVersion() throws Exception {
+        Path java21Home = TestUtil.findJavaHome(21)
+                .orElseThrow(() -> new IllegalStateException("Java 21 installation not found"));
+        assumeTrue(Runtime.version().feature() == 25, "processor must run on Java 25");
+
+        Path root = testDir.resolve("class-version-java21");
+        Path srcDir = root.resolve("src");
+        Path unprocessedDir = root.resolve("classes-unprocessed");
+        Path processedDir = root.resolve("classes-processed");
+        Path classFile = Path.of("Java21Compatibility.class");
+
+        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("classversion/Java21Compatibility/src"), srcDir);
+        TestUtil.compileSources(java21Home, 21, srcDir, unprocessedDir, testLibDir);
+
+        assertEquals(65, TestUtil.readClassFileMajorVersion(unprocessedDir.resolve(classFile)));
+
+        ClassPatcher patcher = new ClassPatcher(List.of(testLibDir), Configuration.STANDARD);
+        patcher.processFolder(unprocessedDir, processedDir);
+
+        assertEquals(65, TestUtil.readClassFileMajorVersion(processedDir.resolve(classFile)));
+        assertEquals(
+                "OK",
+                TestUtil.runClass(
+                        java21Home,
+                        processedDir,
+                        List.of(testLibDir.resolve("jspecify-1.0.0.jar")),
+                        "Java21Compatibility",
+                        true
+                ).strip()
+        );
     }
 
     @ParameterizedTest

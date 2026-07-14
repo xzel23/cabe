@@ -327,6 +327,8 @@ public final class ClassPatcher {
         try {
             ClassInfo classInfo = ClassInfo.forClass(classLoader.loadClass(className));
             CtClass ctClass = classPool.getCtClass(className);
+            int originalMajorVersion = ctClass.getClassFile().getMajorVersion();
+            int originalMinorVersion = ctClass.getClassFile().getMinorVersion();
             
             // Check if the class has already been processed
             if (CabeAttribute.hasAttribute(ctClass)) {
@@ -366,6 +368,8 @@ public final class ClassPatcher {
                 if (parent != null) {
                     Files.createDirectories(parent);
                 }
+                ctClass.getClassFile().setMajorVersion(originalMajorVersion);
+                ctClass.getClassFile().setMinorVersion(originalMinorVersion);
                 try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(target)))) {
                     ctClass.getClassFile().write(out);
                 }

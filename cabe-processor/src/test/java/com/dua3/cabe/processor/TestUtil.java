@@ -5,6 +5,7 @@ import javassist.NotFoundException;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -134,6 +136,41 @@ public final class TestUtil {
     }
 
     /**
+     * Compiles Java source files using the javac executable from a specific Java installation.
+     *
+     * @param javaHome   the Java installation to use
+     * @param release    the javac --release value
+     * @param srcDir     the directory containing the Java source files to compile
+     * @param classesDir the directory where the compiled classes will be stored
+     * @param libDir     the directory containing any required library files
+     * @throws IOException if an I/O error occurs during the compilation process
+     * @throws InterruptedException if the current thread is interrupted while waiting for javac
+     */
+    public static void compileSources(Path javaHome, int release, Path srcDir, Path classesDir, Path libDir)
+            throws IOException, InterruptedException {
+        Files.createDirectories(classesDir);
+        List<String> command = new ArrayList<>();
+        command.add(javaHome.resolve("bin").resolve(isWindows() ? "javac.exe" : "javac").toString());
+        command.add("--release");
+        command.add(Integer.toString(release));
+        command.add("-d");
+        command.add(classesDir.toString());
+        command.add("-cp");
+        command.add(libDir.resolve("jspecify-1.0.0.jar").toString());
+        command.add("-g");
+        command.add("-parameters");
+        Arrays.stream(fetchJavaFiles(srcDir)).map(Path::toString).forEach(command::add);
+
+        Process process = new ProcessBuilder(command).start();
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            String out = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            String err = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+            throw new IllegalStateException("Compilation of test sources failed.%n%s%n%s".formatted(out, err));
+        }
+    }
+
+    /**
      * Loads all class files from a directory into the class pool and returns the list of class file paths.
      *
      * @param dir the directory containing the class files
@@ -199,11 +236,34 @@ public final class TestUtil {
      * @throws InterruptedException if the current thread is interrupted while waiting for the process to terminate
      */
     public static String runClass(Path dir, String className, boolean assertionsEnabled) throws IOException, InterruptedException {
-        List<String> command = new ArrayList<>();
         String javaHome = System.getProperty("java.home");
-        String javaExecutable = javaHome + File.separator + "bin" + File.separator + (System.getProperty("os.name").toLowerCase().contains("win") ? "java.exe" : "java");
+        return runClass(Path.of(javaHome), dir, List.of(), className, assertionsEnabled);
+    }
+
+    /**
+     * Executes a Java class using a specific Java installation.
+     *
+     * @param javaHome          the Java installation to use
+     * @param dir               the working directory and first classpath entry
+     * @param classpathEntries  additional classpath entries
+     * @param className         the fully qualified name of the class to execute
+     * @param assertionsEnabled a flag indicating whether assertions should be enabled
+     * @return the standard output of the process if successful, or the error output otherwise
+     * @throws IOException          if an I/O error occurs while starting the process
+     * @throws InterruptedException if the current thread is interrupted while waiting for the process to terminate
+     */
+    public static String runClass(Path javaHome, Path dir, Collection<Path> classpathEntries, String className, boolean assertionsEnabled)
+            throws IOException, InterruptedException {
+        List<String> command = new ArrayList<>();
+        String javaExecutable = javaHome.resolve("bin").resolve(isWindows() ? "java.exe" : "java").toString();
         command.add(javaExecutable);
         command.add(assertionsEnabled ? "-ea" : "-da");
+
+        List<Path> classpath = new ArrayList<>();
+        classpath.add(dir);
+        classpath.addAll(classpathEntries);
+        command.add("-cp");
+        command.add(classpath.stream().map(Path::toString).collect(java.util.stream.Collectors.joining(File.pathSeparator)));
 
         // Add JavaFX modules to the module path for tests
         String javaFxPath = System.getProperty("org.openjfx.javafxplugin.path");
@@ -225,5 +285,108 @@ public final class TestUtil {
         } else {
             return new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         }
+    }
+
+    /**
+     * Reads the major version from a class file.
+     *
+     * @param classFile the class file
+     * @return the class file major version
+     * @throws IOException if an I/O error occurs
+     */
+    public static int readClassFileMajorVersion(Path classFile) throws IOException {
+        try (DataInputStream in = new DataInputStream(Files.newInputStream(classFile))) {
+            int magic = in.readInt();
+            if (magic != 0xCAFEBABE) {
+                throw new IllegalArgumentException("not a class file: " + classFile);
+            }
+            in.readUnsignedShort();
+            return in.readUnsignedShort();
+        }
+    }
+
+    /**
+     * Finds a Java installation for a specific feature version.
+     *
+     * @param featureVersion the Java feature version
+     * @return the Java home, if found
+     */
+    public static Optional<Path> findJavaHome(int featureVersion) {
+        String[] propertyNames = {
+                "cabe.test.java" + featureVersion + ".home",
+                "java" + featureVersion + ".home"
+        };
+        for (String propertyName : propertyNames) {
+            String value = System.getProperty(propertyName);
+            if (isJavaHome(value, featureVersion)) {
+                return Optional.of(Path.of(value));
+            }
+        }
+
+        String[] environmentNames = {
+                "JAVA" + featureVersion + "_HOME",
+                "JDK" + featureVersion + "_HOME"
+        };
+        for (String environmentName : environmentNames) {
+            String value = System.getenv(environmentName);
+            if (isJavaHome(value, featureVersion)) {
+                return Optional.of(Path.of(value));
+            }
+        }
+
+        Path currentJavaHome = Path.of(System.getProperty("java.home"));
+        if (isJavaHome(currentJavaHome.toString(), featureVersion)) {
+            return Optional.of(currentJavaHome);
+        }
+
+        if (!isWindows()) {
+            try {
+                Process process = new ProcessBuilder("/usr/libexec/java_home", "-v", Integer.toString(featureVersion)).start();
+                int exitCode = process.waitFor();
+                if (exitCode == 0) {
+                    String javaHome = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).strip();
+                    if (isJavaHome(javaHome, featureVersion)) {
+                        return Optional.of(Path.of(javaHome));
+                    }
+                }
+            } catch (IOException e) {
+                LOG.fine(() -> "could not run /usr/libexec/java_home: " + e.getMessage());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static boolean isJavaHome(String value, int featureVersion) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        Path java = Path.of(value).resolve("bin").resolve(isWindows() ? "java.exe" : "java");
+        if (!Files.isExecutable(java)) {
+            return false;
+        }
+        try {
+            Process process = new ProcessBuilder(java.toString(), "-version").start();
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                return false;
+            }
+            String versionText = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8)
+                    + new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            return versionText.contains("\"" + featureVersion + ".")
+                    || versionText.contains("version \"" + featureVersion + "\"");
+        } catch (IOException e) {
+            LOG.fine(() -> "could not check Java home " + value + ": " + e.getMessage());
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
     }
 }
