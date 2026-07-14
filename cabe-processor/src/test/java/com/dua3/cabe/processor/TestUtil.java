@@ -149,6 +149,23 @@ public final class TestUtil {
      */
     public static void compileSources(Path javaHome, int release, Path srcDir, Path classesDir, Path libDir)
             throws IOException, InterruptedException {
+        compileSources(javaHome, release, srcDir, classesDir, libDir, List.of("-g", "-parameters"));
+    }
+
+    /**
+     * Compiles Java source files using the javac executable from a specific Java installation.
+     *
+     * @param javaHome   the Java installation to use
+     * @param release    the javac --release value
+     * @param srcDir     the directory containing the Java source files to compile
+     * @param classesDir the directory where the compiled classes will be stored
+     * @param libDir     the directory containing any required library files
+     * @param javacOptions additional javac options
+     * @throws IOException if an I/O error occurs during the compilation process
+     * @throws InterruptedException if the current thread is interrupted while waiting for javac
+     */
+    public static void compileSources(Path javaHome, int release, Path srcDir, Path classesDir, Path libDir, List<String> javacOptions)
+            throws IOException, InterruptedException {
         Files.createDirectories(classesDir);
         List<String> command = new ArrayList<>();
         command.add(javaHome.resolve("bin").resolve(isWindows() ? "javac.exe" : "javac").toString());
@@ -158,8 +175,7 @@ public final class TestUtil {
         command.add(classesDir.toString());
         command.add("-cp");
         command.add(libDir.resolve("jspecify-1.0.0.jar").toString());
-        command.add("-g");
-        command.add("-parameters");
+        command.addAll(javacOptions);
         Arrays.stream(fetchJavaFiles(srcDir)).map(Path::toString).forEach(command::add);
 
         Process process = new ProcessBuilder(command).start();

@@ -3,6 +3,12 @@ package com.dua3.cabe.processor;
 import javassist.CtBehavior;
 import javassist.CtClass;
 import javassist.ClassPool;
+import javassist.bytecode.ClassFile;
+import javassist.bytecode.CodeAttribute;
+import javassist.bytecode.LineNumberAttribute;
+import javassist.bytecode.LocalVariableAttribute;
+import javassist.bytecode.MethodInfo;
+import javassist.bytecode.SourceFileAttribute;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -14,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -297,6 +304,74 @@ class ClassPatcherTest {
                 ).strip()
         );
     }
+
+    @Test
+    @Order(5)
+    void testInstrumentedClassRetainsDebugInfoPresence() throws Exception {
+        Path javaHome = Path.of(System.getProperty("java.home"));
+        Path root = testDir.resolve("debug-info");
+        Path srcDir = root.resolve("src");
+        Path classFile = Path.of("DebugInfoSubject.class");
+
+        TestUtil.copyRecursive(TestUtil.resourceDir.resolve("debuginfo/DebugInfoSubject/src"), srcDir);
+
+        assertDebugInfoPresence(javaHome, srcDir, root.resolve("with-debug"), classFile, List.of("-g"),
+                new DebugPresence(true, true, true));
+        assertDebugInfoPresence(javaHome, srcDir, root.resolve("without-debug"), classFile, List.of("-g:none"),
+                new DebugPresence(false, false, false));
+        assertDebugInfoPresence(javaHome, srcDir, root.resolve("with-lines-source"), classFile, List.of("-g:lines,source"),
+                new DebugPresence(true, true, false));
+        assertDebugInfoPresence(javaHome, srcDir, root.resolve("with-vars"), classFile, List.of("-g:vars"),
+                new DebugPresence(false, false, true));
+    }
+
+    private static void assertDebugInfoPresence(Path javaHome, Path srcDir, Path root, Path classFile, List<String> javacOptions,
+                                                DebugPresence expectedPresence)
+            throws Exception {
+        Path unprocessedDir = root.resolve("classes-unprocessed");
+        Path processedDir = root.resolve("classes-processed");
+
+        TestUtil.compileSources(javaHome, Runtime.version().feature(), srcDir, unprocessedDir, testLibDir, javacOptions);
+
+        DebugAttributes unprocessedDebugAttributes = readDebugAttributes(unprocessedDir.resolve(classFile));
+        assertEquals(expectedPresence, unprocessedDebugAttributes.presence(), "unexpected debug attributes for " + javacOptions);
+
+        ClassPatcher patcher = new ClassPatcher(List.of(testLibDir), Configuration.DEVELOPMENT);
+        patcher.processFolder(unprocessedDir, processedDir);
+
+        DebugAttributes processedDebugAttributes = readDebugAttributes(processedDir.resolve(classFile));
+        assertEquals(unprocessedDebugAttributes, processedDebugAttributes, "debug attributes should be preserved for " + javacOptions);
+    }
+
+    private static DebugAttributes readDebugAttributes(Path classFile) throws IOException {
+        try (DataInputStream in = new DataInputStream(Files.newInputStream(classFile))) {
+            ClassFile cf = new ClassFile(in);
+            int sourceFiles = cf.getAttribute(SourceFileAttribute.tag) == null ? 0 : 1;
+            int lineNumberTables = 0;
+            int localVariableTables = 0;
+            for (MethodInfo methodInfo : cf.getMethods()) {
+                CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
+                if (codeAttribute == null) {
+                    continue;
+                }
+                if (codeAttribute.getAttribute(LineNumberAttribute.tag) != null) {
+                    lineNumberTables++;
+                }
+                if (codeAttribute.getAttribute(LocalVariableAttribute.tag) != null) {
+                    localVariableTables++;
+                }
+            }
+            return new DebugAttributes(sourceFiles, lineNumberTables, localVariableTables);
+        }
+    }
+
+    private record DebugAttributes(int sourceFiles, int lineNumberTables, int localVariableTables) {
+        DebugPresence presence() {
+            return new DebugPresence(sourceFiles > 0, lineNumberTables > 0, localVariableTables > 0);
+        }
+    }
+
+    private record DebugPresence(boolean sourceFile, boolean lineNumberTable, boolean localVariableTable) {}
 
     @ParameterizedTest
     @Order(4)
