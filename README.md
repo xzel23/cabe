@@ -11,7 +11,7 @@ public API of your project and assertion-based null checks to the private API:
 
 ```kotlin
 plugins {
-    id("com.dua3.cabe") version "4.4.0"
+    id("com.dua3.cabe") version "4.5.0"
 }
 ```
 
@@ -33,7 +33,7 @@ Cabe helps implement the [Fail-Fast Principle](https://www.martinfowler.com/ieee
 ```kotlin
 plugins {
     id("java")
-    id("com.dua3.cabe") version "4.4.0"
+    id("com.dua3.cabe") version "4.5.0"
 }
 ```
 
@@ -97,7 +97,7 @@ dependencies {
 <plugin>
   <groupId>com.dua3.cabe</groupId>
   <artifactId>cabe-maven-plugin</artifactId>
-  <version>4.4.0</version>
+  <version>4.5.0</version>
   <configuration>
     <inputDirectory>${project.build.directory}/unprocessed-classes</inputDirectory>
     <verbosity>1</verbosity>
